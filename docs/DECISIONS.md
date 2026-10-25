@@ -76,3 +76,21 @@ Exactly Delphi 12.3 remains a separate validation gate.
   unterminated strings recover before the newline; multiline strings and block
   comments/directives recover at EOF. Value-level multiline indentation and
   numeric type/range semantics remain outside this lexer.
+
+## M2.1 CST implementation refinements (2026-10-25)
+
+- Original token references are immutable value records plus original indices;
+  retaining the reference-counted source independently avoids keeping a borrowed
+  lexer result alive. No lexer public API changed.
+- A tree-owned flat arena owns every node/token once. Ordered child arrays are
+  immutable, non-owning references. This keeps construction cleanup and tree
+  destruction simple, including long left-associative binary chains.
+- Any directive-bearing input is conservatively one opaque body in M2.1.
+  Ambiguous generic call spellings also stay opaque rather than masquerading
+  as comparisons. This is intentionally smaller grammar coverage, not directive
+  evaluation or generic parsing.
+- The Delphi operator groups follow the official Athens Expressions (Delphi)
+  reference, including multiplicative `as` and left association of equal groups:
+  https://docwiki.embarcadero.com/RADStudio/Athens/en/Expressions_(Delphi)
+- No language-rule deviation was established by this task. Validation used the
+  installed 12 CE Update 1 toolchain; exact 12.3 remains open (`M2_STATUS.md`).

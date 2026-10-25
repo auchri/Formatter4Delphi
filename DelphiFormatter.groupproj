@@ -9,6 +9,9 @@
         <Projects Include="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="tests\DelphiFormatter.Parser.Tests\DelphiFormatter.Parser.Tests.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -35,14 +38,23 @@
     <Target Name="DelphiFormatter_Lexer:Make">
         <MSBuild Projects="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj" Targets="Make"/>
     </Target>
+    <Target Name="DelphiFormatter_Parser_Tests">
+        <MSBuild Projects="tests\DelphiFormatter.Parser.Tests\DelphiFormatter.Parser.Tests.dproj"/>
+    </Target>
+    <Target Name="DelphiFormatter_Parser_Tests:Clean">
+        <MSBuild Projects="tests\DelphiFormatter.Parser.Tests\DelphiFormatter.Parser.Tests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiFormatter_Parser_Tests:Make">
+        <MSBuild Projects="tests\DelphiFormatter.Parser.Tests\DelphiFormatter.Parser.Tests.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="DelphiFormatter_Lexer_Tests;DelphiFormatter_Lexer"/>
+        <CallTarget Targets="DelphiFormatter_Lexer_Tests;DelphiFormatter_Lexer;DelphiFormatter_Parser_Tests"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="DelphiFormatter_Lexer_Tests:Clean;DelphiFormatter_Lexer:Clean"/>
+        <CallTarget Targets="DelphiFormatter_Lexer_Tests:Clean;DelphiFormatter_Lexer:Clean;DelphiFormatter_Parser_Tests:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="DelphiFormatter_Lexer_Tests:Make;DelphiFormatter_Lexer:Make"/>
+        <CallTarget Targets="DelphiFormatter_Lexer_Tests:Make;DelphiFormatter_Lexer:Make;DelphiFormatter_Parser_Tests:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

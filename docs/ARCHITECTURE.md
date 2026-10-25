@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**First deliverable = standalone lossless lexer + tests.** No formatter or parser implementation in the first task.
+**Current milestone: M2.1 lossless CST foundation and basic parser.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -42,11 +42,11 @@ src/
     DelphiFormatter.Lexer.Tokens.pas
     DelphiFormatter.Lexer.Scanner.pas
     DelphiFormatter.Lexer.Keywords.pas
-  DelphiFormatter.Syntax/                     # FUTURE
+  DelphiFormatter.Syntax/                     # M2.1
     DelphiFormatter.Syntax.Kinds.pas
     DelphiFormatter.Syntax.Nodes.pas
     DelphiFormatter.Syntax.Tree.pas
-  DelphiFormatter.Parser/                     # FUTURE
+  DelphiFormatter.Parser/                     # M2.1
     DelphiFormatter.Parser.Reader.pas
     DelphiFormatter.Parser.Delphi.pas
   DelphiFormatter.Formatting/                 # FUTURE
@@ -60,7 +60,7 @@ src/
   DelphiFormatter.Cli/                        # FUTURE
 tests/
   DelphiFormatter.Lexer.Tests/
-  DelphiFormatter.Parser.Tests/               # FUTURE
+  DelphiFormatter.Parser.Tests/               # M2.1
   DelphiFormatter.Formatting.Tests/           # FUTURE
   Fixtures/
 docs/
@@ -75,7 +75,7 @@ CODEX_START.md
 README.md
 ```
 
-**Initial actual files only:** spans, diagnostics, tokens, scanner, keywords (if useful), DUnitX lexer project/tests/fixtures. No placeholder Pascal units for future folders.
+**Implemented layers:** core, lexer, generic immutable CST, token reader, basic recursive-descent parser and independent DUnitX lexer/parser suites. No placeholder units for future layers. The parser test project directly compiles the syntax/parser units and is included in the group alongside the existing lexer package and tests.
 
 ## Concrete types and roles
 
@@ -132,9 +132,9 @@ These are API sketches, not compiled source. Codex should choose valid unit decl
 - Lexer tokens do not own independent string copies. A text snapshot shared with future `TSyntaxTree` must have a clear owner; Delphi strings are reference-counted, so retain the snapshot explicitly in each result that needs it.
 - `TDelphiLexResult` is disposable without invalidating **value-only** spans, but consumers must not dereference them without a living matching source snapshot.
 - Diagnostics never mutate source.
-- `TSyntaxTree` later owns all syntax nodes and keeps exact source and token references; parse error recovery adds nodes/leaves, not silent drops.
+- `TSyntaxTree` owns an arena of all elements, retains the reference-counted source snapshot and original token value records/indices; child references are non-owning; parse error recovery adds nodes/leaves, not silent drops.
 
-## Parser design for later milestones
+## Parser design and extension boundaries
 
 - Handwritten recursive descent for units, declarations, blocks, statements.
 - Precedence-climbing or Pratt parser for expression operators, unary/postfix components, including argument lists, indexing, generics.
@@ -155,5 +155,21 @@ These are API sketches, not compiled source. Codex should choose valid unit decl
 ## Dependency/test policies
 
 - Delphi 12.3, RTL; DUnitX only for tests.
-- No incidental changes in application projects, no external Delphi IDE automation for the initial lexer.
+- Keep project changes limited to affected layers. The installed CE toolchain requires IDE builds; core code never depends on the IDE.
 - Build Win64 locally if toolchain exists; support cross-platform RTL code where practical but do not promise untested platforms.
+
+## M2.1 implementation details
+
+`CST_SPEC.md` is the concrete parser API contract. Nodes are immutable at
+construction, with private copied child arrays. A parser-owned arena transfers
+to `TSyntaxTree`; no child owns another element. This avoids both duplicate
+ownership and recursive destruction of long binary chains. Lexer APIs and
+recognition are unchanged. Original token references use value records plus
+original indices, so trees do not retain a disposable lexer result.
+
+The significant-token view excludes ordinary trivia only. Directive-bearing
+input is conservatively one opaque body; other unsupported regions are opaque
+at statement, unit-section or root-tail boundaries. Supported grammar has
+explicit hierarchical expression/statement/unit nodes. Recursive nesting has a
+128-entry guard; serialization uses an explicit stack. M2.1 deliberately omits
+all declarations and methods, as well as AST, formatter and preprocessing.

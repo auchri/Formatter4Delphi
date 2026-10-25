@@ -2,18 +2,18 @@
 
 **Target:** a Delphi 12.3+ source formatter written in Delphi, independent of the Delphi IDE, with behavioral compatibility with the original Delphi formatter's `.config` profiles. Add separate settings for editor behavior (tabs, tab stops, indentation, line endings, encoding, etc.) without changing `.config` semantics.
 
-**Start here (token efficient):** `CODEX_START.md` → `AGENTS.md` → `docs/LEXER_HANDOFF.md`. Read the longer technical documents only as needed.
+**Start here (token efficient):** `CODEX_START.md` → `AGENTS.md` → `docs/CST_SPEC.md`. Read the longer technical documents only as needed.
 
-**Current coding scope: lexer only.** The CST and subsequent components are designed but must not be prematurely implemented. The lexer is the foundation for a standalone, lossless CST that can later be lowered into an AST.
+**Current milestone: M2.1 lossless CST and basic Delphi parser.** The lexer APIs remain stable. Expressions, statements and minimal units have hierarchical, lossless CSTs; unsupported regions stay opaque. AST, formatter and integrations remain future work. See [M2 status](docs/M2_STATUS.md).
 
 ## Documents
 
-- `CODEX_START.md`: compact first-task instructions for Codex.
+- `CODEX_START.md`: current entry instructions for Codex.
 - `AGENTS.md`: persistent repository conventions and scope boundaries.
-- `docs/LEXER_HANDOFF.md`: short, self-contained active lexer task for Codex.
+- `docs/LEXER_HANDOFF.md`: historical lexer handoff.
 - `docs/ARCHITECTURE.md`: layer boundaries, components, classes, APIs and ownership.
 - `docs/LEXER_SPEC.md`: lexer contract, recognition order, Delphi edge cases and diagnostics.
-- `docs/CST_SPEC.md`: later lossless CST / parser model and recovery strategy.
+- `docs/CST_SPEC.md`: implemented lossless CST/parser API, grammar and recovery contract.
 - `docs/TEST_PLAN.md`: concrete tests and acceptance criteria.
 - `docs/ROADMAP.md`: phased work with exit gates.
 - `docs/DECISIONS.md`: settled architectural decisions and intentionally open questions.
@@ -28,20 +28,21 @@
 
 Documentation and test fixtures are project-authored. Do not copy implementation code from third-party parsers without a licensing review.
 
-## M1.2 lexer implementation
+## Build and test
 
 Open `DelphiFormatter.groupproj` in Delphi 12.3 and select Win64 / Debug.
 The runtime package contains only RTL-based core/lexer units; the console
-test project compiles these same units directly and uses bundled DUnitX.
+test projects compile their core/lexer and syntax/parser units directly and use bundled DUnitX.
 No package installation into the IDE is needed.
 Use **Project > Build All Projects** (German IDE: **Projekt > Alle Projekte
-erzeugen**), then run `build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe`.
+erzeugen**), then run both `build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe` and `build\Win64\Debug\DelphiFormatter.Parser.Tests.exe`.
 
 From the RAD Studio command prompt (with `rsvars.bat` already loaded):
 
 ```bat
 msbuild DelphiFormatter.groupproj /t:Build /p:Config=Debug /p:Platform=Win64
 build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe
+build\Win64\Debug\DelphiFormatter.Parser.Tests.exe
 ```
 
 `DUnitXSource` defaults to `$(BDS)\source\DUnitX` and can be overridden with
@@ -55,3 +56,8 @@ Edition Update 1 IDE on Win64/Debug: **40/40 DUnitX tests passed**. That is a re
 IDE build and execution; a build with exactly Delphi 12.3 is still unverified.
 
 Implemented scope, validation results and limitations: [M1 status](docs/M1_STATUS.md).
+
+
+
+M2.1 adds **28/28 passing parser tests** on the same Win64/Debug toolchain.
+See [M2 status](docs/M2_STATUS.md) for CST coverage, limits and fresh artifacts.
