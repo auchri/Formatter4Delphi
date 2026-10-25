@@ -10,11 +10,29 @@ type
   [TestFixture]
   TLexerBasics = class
   private
+    procedure CheckSingle(const Source: string; Kind: TTokenKind;
+      const Code: string = '');
     procedure CheckCoverage(Lexed: TDelphiLexResult);
     procedure CheckToken(Lexed: TDelphiLexResult; Index: Integer;
       Kind: TTokenKind; Start, Count: Integer; const Text: string);
     procedure CheckWords(const Words: array of string; Kind: TTokenKind);
   public
+    [Test] procedure OrdinaryStrings;
+    [Test] procedure QuoteRuns;
+    [Test] procedure MultilineStrings;
+    [Test] procedure StringRecovery;
+    [Test] procedure CommentForms;
+    [Test] procedure CommentBoundaries;
+    [Test] procedure CompilerDirectives;
+    [Test] procedure ValidNumbers;
+    [Test] procedure InvalidNumbers;
+    [Test] procedure NumberBoundaries;
+    [Test] procedure CharacterCodes;
+    [Test] procedure UTF16InsideConstructs;
+    [Test] procedure SeededMalformedInputs;
+    [Test] procedure NumericMemberAccess;
+    [Test] procedure MultilineBoundaries;
+    [Test] procedure RealisticCorpus;
     [Test] procedure EmptySource;
     [Test] procedure HorizontalBlanks;
     [Test] procedure MixedNewlines;
@@ -22,7 +40,7 @@ type
     [Test] procedure ReservedWords;
     [Test] procedure ContextualWords;
     [Test] procedure EscapedIdentifiers;
-    [Test] procedure AssignmentWithDeferredNumber;
+    [Test] procedure AssignmentWithNumber;
     [Test] procedure LongestSymbols;
     [Test] procedure SingleSymbolsAndLookaheadAtEOF;
     [Test] procedure BasicUnicodeIdentifiers;
@@ -33,8 +51,8 @@ type
     [Test] procedure DeterministicResults;
     [Test] procedure ResultCopiesArrays;
     [Test] procedure ResultRejectsInvalidSpans;
-    [Test] procedure DeferredCategoriesRemainLossless;
-    [Test] procedure RangeDotsBeforeNumberScanner;
+    [Test] procedure CompletedCategories;
+    [Test] procedure RangeDots;
     [Test] procedure SourceSnapshotAndValueAccess;
     [Test] procedure AccessorBounds;
     [Test] procedure SpanValidation;
@@ -45,6 +63,7 @@ implementation
 
 uses
   System.SysUtils,
+  System.IOUtils,
   DelphiFormatter.Core.Spans,
   DelphiFormatter.Core.Diagnostics,
   DelphiFormatter.Lexer.Scanner;
@@ -211,33 +230,26 @@ begin
     CheckToken(L, 0, tkIdentifier, 0, 5, '&Type');
     CheckToken(L, 2, tkIdentifier, 6, 4, '&foo');
     CheckToken(L, 4, tkUnknown, 11, 1, '&');
-    CheckToken(L, 5, tkUnknown, 12, 1, '1');
+    CheckToken(L, 5, tkNumber, 12, 1, '1');
     CheckToken(L, 7, tkUnknown, 14, 1, '&');
-    Assert.AreEqual(3, L.DiagnosticCount);
+    Assert.AreEqual(2, L.DiagnosticCount);
     CheckCoverage(L);
   finally L.Free; end;
 end;
 
-procedure TLexerBasics.AssignmentWithDeferredNumber;
-var
-  L: TDelphiLexResult;
-  D: TDiagnostic;
+procedure TLexerBasics.AssignmentWithNumber;
+var L: TDelphiLexResult;
 begin
   L := TDelphiLexer.Tokenize('Result:=A+1;');
   try
     Assert.AreEqual(7, L.TokenCount);
+    Assert.AreEqual(0, L.DiagnosticCount);
     CheckToken(L, 0, tkIdentifier, 0, 6, 'Result');
     CheckToken(L, 1, tkSymbol, 6, 2, ':=');
     CheckToken(L, 2, tkIdentifier, 8, 1, 'A');
     CheckToken(L, 3, tkSymbol, 9, 1, '+');
-    CheckToken(L, 4, tkUnknown, 10, 1, '1');
+    CheckToken(L, 4, tkNumber, 10, 1, '1');
     CheckToken(L, 5, tkSymbol, 11, 1, ';');
-    Assert.AreEqual(1, L.DiagnosticCount);
-    D := L.GetDiagnostic(0);
-    Assert.AreEqual('LEX006', D.Code);
-    Assert.AreEqual(Ord(dsWarning), Ord(D.Severity));
-    Assert.AreEqual(10, D.Span.StartOffset);
-    Assert.AreEqual(1, D.Span.Length);
     CheckCoverage(L);
   finally L.Free; end;
 end;
@@ -346,8 +358,8 @@ begin
         CheckToken(L, I, tkUnknown, I, 2, Pair);
         Assert.AreEqual(1, L.DiagnosticCount);
         D := L.GetDiagnostic(0);
-        Assert.AreEqual('LEX006', D.Code);
-        Assert.AreEqual(Ord(dsWarning), Ord(D.Severity));
+        Assert.AreEqual('LEX005', D.Code);
+        Assert.AreEqual(Ord(dsError), Ord(D.Severity));
         Assert.AreEqual(I, D.Span.StartOffset);
         Assert.AreEqual(2, D.Span.Length);
         Assert.IsTrue(Pos('Supplementary Unicode', D.Message) > 0);
@@ -380,30 +392,10 @@ begin
 end;
 
 procedure TLexerBasics.FallbackAtEOF;
-var Source: string; L: TDelphiLexResult; D: TDiagnostic;
+var S: string;
 begin
-  for Source in TArray<string>.Create('''', '{', '}', '$', '%', '#', '0',
-    '//', '(*') do
-  begin
-    L := TDelphiLexer.Tokenize(Source);
-    try
-      CheckToken(L, 0, tkUnknown, 0, 1, Copy(Source, 1, 1));
-      Assert.AreEqual(1, L.DiagnosticCount);
-      D := L.GetDiagnostic(0);
-      Assert.AreEqual('LEX006', D.Code);
-      Assert.AreEqual(Ord(dsWarning), Ord(D.Severity));
-      Assert.AreEqual(0, D.Span.StartOffset);
-      Assert.AreEqual(1, D.Span.Length);
-      CheckCoverage(L);
-    finally L.Free; end;
-  end;
-  L := TDelphiLexer.Tokenize('&');
-  try
-    CheckToken(L, 0, tkUnknown, 0, 1, '&');
-    Assert.AreEqual(1, L.DiagnosticCount);
-    Assert.AreEqual('LEX005', L.GetDiagnostic(0).Code);
-    CheckCoverage(L);
-  finally L.Free; end;
+  for S in TArray<string>.Create('}', '&', '?') do
+    CheckSingle(S, tkUnknown, 'LEX005');
 end;
 
 procedure TLexerBasics.DeterministicResults;
@@ -507,33 +499,25 @@ begin
   Reject;
 end;
 
-procedure TLexerBasics.DeferredCategoriesRemainLossless;
-var Source: string; L: TDelphiLexResult;
+procedure TLexerBasics.CompletedCategories;
 begin
-  for Source in TArray<string>.Create('''abc', '// comment'#13#10,
-    '{$IFDEF DEBUG}', '(* unfinished', '$FF %10 1.2e-3 #13', '''''''') do
-  begin
-    L := TDelphiLexer.Tokenize(Source);
-    try
-      Assert.IsTrue(L.DiagnosticCount > 0);
-      CheckToken(L, 0, tkUnknown, 0, 1, Copy(Source, 1, 1));
-      Assert.AreEqual('LEX006', L.GetDiagnostic(0).Code);
-      CheckCoverage(L);
-    finally L.Free; end;
-  end;
+  CheckSingle(#39'abc', tkStringLiteral, 'LEX003');
+  CheckSingle('// comment', tkComment);
+  CheckSingle('{$IFDEF DEBUG}', tkCompilerDirective);
+  CheckSingle('(* unfinished', tkComment, 'LEX001');
+  CheckSingle('$FF', tkNumber);
 end;
 
-procedure TLexerBasics.RangeDotsBeforeNumberScanner;
+procedure TLexerBasics.RangeDots;
 var L: TDelphiLexResult;
 begin
   L := TDelphiLexer.Tokenize('1..10');
   try
-    Assert.AreEqual(5, L.TokenCount);
-    Assert.AreEqual(3, L.DiagnosticCount);
-    CheckToken(L, 0, tkUnknown, 0, 1, '1');
+    Assert.AreEqual(4, L.TokenCount);
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckToken(L, 0, tkNumber, 0, 1, '1');
     CheckToken(L, 1, tkSymbol, 1, 2, '..');
-    CheckToken(L, 2, tkUnknown, 3, 1, '1');
-    CheckToken(L, 3, tkUnknown, 4, 1, '0');
+    CheckToken(L, 2, tkNumber, 3, 2, '10');
     CheckCoverage(L);
   finally L.Free; end;
 end;
@@ -596,6 +580,318 @@ begin
     CheckToken(L, 10, tkSymbol, 45, 1, '.');
     CheckCoverage(L);
   finally L.Free; end;
+end;
+
+procedure TLexerBasics.CheckSingle(const Source: string; Kind: TTokenKind;
+  const Code: string);
+var L: TDelphiLexResult; D: TDiagnostic;
+begin
+  L := TDelphiLexer.Tokenize(Source);
+  try
+    Assert.AreEqual(2, L.TokenCount, Source);
+    CheckToken(L, 0, Kind, 0, Length(Source), Source);
+    if Code = '' then Assert.AreEqual(0, L.DiagnosticCount, Source)
+    else
+    begin
+      Assert.AreEqual(1, L.DiagnosticCount, Source);
+      D := L.GetDiagnostic(0);
+      Assert.AreEqual(Code, D.Code, Source);
+      Assert.AreEqual(Ord(dsError), Ord(D.Severity));
+      Assert.AreEqual(0, D.Span.StartOffset);
+      Assert.AreEqual(Length(Source), D.Span.Length);
+    end;
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.OrdinaryStrings;
+var S: string;
+begin
+  for S in TArray<string>.Create(#39'Hello World'#39, #39'It'#39#39's Delphi'#39,
+    #39#39, #39#39#39#39, #39'// { (* {$IFDEF X}'#39,
+    #39 + Char($00E4) + Char($D83D) + Char($DE00) + #39,
+    #39 + StringOfChar('x', 100000) + #39) do CheckSingle(S, tkStringLiteral);
+end;
+
+procedure TLexerBasics.QuoteRuns;
+var N: Integer; S: string;
+begin
+  for N := 1 to 12 do
+  begin
+    S := StringOfChar(#39, N);
+    if Odd(N) then CheckSingle(S, tkStringLiteral, 'LEX003')
+    else CheckSingle(S, tkStringLiteral);
+  end;
+  CheckSingle(StringOfChar(#39, 3) + 'abc', tkStringLiteral, 'LEX003');
+end;
+
+procedure TLexerBasics.MultilineStrings;
+var N: Integer; Q, EOL, S: string;
+begin
+  for N in TArray<Integer>.Create(3, 5, 7, 9) do
+    for EOL in TArray<string>.Create(#13#10, #13, #10) do
+    begin
+      Q := StringOfChar(#39, N);
+      S := Q + EOL + '  SELECT ' + #39 + 'R&D' + #39 + EOL +
+        '  // { (* $' + EOL + '  ' + Q;
+      CheckSingle(S, tkStringLiteral);
+      CheckSingle(Q + EOL + '  text', tkStringLiteral, 'LEX003');
+      CheckSingle(Q + EOL + 'text' + Q, tkStringLiteral, 'LEX003');
+    end;
+  Q := StringOfChar(#39, 5);
+  CheckSingle(Q + #10 + '  ' + StringOfChar(#39, 3) + #13#10 +
+    '  ' + Q, tkStringLiteral);
+end;
+
+procedure TLexerBasics.StringRecovery;
+var L: TDelphiLexResult;
+begin
+  L := TDelphiLexer.Tokenize(#39'abc'#13#10'unit');
+  try
+    Assert.AreEqual(4, L.TokenCount);
+    CheckToken(L, 0, tkStringLiteral, 0, 4, #39'abc');
+    CheckToken(L, 1, tkNewLine, 4, 2, #13#10);
+    CheckToken(L, 2, tkReservedWord, 6, 4, 'unit');
+    Assert.AreEqual(1, L.DiagnosticCount);
+    Assert.AreEqual('LEX003', L.GetDiagnostic(0).Code);
+    Assert.AreEqual(0, L.GetDiagnostic(0).Span.StartOffset);
+    Assert.AreEqual(4, L.GetDiagnostic(0).Span.Length);
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.CommentForms;
+var S: string; L: TDelphiLexResult;
+begin
+  for S in TArray<string>.Create('//', '/// <summary>', '// '#39' { (*',
+    '{}', '(**)', '{ a'#13#10' b }', '(* a'#10' b *)',
+    '(* { nested } *)', '{ (* nested *) }', '{ {$IFDEF X}',
+    '(* (* first closer *)') do CheckSingle(S, tkComment);
+  for S in TArray<string>.Create('{', '{abc', '(*', '(*abc') do
+    CheckSingle(S, tkComment, 'LEX001');
+  L := TDelphiLexer.Tokenize('// a'#13#10'X');
+  try
+    CheckToken(L, 0, tkComment, 0, 4, '// a');
+    CheckToken(L, 1, tkNewLine, 4, 2, #13#10);
+    CheckToken(L, 2, tkIdentifier, 6, 1, 'X');
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.CommentBoundaries;
+var L: TDelphiLexResult;
+begin
+  L := TDelphiLexer.Tokenize('{ { } X');
+  try
+    CheckToken(L, 0, tkComment, 0, 5, '{ { }');
+    CheckToken(L, 2, tkIdentifier, 6, 1, 'X');
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckCoverage(L);
+  finally L.Free; end;
+  L := TDelphiLexer.Tokenize('{ (* } X');
+  try
+    CheckToken(L, 0, tkComment, 0, 6, '{ (* }');
+    CheckToken(L, 2, tkIdentifier, 7, 1, 'X');
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.CompilerDirectives;
+var S: string;
+begin
+  for S in TArray<string>.Create('{$IFDEF DEBUG}', '{$ELSE}', '{$ENDIF}',
+    '{$I filename.inc}', '{$WARNINGS OFF}', '(*$IFDEF DEBUG*)',
+    '{$MESSAGE '#39'hello'#39'}') do CheckSingle(S, tkCompilerDirective);
+  for S in TArray<string>.Create('{$', '(*$', '{$IFDEF X', '(*$I X') do
+    CheckSingle(S, tkCompilerDirective, 'LEX002');
+  CheckSingle('{ $IFDEF X}', tkComment);
+  CheckSingle('(* $IFDEF X*)', tkComment);
+  CheckSingle('//$IFDEF X', tkComment);
+end;
+
+procedure TLexerBasics.ValidNumbers;
+var S: string;
+begin
+  for S in TArray<string>.Create('0', '123', '12345', '12.34', '1.5E-3',
+    '2E+10', '1.', '$FF', '$1234ABCD', '%101010', '1_000_000', '$FF_FF',
+    '%10_10', '1_2.3_4e+5_6', StringOfChar('9', 10000)) do
+    CheckSingle(S, tkNumber);
+end;
+
+procedure TLexerBasics.InvalidNumbers;
+var S: string;
+begin
+  for S in TArray<string>.Create('$', '%', '$_F', '%_1', '%102',
+    '1_', '1__2', '$FF_', '%10__1', '1e', '1e+', '1e-', '1e_2',
+    '1.2_e3', '1.2e+_3') do CheckSingle(S, tkNumber, 'LEX004');
+end;
+
+procedure TLexerBasics.NumberBoundaries;
+var L: TDelphiLexResult;
+begin
+  L := TDelphiLexer.Tokenize('-12+2E-10');
+  try
+    Assert.AreEqual(5, L.TokenCount);
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckToken(L, 0, tkSymbol, 0, 1, '-');
+    CheckToken(L, 1, tkNumber, 1, 2, '12');
+    CheckToken(L, 2, tkSymbol, 3, 1, '+');
+    CheckToken(L, 3, tkNumber, 4, 5, '2E-10');
+    CheckCoverage(L);
+  finally L.Free; end;
+  L := TDelphiLexer.Tokenize('A(.0.)');
+  try
+    Assert.AreEqual(5, L.TokenCount);
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckToken(L, 1, tkSymbol, 1, 2, '(.');
+    CheckToken(L, 2, tkNumber, 3, 1, '0');
+    CheckToken(L, 3, tkSymbol, 4, 2, '.)');
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.CharacterCodes;
+var S: string; L: TDelphiLexResult;
+begin
+  for S in TArray<string>.Create('#0', '#13', '#10', '#$0A', '#65535', '#1_0',
+    '#$FFFF') do CheckSingle(S, tkCharCode);
+  for S in TArray<string>.Create('#', '#$', '#65536', '#$10000', '#_1',
+    '#1_', '#%1010', '#' + StringOfChar('9', 10000)) do
+    CheckSingle(S, tkCharCode, 'LEX004');
+  L := TDelphiLexer.Tokenize(#39'Hello'#39'#13#10'#39'World'#39);
+  try
+    Assert.AreEqual(5, L.TokenCount);
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckToken(L, 0, tkStringLiteral, 0, 7, #39'Hello'#39);
+    CheckToken(L, 1, tkCharCode, 7, 3, '#13');
+    CheckToken(L, 2, tkCharCode, 10, 3, '#10');
+    CheckToken(L, 3, tkStringLiteral, 13, 7, #39'World'#39);
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.UTF16InsideConstructs;
+var Prefix, S: string; L: TDelphiLexResult;
+begin
+  for Prefix in TArray<string>.Create(#39, '{', '(*', '//', '{$') do
+  begin
+    S := Prefix + Char($D800);
+    L := TDelphiLexer.Tokenize(S);
+    try
+      Assert.AreEqual('LEX007', L.GetDiagnostic(0).Code);
+      Assert.AreEqual(Length(Prefix), L.GetDiagnostic(0).Span.StartOffset);
+      Assert.AreEqual(1, L.GetDiagnostic(0).Span.Length);
+      Assert.IsTrue(L.GetToken(0).Kind <> tkUnknown);
+      CheckCoverage(L);
+    finally L.Free; end;
+  end;
+end;
+
+procedure TLexerBasics.SeededMalformedInputs;
+var Seed: UInt64; N, J, I: Integer; S: string; A, B: TDelphiLexResult;
+const Alphabet = 'abcXYZ019_$%#'':;.+-/*(){}[]'#0#9#13#10;
+  function NextValue: Cardinal;
+  begin
+    Seed := (Seed * 1664525 + 1013904223) and $FFFFFFFF;
+    Result := Cardinal(Seed);
+  end;
+begin
+  Seed := $4D312E32;
+  for N := 1 to 500 do
+  begin
+    SetLength(S, Integer(NextValue mod 512) + 1);
+    for J := 1 to Length(S) do
+      if N mod 3 = 0 then S[J] := Char(NextValue mod 65536)
+      else S[J] := Alphabet[Integer(NextValue mod Cardinal(Length(Alphabet))) + 1];
+    A := TDelphiLexer.Tokenize(S);
+    try
+      B := TDelphiLexer.Tokenize(S);
+      try
+        CheckCoverage(A);
+        CheckCoverage(B);
+        Assert.AreEqual(A.TokenCount, B.TokenCount);
+        Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+        for I := 0 to A.TokenCount - 1 do
+          CheckToken(B, I, A.GetToken(I).Kind, A.GetToken(I).Span.StartOffset,
+            A.GetToken(I).Span.Length, A.TokenText(I));
+        for I := 0 to A.DiagnosticCount - 1 do
+        begin
+          Assert.AreEqual(A.GetDiagnostic(I).Code, B.GetDiagnostic(I).Code);
+          Assert.AreEqual(A.GetDiagnostic(I).Span.StartOffset,
+            B.GetDiagnostic(I).Span.StartOffset);
+          Assert.AreEqual(A.GetDiagnostic(I).Span.Length,
+            B.GetDiagnostic(I).Span.Length);
+        end;
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TLexerBasics.RealisticCorpus;
+var S, Path: string; L: TDelphiLexResult; I: Integer;
+  Counts: array[TTokenKind] of Integer; K: TTokenKind;
+begin
+  Path := ExpandFileName(ExtractFilePath(ParamStr(0)) +
+    '..\..\..\tests\Fixtures\LexicalCorpus.pas');
+  S := TFile.ReadAllText(Path, TEncoding.UTF8);
+  // Exercise mixed endings independently of Git's checkout normalization.
+  S := StringReplace(S, #13#10, #10, [rfReplaceAll]);
+  S := StringReplace(S, 'interface'#10, 'interface'#13, []);
+  S := StringReplace(S, 'implementation'#10, 'implementation'#13#10, []);
+  FillChar(Counts, SizeOf(Counts), 0);
+  L := TDelphiLexer.Tokenize(S);
+  try
+    Assert.AreEqual(0, L.DiagnosticCount);
+    Assert.IsTrue(L.TokenCount > 250);
+    for I := 0 to L.TokenCount - 1 do
+    begin
+      Assert.IsTrue(L.GetToken(I).Kind <> tkUnknown, L.TokenText(I));
+      Inc(Counts[L.GetToken(I).Kind]);
+    end;
+    for K in [tkIdentifier, tkReservedWord, tkNumber, tkStringLiteral,
+      tkCharCode, tkComment, tkCompilerDirective, tkSymbol, tkNewLine] do
+      Assert.IsTrue(Counts[K] > 0);
+    CheckToken(L, 0, tkReservedWord, 0, 4, 'unit');
+    CheckToken(L, 2, tkIdentifier, 5, 13, 'LexicalCorpus');
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.NumericMemberAccess;
+var S: string; L: TDelphiLexResult;
+begin
+  for S in TArray<string>.Create('1.ToString', '1.e2', '1._2') do
+  begin
+    L := TDelphiLexer.Tokenize(S);
+    try
+      Assert.AreEqual(4, L.TokenCount);
+      Assert.AreEqual(0, L.DiagnosticCount);
+      CheckToken(L, 0, tkNumber, 0, 1, '1');
+      CheckToken(L, 1, tkSymbol, 1, 1, '.');
+      CheckToken(L, 2, tkIdentifier, 2, Length(S) - 2, Copy(S, 3, MaxInt));
+      CheckCoverage(L);
+    finally L.Free; end;
+  end;
+end;
+
+procedure TLexerBasics.MultilineBoundaries;
+var Q, S: string; L: TDelphiLexResult;
+begin
+  Q := StringOfChar(#39, 3);
+  S := Q + #10 + '  text' + #13#10 + '  ' + Q;
+  L := TDelphiLexer.Tokenize(S + ';X');
+  try
+    Assert.AreEqual(4, L.TokenCount);
+    Assert.AreEqual(0, L.DiagnosticCount);
+    CheckToken(L, 0, tkStringLiteral, 0, Length(S), S);
+    CheckToken(L, 1, tkSymbol, Length(S), 1, ';');
+    CheckToken(L, 2, tkIdentifier, Length(S) + 1, 1, 'X');
+    CheckCoverage(L);
+  finally L.Free; end;
+  CheckSingle(Q + #10 + 'text' + #10 + StringOfChar(#39, 5),
+    tkStringLiteral, 'LEX003');
 end;
 
 initialization

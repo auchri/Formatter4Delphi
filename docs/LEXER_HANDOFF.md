@@ -1,4 +1,11 @@
-# Active milestone handoff: M1.0 + M1.1 (read this first)
+# Lexer handoff (read this first)
+
+M1.0, M1.1 and M1.2 are implemented. Read `M1_STATUS.md` for current syntax
+coverage, actual build/test evidence and remaining Delphi 12.3 validation.
+The baseline instructions below are historical; do not reimplement them or
+start M2 without a new task.
+
+## Historical M1.0 + M1.1 handoff
 
 Target is Delphi **12.3+**, pure RTL Delphi code. The long-term project is a native-`.config`-compatible Delphi formatter, built on a reusable lossless CST; optional AST/linter/LSP later. **For this task implement only the first lexer and DUnitX tests.** For fuller rationale/details see `ARCHITECTURE.md`, `LEXER_SPEC.md`, and `TEST_PLAN.md` on demand.
 

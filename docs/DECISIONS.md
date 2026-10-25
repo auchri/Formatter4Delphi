@@ -49,3 +49,30 @@ pair remains a single length-2 source span with an unsupported-category warning
 corrects the original per-code-unit fallback without extending Delphi identifier
 recognition or changing the public API. BMP non-identifier characters retain
 `LEX005` with a source-character message rather than an encoding-error message.
+
+## M1.2 compiler-checked refinements (2026-10-25)
+
+Public APIs remain unchanged. Documentation was checked against the official
+Athens language reference and the installed Delphi 12 Community Edition Update 1
+compiler (29.0.51961.7529), rather than assuming rules from other Pascal dialects.
+Exactly Delphi 12.3 remains a separate validation gate.
+
+- Block comments stop at their first own-style closer. Cross-style delimiters
+  are inert, so a delimiter stack would incorrectly absorb following code.
+  The compiled corpus includes both crossed-closing examples and ordinary
+  mixed-style comments; unit tests cover same-style early closure.
+- Compiler accepted 3/5/7-quote multiline literals, decimal/hex/binary digit
+  separators, separators in fraction/exponent components, trailing decimal
+  points and decimal char-code separators. The corpus is compiled into the
+  test executable as a continuing language-syntax check.
+- Compiler rejected binary char code `#%1010` with E2026. M1.2 diagnoses it
+  as LEX004 while preserving the complete malformed char-code spelling.
+- Compiler rejected `1.e2` with E2018: a dot before an identifier must stay
+  separate (also permits numeric type-helper/member access).
+- A supplementary U+10400 letter in an identifier produced E2038. Valid pairs
+  outside strings/comments now use LEX005, never an invalid-encoding error.
+  LEX007 checks all source code units, including within strings/comments.
+- LEX006 is retained as a historical code but no longer emitted. Ordinary
+  unterminated strings recover before the newline; multiline strings and block
+  comments/directives recover at EOF. Value-level multiline indentation and
+  numeric type/range semantics remain outside this lexer.
