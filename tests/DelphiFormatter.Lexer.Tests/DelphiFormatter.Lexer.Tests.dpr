@@ -25,7 +25,8 @@ begin
     Runner.FailsOnNoAsserts := True;
     Runner.AddLogger(TDUnitXConsoleLogger.Create(True));
     Results := Runner.Execute;
-    if not Results.AllPassed then
+    if (Results.TestCount = 0) or (Results.PassCount = 0) or
+      not Results.AllPassed then
       ExitCode := 1;
   except
     on E: Exception do

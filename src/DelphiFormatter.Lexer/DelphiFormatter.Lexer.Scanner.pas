@@ -23,12 +23,12 @@ uses
 
 function IsIdentifierStart(C: Char): Boolean;
 begin
-  Result := (C = '_') or TCharacter.IsLetter(C);
+  Result := (C = '_') or C.IsLetter;
 end;
 
 function IsIdentifierPart(C: Char): Boolean;
 begin
-  Result := IsIdentifierStart(C) or TCharacter.IsNumber(C);
+  Result := IsIdentifierStart(C) or C.IsNumber;
 end;
 
 function IsHorizontalBlank(C: Char): Boolean;
@@ -46,6 +46,7 @@ var
   Kind: TTokenKind;
   Span: TSourceSpan;
   Escaped, Deferred: Boolean;
+  UnknownCode, UnknownMessage: string;
 
   function Peek(Delta: Integer): Char;
   begin
@@ -70,6 +71,8 @@ begin
         Next := Peek(1);
         Kind := tkUnknown;
         Deferred := False;
+        UnknownCode := 'LEX005';
+        UnknownMessage := 'Unrecognized source character';
         if (C = #13) or (C = #10) then
         begin
           Kind := tkNewLine;
@@ -83,6 +86,24 @@ begin
           repeat
             Inc(Position);
           until (Position = SourceLength) or not IsHorizontalBlank(Peek(0));
+        end
+        else if (Ord(C) >= $D800) and (Ord(C) <= $DFFF) then
+        begin
+          Inc(Position);
+          if (Ord(C) <= $DBFF) and (Position < SourceLength) and
+            (Ord(Next) >= $DC00) and (Ord(Next) <= $DFFF) then
+          begin
+            // One valid scalar value, two UTF-16 code units. Identifier
+            // classification beyond the BMP remains outside M1.1.
+            Inc(Position);
+            Deferred := True;
+            UnknownMessage := 'Supplementary Unicode character is not supported in M1.1';
+          end
+          else
+          begin
+            UnknownCode := 'LEX007';
+            UnknownMessage := 'Invalid UTF-16: isolated surrogate code unit';
+          end;
         end
         else if IsIdentifierStart(C) or ((C = '&') and IsIdentifierStart(Next)) then
         begin
@@ -105,7 +126,9 @@ begin
             ((C >= '0') and (C <= '9')) or
             ((C = '/') and (Next = '/')) or
             ((C = '(') and (Next = '*'));
-          Inc(Position); // Every fallback consumes exactly one UTF-16 code unit.
+          Inc(Position); // Ordinary fallback consumes one UTF-16 code unit.
+          if Deferred then
+            UnknownMessage := 'Lexical category not implemented in M1.1';
           if not Deferred then
           begin
             case C of
@@ -139,10 +162,10 @@ begin
         if Kind = tkUnknown then
           if Deferred then
             Diagnostics.Add(TDiagnostic.Create('LEX006',
-              'Lexical category not implemented in M1.1', dsWarning, Span))
+              UnknownMessage, dsWarning, Span))
           else
-            Diagnostics.Add(TDiagnostic.Create('LEX005',
-              'Unrecognized UTF-16 code unit', dsError, Span));
+            Diagnostics.Add(TDiagnostic.Create(UnknownCode,
+              UnknownMessage, dsError, Span));
       end;
       Tokens.Add(TDelphiToken.Create(tkEOF, TSourceSpan.Create(SourceLength, 0)));
       Result := TDelphiLexResult.Create(Source, Tokens.ToArray, Diagnostics.ToArray);

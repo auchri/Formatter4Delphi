@@ -40,3 +40,12 @@ Document validated deviations in this file.
   scanner is claimed by M1.1. See `LEXER_SPEC.md` for exact fallback behavior.
 - No language-rule deviation has been established by compiler tests. The
   installed toolchain refuses command-line compilation; see `M1_STATUS.md`.
+
+## M1.1 review correction (2026-10-25)
+
+UTF-16 recovery distinguishes encoding from lexical support: a valid surrogate
+pair remains a single length-2 source span with an unsupported-category warning
+(`LEX006`); an isolated surrogate receives an encoding error (`LEX007`). This
+corrects the original per-code-unit fallback without extending Delphi identifier
+recognition or changing the public API. BMP non-identifier characters retain
+`LEX005` with a source-character message rather than an encoding-error message.

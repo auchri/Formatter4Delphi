@@ -1,30 +1,52 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>{676BCBD9-DCB6-4DD3-905B-AF92626C8622}</ProjectGuid>
-    <ProjectVersion>20.3</ProjectVersion>
+    <ProjectVersion>20.1</ProjectVersion>
     <MainSource>DelphiFormatter.Lexer.Tests.dpr</MainSource>
     <ProjectName>DelphiFormatter.Lexer.Tests</ProjectName>
     <AppType>Console</AppType>
     <FrameworkType>None</FrameworkType>
-    <Base>True</Base>
+    <Base>true</Base>
     <Config Condition="'$(Config)'==''">Debug</Config>
-    <Platform Condition="'$(Platform)'==''">Win64</Platform>
+    <Platform>Win64</Platform>
     <TargetedPlatforms>2</TargetedPlatforms>
-    <DUnitXSource Condition="'$(DUnitXSource)'==''">$(BDS)\source\DUnitX</DUnitXSource>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+    <Base>true</Base>
+  </PropertyGroup>
+  <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Base)'=='true') or '$(Base_Win64)'!=''">
+    <Base_Win64>true</Base_Win64>
+    <CfgParent>Base</CfgParent>
+    <Base>true</Base>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
+    <Cfg_1>true</Cfg_1>
+    <CfgParent>Base</CfgParent>
+    <Base>true</Base>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
+    <Cfg_2>true</Cfg_2>
+    <CfgParent>Base</CfgParent>
+    <Base>true</Base>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Base)'!=''">
+    <SanitizedProjectName>DelphiFormatter_Lexer_Tests</SanitizedProjectName>
     <DCC_Namespace>System;$(DCC_Namespace)</DCC_Namespace>
+    <DUnitXSource Condition="'$(DUnitXSource)'==''">$(BDS)\source\DUnitX</DUnitXSource>
     <DCC_UnitSearchPath>..\..\src\DelphiFormatter.Core;..\..\src\DelphiFormatter.Lexer;$(DUnitXSource);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     <DCC_IncludePath>$(DUnitXSource);$(DCC_IncludePath)</DCC_IncludePath>
     <DCC_DcuOutput>..\..\build\$(Platform)\$(Config)\Tests</DCC_DcuOutput>
     <DCC_ExeOutput>..\..\build\$(Platform)\$(Config)</DCC_ExeOutput>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Config)'=='Debug'">
-    <DCC_DebugInformation>true</DCC_DebugInformation>
+  <PropertyGroup Condition="'$(Cfg_1)'!=''">
+    <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+    <DCC_DebugInformation>1</DCC_DebugInformation>
     <DCC_Optimize>false</DCC_Optimize>
     <DCC_RangeChecking>true</DCC_RangeChecking>
     <DCC_OverflowChecking>true</DCC_OverflowChecking>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Config)'=='Release'">
-    <DCC_DebugInformation>false</DCC_DebugInformation>
+  <PropertyGroup Condition="'$(Cfg_2)'!=''">
+    <DCC_DebugInformation>0</DCC_DebugInformation>
     <DCC_Optimize>true</DCC_Optimize>
   </PropertyGroup>
   <ItemGroup>
@@ -35,6 +57,7 @@
     <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Tokens.pas" />
     <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Keywords.pas" />
     <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Scanner.pas" />
+    <BuildConfiguration Include="Base"><Key>Base</Key></BuildConfiguration>
     <BuildConfiguration Include="Debug"><Key>Cfg_1</Key><CfgParent>Base</CfgParent></BuildConfiguration>
     <BuildConfiguration Include="Release"><Key>Cfg_2</Key><CfgParent>Base</CfgParent></BuildConfiguration>
   </ItemGroup>
@@ -43,8 +66,9 @@
     <Borland.ProjectType>Console</Borland.ProjectType>
     <BorlandProject>
       <Delphi.Personality><Source><Source Name="MainSource">DelphiFormatter.Lexer.Tests.dpr</Source></Source></Delphi.Personality>
-      <Platforms><Platform value="Win64">True</Platform></Platforms>
+      <Platforms><Platform value="Win32">False</Platform><Platform value="Win64">True</Platform></Platforms>
     </BorlandProject>
+    <ProjectFileVersion>12</ProjectFileVersion>
   </ProjectExtensions>
-  <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" />
+  <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" />
 </Project>

@@ -27,6 +27,12 @@ type
     [Test] procedure SingleSymbolsAndLookaheadAtEOF;
     [Test] procedure BasicUnicodeIdentifiers;
     [Test] procedure InvalidUTF16;
+    [Test] procedure ValidUTF16Pairs;
+    [Test] procedure NonIdentifierBMP;
+    [Test] procedure FallbackAtEOF;
+    [Test] procedure DeterministicResults;
+    [Test] procedure ResultCopiesArrays;
+    [Test] procedure ResultRejectsInvalidSpans;
     [Test] procedure DeferredCategoriesRemainLossless;
     [Test] procedure RangeDotsBeforeNumberScanner;
     [Test] procedure SourceSnapshotAndValueAccess;
@@ -289,22 +295,216 @@ end;
 procedure TLexerBasics.InvalidUTF16;
 var L: TDelphiLexResult; Source: string; I: Integer; D: TDiagnostic;
 begin
-  Source := Char($D83D) + Char($DE00) + Char($D800) + Char($DC00) + Char($FFFF);
+  // No adjacent high/low pair: high + letter, low + high at EOF.
+  Source := Char($D800) + 'A' + Char($DC00) + Char($DBFF);
   L := TDelphiLexer.Tokenize(Source);
   try
-    Assert.AreEqual(6, L.TokenCount);
-    Assert.AreEqual(5, L.DiagnosticCount);
-    for I := 0 to 4 do
+    Assert.AreEqual(5, L.TokenCount);
+    Assert.AreEqual(3, L.DiagnosticCount);
+    CheckToken(L, 0, tkUnknown, 0, 1, Char($D800));
+    CheckToken(L, 1, tkIdentifier, 1, 1, 'A');
+    CheckToken(L, 2, tkUnknown, 2, 1, Char($DC00));
+    CheckToken(L, 3, tkUnknown, 3, 1, Char($DBFF));
+    for I := 0 to 2 do
     begin
-      CheckToken(L, I, tkUnknown, I, 1, Copy(Source, I + 1, 1));
       D := L.GetDiagnostic(I);
-      Assert.AreEqual('LEX005', D.Code);
+      Assert.AreEqual('LEX007', D.Code);
       Assert.AreEqual(Ord(dsError), Ord(D.Severity));
-      Assert.AreEqual(I, D.Span.StartOffset);
+      Assert.IsTrue(Pos('Invalid UTF-16', D.Message) > 0);
+      if I = 0 then
+        Assert.AreEqual(0, D.Span.StartOffset)
+      else
+        Assert.AreEqual(I + 1, D.Span.StartOffset);
       Assert.AreEqual(1, D.Span.Length);
     end;
     CheckCoverage(L);
   finally L.Free; end;
+end;
+
+procedure TLexerBasics.ValidUTF16Pairs;
+var Source, Pair: string; L: TDelphiLexResult; I: Integer; D: TDiagnostic;
+begin
+  // Emoji U+1F600, supplementary letter U+10400, scalar boundaries.
+  // None is claimed to be an implemented Delphi identifier in M1.1.
+  for Pair in TArray<string>.Create(Char($D83D) + Char($DE00),
+    Char($D801) + Char($DC00), Char($D800) + Char($DC00),
+    Char($DBFF) + Char($DFFF)) do
+    for Source in TArray<string>.Create(Pair, 'A' + Pair + 'B') do
+    begin
+      L := TDelphiLexer.Tokenize(Source);
+      try
+        I := 0;
+        if Length(Source) = 4 then
+        begin
+          Assert.AreEqual(4, L.TokenCount);
+          CheckToken(L, 0, tkIdentifier, 0, 1, 'A');
+          CheckToken(L, 2, tkIdentifier, 3, 1, 'B');
+          I := 1;
+        end
+        else
+          Assert.AreEqual(2, L.TokenCount);
+        CheckToken(L, I, tkUnknown, I, 2, Pair);
+        Assert.AreEqual(1, L.DiagnosticCount);
+        D := L.GetDiagnostic(0);
+        Assert.AreEqual('LEX006', D.Code);
+        Assert.AreEqual(Ord(dsWarning), Ord(D.Severity));
+        Assert.AreEqual(I, D.Span.StartOffset);
+        Assert.AreEqual(2, D.Span.Length);
+        Assert.IsTrue(Pos('Supplementary Unicode', D.Message) > 0);
+        Assert.AreEqual(0, Pos('Invalid UTF-16', D.Message));
+        CheckCoverage(L);
+      finally L.Free; end;
+    end;
+end;
+
+procedure TLexerBasics.NonIdentifierBMP;
+var C: Char; L: TDelphiLexResult; D: TDiagnostic;
+begin
+  // Snowman and noncharacter: correctly encoded BMP, not invalid UTF-16.
+  for C in TArray<Char>.Create(Char($2603), Char($FFFF)) do
+  begin
+    L := TDelphiLexer.Tokenize(C);
+    try
+      Assert.AreEqual(2, L.TokenCount);
+      CheckToken(L, 0, tkUnknown, 0, 1, C);
+      Assert.AreEqual(1, L.DiagnosticCount);
+      D := L.GetDiagnostic(0);
+      Assert.AreEqual('LEX005', D.Code);
+      Assert.AreEqual(Ord(dsError), Ord(D.Severity));
+      Assert.AreEqual(0, D.Span.StartOffset);
+      Assert.AreEqual(1, D.Span.Length);
+      Assert.AreEqual('Unrecognized source character', D.Message);
+      CheckCoverage(L);
+    finally L.Free; end;
+  end;
+end;
+
+procedure TLexerBasics.FallbackAtEOF;
+var Source: string; L: TDelphiLexResult; D: TDiagnostic;
+begin
+  for Source in TArray<string>.Create('''', '{', '}', '$', '%', '#', '0',
+    '//', '(*') do
+  begin
+    L := TDelphiLexer.Tokenize(Source);
+    try
+      CheckToken(L, 0, tkUnknown, 0, 1, Copy(Source, 1, 1));
+      Assert.AreEqual(1, L.DiagnosticCount);
+      D := L.GetDiagnostic(0);
+      Assert.AreEqual('LEX006', D.Code);
+      Assert.AreEqual(Ord(dsWarning), Ord(D.Severity));
+      Assert.AreEqual(0, D.Span.StartOffset);
+      Assert.AreEqual(1, D.Span.Length);
+      CheckCoverage(L);
+    finally L.Free; end;
+  end;
+  L := TDelphiLexer.Tokenize('&');
+  try
+    CheckToken(L, 0, tkUnknown, 0, 1, '&');
+    Assert.AreEqual(1, L.DiagnosticCount);
+    Assert.AreEqual('LEX005', L.GetDiagnostic(0).Code);
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.DeterministicResults;
+var Source: string; A, B: TDelphiLexResult; I: Integer; DA, DB: TDiagnostic;
+begin
+  Source := 'unit A;'#0#13#10'&Type:=1..10;{''' + Char($D83D) +
+    Char($DE00) + Char($D800) + 'Z';
+  A := TDelphiLexer.Tokenize(Source);
+  try
+    B := TDelphiLexer.Tokenize(Source);
+    try
+      Assert.AreEqual(A.TokenCount, B.TokenCount);
+      Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+      for I := 0 to A.TokenCount - 1 do
+        CheckToken(B, I, A.GetToken(I).Kind, A.GetToken(I).Span.StartOffset,
+          A.GetToken(I).Span.Length, A.TokenText(I));
+      for I := 0 to A.DiagnosticCount - 1 do
+      begin
+        DA := A.GetDiagnostic(I);
+        DB := B.GetDiagnostic(I);
+        Assert.AreEqual(DA.Code, DB.Code);
+        Assert.AreEqual(DA.Message, DB.Message);
+        Assert.AreEqual(Ord(DA.Severity), Ord(DB.Severity));
+        Assert.AreEqual(DA.Span.StartOffset, DB.Span.StartOffset);
+        Assert.AreEqual(DA.Span.Length, DB.Span.Length);
+      end;
+      CheckCoverage(A);
+      CheckCoverage(B);
+    finally B.Free; end;
+  finally A.Free; end;
+end;
+
+procedure TLexerBasics.ResultCopiesArrays;
+var
+  Tokens: TArray<TDelphiToken>;
+  Diagnostics: TArray<TDiagnostic>;
+  L: TDelphiLexResult;
+  D: TDiagnostic;
+begin
+  Tokens := TArray<TDelphiToken>.Create(
+    TDelphiToken.Create(tkUnknown, TSourceSpan.Create(0, 1)),
+    TDelphiToken.Create(tkEOF, TSourceSpan.Create(1, 0)));
+  Diagnostics := TArray<TDiagnostic>.Create(TDiagnostic.Create('LEX005',
+    'Unrecognized source character', dsError, TSourceSpan.Create(0, 1)));
+  L := TDelphiLexResult.Create('&', Tokens, Diagnostics);
+  try
+    Tokens[0].Kind := tkIdentifier;
+    Diagnostics[0].Code := 'changed';
+    D := L.GetDiagnostic(0);
+    D.Message := 'changed';
+    Tokens := nil;
+    Diagnostics := nil;
+    CheckToken(L, 0, tkUnknown, 0, 1, '&');
+    Assert.AreEqual('LEX005', L.GetDiagnostic(0).Code);
+    Assert.AreEqual('Unrecognized source character', L.GetDiagnostic(0).Message);
+    CheckCoverage(L);
+  finally L.Free; end;
+end;
+
+procedure TLexerBasics.ResultRejectsInvalidSpans;
+var
+  Tokens: TArray<TDelphiToken>;
+  Diagnostics: TArray<TDiagnostic>;
+  procedure Reject;
+  begin
+    Assert.WillRaise(
+      procedure
+      var L: TDelphiLexResult;
+      begin
+        L := TDelphiLexResult.Create('A', Tokens, Diagnostics);
+        L.Free;
+      end, EArgumentException);
+  end;
+begin
+  Tokens := nil;
+  Diagnostics := nil;
+  Reject;
+  Tokens := TArray<TDelphiToken>.Create(
+    TDelphiToken.Create(tkIdentifier, TSourceSpan.Create(0, 2)),
+    TDelphiToken.Create(tkEOF, TSourceSpan.Create(1, 0)));
+  Reject;
+  Tokens[0] := TDelphiToken.Create(tkIdentifier, TSourceSpan.Create(1, 1));
+  Reject;
+  Tokens[0] := TDelphiToken.Create(tkIdentifier, TSourceSpan.Create(0, 0));
+  Reject;
+  Tokens[0] := TDelphiToken.Create(tkEOF, TSourceSpan.Create(0, 0));
+  Reject;
+  Tokens[0] := TDelphiToken.Create(tkIdentifier, TSourceSpan.Create(0, 1));
+  Tokens[1] := TDelphiToken.Create(tkEOF, TSourceSpan.Create(0, 0));
+  Reject;
+  Tokens[1] := TDelphiToken.Create(tkEOF, TSourceSpan.Create(1, 1));
+  Reject;
+  Tokens := TArray<TDelphiToken>.Create(
+    TDelphiToken.Create(tkIdentifier, TSourceSpan.Create(0, 1)));
+  Reject;
+  Tokens := TArray<TDelphiToken>.Create(
+    TDelphiToken.Create(tkIdentifier, TSourceSpan.Create(0, 1)),
+    TDelphiToken.Create(tkEOF, TSourceSpan.Create(1, 0)));
+  Diagnostics := TArray<TDiagnostic>.Create(TDiagnostic.Create('LEX005',
+    'Bad span', dsError, TSourceSpan.Create(1, 1)));
+  Reject;
 end;
 
 procedure TLexerBasics.DeferredCategoriesRemainLossless;

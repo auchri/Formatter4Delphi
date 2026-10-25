@@ -34,6 +34,8 @@ Open `DelphiFormatter.groupproj` in Delphi 12.3 and select Win64 / Debug.
 The runtime package contains only RTL-based core/lexer units; the console
 test project compiles these same units directly and uses bundled DUnitX.
 No package installation into the IDE is needed.
+Use **Project > Build All Projects** (German IDE: **Projekt > Alle Projekte
+erzeugen**), then run `build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe`.
 
 From the RAD Studio command prompt (with `rsvars.bat` already loaded):
 
@@ -44,8 +46,12 @@ build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe
 
 `DUnitXSource` defaults to `$(BDS)\source\DUnitX` and can be overridden with
 `/p:DUnitXSource=C:\path\to\DUnitX\Source`. Build artifacts go under `build/`.
-The test runner returns 0 for success, 1 for failed tests, 2 for runner errors.
+The test runner returns 0 for success, 1 for failed/empty test runs, 2 for runner errors.
 Check that a fresh executable was produced before running tests: the installed
 compiler can report unsupported command-line compilation with exit code 0.
+
+The review correction was built through the installed Delphi 12 Community
+Edition Update 1 IDE on Win64/Debug: **24/24 DUnitX tests passed**. That is a real
+IDE build and execution; a build with exactly Delphi 12.3 is still unverified.
 
 Implemented scope, validation results and limitations: [M1 status](docs/M1_STATUS.md).

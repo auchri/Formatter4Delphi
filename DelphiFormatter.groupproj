@@ -1,14 +1,48 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <ProjectGuid>{CF47866F-BA26-4D13-9B28-FBE5DD71CC27}</ProjectGuid>
-  </PropertyGroup>
-  <ItemGroup>
-    <Projects Include="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj"><Dependencies /></Projects>
-    <Projects Include="tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dproj"><Dependencies /></Projects>
-  </ItemGroup>
-  <ProjectExtensions><Borland.Personality>Default.Personality.12</Borland.Personality><Borland.ProjectType /></ProjectExtensions>
-  <Target Name="Build"><MSBuild Projects="@(Projects)" Targets="Build" /></Target>
-  <Target Name="Clean"><MSBuild Projects="@(Projects)" Targets="Clean" /></Target>
-  <Target Name="Make"><MSBuild Projects="@(Projects)" Targets="Make" /></Target>
-  <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" />
+    <PropertyGroup>
+        <ProjectGuid>{CF47866F-BA26-4D13-9B28-FBE5DD71CC27}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DelphiFormatter_Lexer_Tests">
+        <MSBuild Projects="tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dproj"/>
+    </Target>
+    <Target Name="DelphiFormatter_Lexer_Tests:Clean">
+        <MSBuild Projects="tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiFormatter_Lexer_Tests:Make">
+        <MSBuild Projects="tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DelphiFormatter_Lexer">
+        <MSBuild Projects="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj"/>
+    </Target>
+    <Target Name="DelphiFormatter_Lexer:Clean">
+        <MSBuild Projects="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DelphiFormatter_Lexer:Make">
+        <MSBuild Projects="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DelphiFormatter_Lexer_Tests;DelphiFormatter_Lexer"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DelphiFormatter_Lexer_Tests:Clean;DelphiFormatter_Lexer:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DelphiFormatter_Lexer_Tests:Make;DelphiFormatter_Lexer:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

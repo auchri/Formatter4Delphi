@@ -115,7 +115,13 @@ Use a small stable code set, e.g.:
   the source is invalid Delphi). Numeric digits/prefixes, quote and comment
   openers are preserved as individual `tkUnknown` code units. Remaining text
   is scanned normally; M1.1 does not infer string/comment boundaries or issue
-  unterminated-construct diagnostics. Replace this fallback in M1.2.
+  unterminated-construct diagnostics. A valid supplementary Unicode scalar
+  is preserved as one `tkUnknown` span of length 2 with a specific unsupported
+  Unicode message. Its Delphi identifier validity is not decided in M1.1.
+  Replace these fallbacks in M1.2.
+- `LEX007`: invalid UTF-16 encoding (error); an isolated high or low surrogate,
+  preserved as one `tkUnknown` code unit. `LEX005` instead means an unrecognized
+  source character, not an encoding error.
 
 Each diagnostic includes code, severity, span, message; location conversion can be added via `TLineMap` when needed. Don't throw for lexical errors.
 
@@ -133,11 +139,14 @@ Each diagnostic includes code, severity, span, message; location conversion can 
   raise `EArgumentOutOfRangeException` for API misuse (not lexical errors).
   Construction copies input arrays so callers cannot mutate the snapshot
   through aliases. Source strings retain RTL copy-on-write semantics.
+  The public result constructor rejects noncontiguous/out-of-source token
+  spans, missing/duplicate/misplaced EOF and out-of-source diagnostic spans
+  with `EArgumentException`. Zero-width diagnostics at EOF are allowed.
 - Baseline blanks are U+0000 through U+0020 except CR/LF, which produce
   newline tokens. BMP letters/underscore start identifiers; RTL Unicode
-  letters/numbers/underscore continue them. Surrogate code units remain
-  individual `tkUnknown` tokens with `LEX005`; supplementary identifier
-  rules await M1.2 compiler validation.
+  letters/numbers/underscore continue them. Valid surrogate pairs form one
+  length-2 unknown token with `LEX006`; isolated surrogates use `LEX007`.
+  Supplementary identifier rules await M1.2 compiler validation.
 - Keyword matching folds ASCII keyword letters without locale dependence.
   The documented reserved-word table plus `at`/`on` is centralized; contextual
   visibility/declaration directives remain identifiers.
