@@ -1,0 +1,50 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{676BCBD9-DCB6-4DD3-905B-AF92626C8622}</ProjectGuid>
+    <ProjectVersion>20.3</ProjectVersion>
+    <MainSource>DelphiFormatter.Lexer.Tests.dpr</MainSource>
+    <ProjectName>DelphiFormatter.Lexer.Tests</ProjectName>
+    <AppType>Console</AppType>
+    <FrameworkType>None</FrameworkType>
+    <Base>True</Base>
+    <Config Condition="'$(Config)'==''">Debug</Config>
+    <Platform Condition="'$(Platform)'==''">Win64</Platform>
+    <TargetedPlatforms>2</TargetedPlatforms>
+    <DUnitXSource Condition="'$(DUnitXSource)'==''">$(BDS)\source\DUnitX</DUnitXSource>
+    <DCC_Namespace>System;$(DCC_Namespace)</DCC_Namespace>
+    <DCC_UnitSearchPath>..\..\src\DelphiFormatter.Core;..\..\src\DelphiFormatter.Lexer;$(DUnitXSource);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+    <DCC_IncludePath>$(DUnitXSource);$(DCC_IncludePath)</DCC_IncludePath>
+    <DCC_DcuOutput>..\..\build\$(Platform)\$(Config)\Tests</DCC_DcuOutput>
+    <DCC_ExeOutput>..\..\build\$(Platform)\$(Config)</DCC_ExeOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Debug'">
+    <DCC_DebugInformation>true</DCC_DebugInformation>
+    <DCC_Optimize>false</DCC_Optimize>
+    <DCC_RangeChecking>true</DCC_RangeChecking>
+    <DCC_OverflowChecking>true</DCC_OverflowChecking>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Release'">
+    <DCC_DebugInformation>false</DCC_DebugInformation>
+    <DCC_Optimize>true</DCC_Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <DelphiCompile Include="$(MainSource)"><MainSource>MainSource</MainSource></DelphiCompile>
+    <DCCReference Include="Tests.Lexer.Basics.pas" />
+    <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas" />
+    <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Diagnostics.pas" />
+    <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Tokens.pas" />
+    <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Keywords.pas" />
+    <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Scanner.pas" />
+    <BuildConfiguration Include="Debug"><Key>Cfg_1</Key><CfgParent>Base</CfgParent></BuildConfiguration>
+    <BuildConfiguration Include="Release"><Key>Cfg_2</Key><CfgParent>Base</CfgParent></BuildConfiguration>
+  </ItemGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+    <Borland.ProjectType>Console</Borland.ProjectType>
+    <BorlandProject>
+      <Delphi.Personality><Source><Source Name="MainSource">DelphiFormatter.Lexer.Tests.dpr</Source></Source></Delphi.Personality>
+      <Platforms><Platform value="Win64">True</Platform></Platforms>
+    </BorlandProject>
+  </ProjectExtensions>
+  <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" />
+</Project>

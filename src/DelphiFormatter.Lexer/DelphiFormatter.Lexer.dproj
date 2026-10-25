@@ -1,0 +1,50 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{98451E8D-41A0-41EC-B4E8-1E14ADAD404A}</ProjectGuid>
+    <ProjectVersion>20.3</ProjectVersion>
+    <MainSource>DelphiFormatter.Lexer.dpk</MainSource>
+    <ProjectName>DelphiFormatter.Lexer</ProjectName>
+    <AppType>Package</AppType>
+    <FrameworkType>None</FrameworkType>
+    <GenPackage>true</GenPackage>
+    <GenDll>true</GenDll>
+    <Base>True</Base>
+    <Config Condition="'$(Config)'==''">Debug</Config>
+    <Platform Condition="'$(Platform)'==''">Win64</Platform>
+    <TargetedPlatforms>2</TargetedPlatforms>
+    <DCC_Namespace>System;$(DCC_Namespace)</DCC_Namespace>
+    <DCC_UnitSearchPath>..\DelphiFormatter.Core;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+    <DCC_DcuOutput>..\..\build\$(Platform)\$(Config)\Lexer</DCC_DcuOutput>
+    <DCC_BplOutput>..\..\build\$(Platform)\$(Config)</DCC_BplOutput>
+    <DCC_DcpOutput>..\..\build\$(Platform)\$(Config)</DCC_DcpOutput>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Debug'">
+    <DCC_DebugInformation>true</DCC_DebugInformation>
+    <DCC_Optimize>false</DCC_Optimize>
+    <DCC_RangeChecking>true</DCC_RangeChecking>
+    <DCC_OverflowChecking>true</DCC_OverflowChecking>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Config)'=='Release'">
+    <DCC_DebugInformation>false</DCC_DebugInformation>
+    <DCC_Optimize>true</DCC_Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <DelphiCompile Include="$(MainSource)"><MainSource>MainSource</MainSource></DelphiCompile>
+    <DCCReference Include="..\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas" />
+    <DCCReference Include="..\DelphiFormatter.Core\DelphiFormatter.Core.Diagnostics.pas" />
+    <DCCReference Include="DelphiFormatter.Lexer.Tokens.pas" />
+    <DCCReference Include="DelphiFormatter.Lexer.Keywords.pas" />
+    <DCCReference Include="DelphiFormatter.Lexer.Scanner.pas" />
+    <BuildConfiguration Include="Debug"><Key>Cfg_1</Key><CfgParent>Base</CfgParent></BuildConfiguration>
+    <BuildConfiguration Include="Release"><Key>Cfg_2</Key><CfgParent>Base</CfgParent></BuildConfiguration>
+  </ItemGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+    <Borland.ProjectType>Package</Borland.ProjectType>
+    <BorlandProject>
+      <Delphi.Personality><Source><Source Name="MainSource">DelphiFormatter.Lexer.dpk</Source></Source></Delphi.Personality>
+      <Platforms><Platform value="Win64">True</Platform></Platforms>
+    </BorlandProject>
+  </ProjectExtensions>
+  <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" />
+</Project>

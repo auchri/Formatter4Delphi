@@ -1,0 +1,14 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{CF47866F-BA26-4D13-9B28-FBE5DD71CC27}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <Projects Include="src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.dproj"><Dependencies /></Projects>
+    <Projects Include="tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dproj"><Dependencies /></Projects>
+  </ItemGroup>
+  <ProjectExtensions><Borland.Personality>Default.Personality.12</Borland.Personality><Borland.ProjectType /></ProjectExtensions>
+  <Target Name="Build"><MSBuild Projects="@(Projects)" Targets="Build" /></Target>
+  <Target Name="Clean"><MSBuild Projects="@(Projects)" Targets="Clean" /></Target>
+  <Target Name="Make"><MSBuild Projects="@(Projects)" Targets="Make" /></Target>
+  <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" />
+</Project>

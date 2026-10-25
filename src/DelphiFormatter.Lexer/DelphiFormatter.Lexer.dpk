@@ -1,0 +1,16 @@
+package DelphiFormatter.Lexer;
+
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl;
+
+contains
+  DelphiFormatter.Core.Spans in '..\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas',
+  DelphiFormatter.Core.Diagnostics in '..\DelphiFormatter.Core\DelphiFormatter.Core.Diagnostics.pas',
+  DelphiFormatter.Lexer.Tokens in 'DelphiFormatter.Lexer.Tokens.pas',
+  DelphiFormatter.Lexer.Keywords in 'DelphiFormatter.Lexer.Keywords.pas',
+  DelphiFormatter.Lexer.Scanner in 'DelphiFormatter.Lexer.Scanner.pas';
+
+end.
