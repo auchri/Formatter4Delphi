@@ -1,0 +1,51 @@
+# Architecture decision record (initial)
+
+| ID | Decision | Reason |
+| --- | --- | --- |
+| D-01 | Target Delphi **12.3 minimum**; allow later language versions through tested extensions. | One testable baseline. |
+| D-02 | Implement in **Delphi**, pure RTL core, no VCL/FMX dependency. | Reusable code across CLI/IDE/tools. |
+| D-03 | Implement a **lossless CST** first; derive optional AST in a later independent layer. | Formatting needs trivia; semantic tools need abstraction. |
+| D-04 | Handwritten deterministic scanner with lookahead, not regex-driven. | Precise Delphi lexical rules, malformed-code resilience. |
+| D-05 | Lexer's public stream includes comments, directives, horizontal whitespace, and line breaks. | No loss and straightforward first-stage verification. |
+| D-06 | Tokens are small value records with spans into the retained original `string` source. | Avoid per-token string allocation. |
+| D-07 | Half-open zero-based UTF-16 spans. | Clean offsets, useful for editor APIs. |
+| D-08 | Lexer EOF has `(Length(Source), 0)` and is not reconstructed. | Explicit end sentinel. |
+| D-09 | Keep lexical compiler directives as first-class tokens, NOT normal comments or processed macros. | Preprocessing postponed without discarding information. |
+| D-10 | Treat context-sensitive declaration directives (e.g. `virtual`, `override`) as identifiers at lex time. | Proper context belongs to parser. |
+| D-11 | Preserve malformed input; produce error diagnostics, never throw for ordinary source syntax. | Works with in-progress editor text. |
+| D-12 | CST nodes become immutable **after construction**; own/refer to a source snapshot. Do not introduce green/red trees yet. | No needless initial complexity. |
+| D-13 | CST exact reconstruction traverses token leaves, not a source-copy shortcut. | Strong correctness invariant. |
+| D-14 | Formatter later builds a layout plan and guarded edits, not arbitrary CST/token mutation. | Original syntax protection. |
+| D-15 | AST + semantic resolution are optional, separate from formatting. | Avoid burdening basic formatting. |
+| D-16 | Config precedence and native formatter equivalence will be specified/tested in formatter phase, not the lexer. | Preserve milestone focus. |
+| D-17 | The original encoding/BOM and byte-preserving writes are a separate Source I/O layer; lexer gets decoded UTF-16 `string`. | No accidental byte/character confusion. |
+| D-18 | Use DUnitX with tests for token kinds and full coverage in addition to roundtrips. | Lossless does not imply lexical correctness. |
+
+## Open questions (do not block lexer)
+
+- Exact `.config` schema across Delphi 12.3 and subsequent releases, precedence against editor overrides, and behavior of conflicting options.
+- Precise Unicode identifier edge cases with supplementary code points: assert against Delphi compiler behavior where uncertain; preserve source even when classifying uncertain input as unknown.
+- Parser handling of conditional compilation through incompatible grammar fragments: plan opaque protected regions first, configuration-aware CST second.
+- Preferred serialization format for additional settings (tentative `delphifmt.toml`), and `.editorconfig` precedence.
+- How exact cross-version output compatibility is defined when Embarcadero changes formatter behavior.
+
+Document validated deviations in this file.
+
+## M1.0/M1.1 implementation refinements (2026-10-25)
+
+- Span members use read-only properties with constructor range validation;
+  this preserves the conceptual API while preventing invalid mutable spans.
+- `LEX006` is a warning for intentionally deferred M1.2 categories, distinct
+  from `LEX005` errors for unrecognized code units. No string/comment/number
+  scanner is claimed by M1.1. See `LEXER_SPEC.md` for exact fallback behavior.
+- No language-rule deviation has been established by compiler tests. The
+  installed toolchain refuses command-line compilation; see `M1_STATUS.md`.
+
+## M1.1 review correction (2026-10-25)
+
+UTF-16 recovery distinguishes encoding from lexical support: a valid surrogate
+pair remains a single length-2 source span with an unsupported-category warning
+(`LEX006`); an isolated surrogate receives an encoding error (`LEX007`). This
+corrects the original per-code-unit fallback without extending Delphi identifier
+recognition or changing the public API. BMP non-identifier characters retain
+`LEX005` with a source-character message rather than an encoding-error message.

@@ -1,0 +1,25 @@
+unit LexerSample;
+
+interface
+
+{$IFDEF DEBUG}
+/// <summary>Example source that the lexer must preserve</summary>
+{$ENDIF}
+
+implementation
+
+function Add(const A, B: Integer): Integer;
+begin
+  Result := A + B;
+end;
+
+const
+  MessageText = 'It''s Delphi';
+  BinaryMask = %1010_0101;
+  NumberRangeEnd = 10;
+  Sql = '''
+    SELECT *
+    FROM Example
+    ''';
+
+end.

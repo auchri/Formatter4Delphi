@@ -85,3 +85,4 @@ __pycache__/
 tools/oracle/bin/
 tools/oracle/obj/
 build/
+TestInsightSettings.ini
