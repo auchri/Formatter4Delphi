@@ -94,3 +94,25 @@ Exactly Delphi 12.3 remains a separate validation gate.
   https://docwiki.embarcadero.com/RADStudio/Athens/en/Expressions_(Delphi)
 - No language-rule deviation was established by this task. Validation used the
   installed 12 CE Update 1 toolchain; exact 12.3 remains open (`M2_STATUS.md`).
+
+## M2.1 PR #3 review corrections (2026-10-25)
+
+- `True` and `False` remain `skIdentifierExpression`, including mixed case.
+  Delphi defines them as predefined constants, not reserved words; resolving
+  their declarations/values belongs to later semantic analysis. The parser
+  therefore follows the lexer identifier classification and removes unreachable
+  Boolean conditions from the literal branch. `nil` remains a reserved literal.
+  References: https://docwiki.embarcadero.com/RADStudio/Athens/en/Simple_Types_(Delphi)
+  and https://docwiki.embarcadero.com/RADStudio/Athens/en/Fundamental_Syntactic_Elements_(Delphi).
+- Generic ambiguity lookahead uses a lazily built per-parser Boolean index of
+  angle openers whose matching closer is followed by a significant `(`.
+  A stack indexes the immutable raw token stream once; only ordinary trivia is
+  skipped. Existing `;`, `(`, `then` and `end` barriers are unchanged. Each token
+  is visited at most twice and each opener is pushed/removed once. Subsequent
+  candidates use the index, so long comparison chains do not repeatedly scan
+  overlapping suffixes. Cost is O(tokens + source text) time and O(tokens)
+  temporary/parser-local memory, with no public API or Reader state change.
+  This is delimiter lookahead only, not an implementation of generic grammar.
+- The complete-body opaque fallback for any compiler directive is unchanged.
+  Resource, include and conditional directives are tested in every entry mode;
+  differentiated directive handling remains a later parser milestone.

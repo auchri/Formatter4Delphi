@@ -46,7 +46,7 @@ This is NOT Delphi 12.3. Exact Delphi 12.3+ validation remains outstanding.
 The installed CE compiler restricts command-line compilation, so builds used
 the actual IDE's **Build All Projects / Alle erzeugen** action with Win64/Debug.
 
-Final build timestamp recorded before invocation: **2026-10-25 18:50:20 UTC**.
+Final build timestamp recorded before invocation: **2026-10-25 19:09:55 UTC**.
 All three projects built successfully in 2.4 seconds, with no warnings or hints.
 New artifact timestamps and SHA-256 values are recorded below. Every artifact
 is newer than that timestamp; the parser EXE is also newer than all parser,
@@ -59,7 +59,7 @@ Executed after the final full build:
 & ./build/Win64/Debug/DelphiFormatter.Lexer.Tests.exe
 ```
 
-- Parser: **28 found, 28 passed**, 0 ignored/failed/errored/leaked; exit code 0.
+- Parser: **32 found, 32 passed**, 0 ignored/failed/errored/leaked; exit code 0.
 - Lexer: **40 found, 40 passed**, 0 ignored/failed/errored/leaked; exit code 0.
 - Both test Debug configurations enable range/overflow checks. The parser runner
   also enables RTL shutdown leak reporting; no leak dialog was observed.
@@ -75,6 +75,31 @@ Executed after the final full build:
   directive/include fallback and ambiguous generic calls inside arguments.
 - Project XML/reference checks and git whitespace checks complete the static
   verification. Local test logs are under ignored `build/Win64/Debug/M2.*.log`.
+
+## PR #3 review corrections
+
+- Replaced repeated significant-token suffix scans with one lazily built raw
+  token index. Matching angle pairs are computed with a stack, ordinary trivia
+  remains ignored only for lookahead, and the original barriers are preserved.
+  Construction is O(tokens + source text), with O(tokens) parser-local storage.
+  Successive comparison operands reuse the index. No reader state, tokens,
+  lexer behavior or public API changed; no generic grammar was introduced.
+- `True` / `False` deliberately remain identifier expressions in every casing;
+  unreachable literal-branch checks were removed. The syntax/semantic boundary
+  and Delphi predefined-constant rationale are recorded in `DECISIONS.md`.
+- Four additional regression tests exercise a 1,025-opener nested generic
+  candidate with substantial trivia, both incomplete at EOF and completed with
+  a call; 768 comparisons plus a missing final operand; eight Boolean spellings
+  and operator hierarchy; and resource/include/conditional directives in all
+  three entry modes (including malformed UTF-16). Long candidate parses also
+  compare deterministic trees. The common coverage helper checks every token,
+  ordered spans and leaf serialization after disposing of the lexer result.
+- Complete-document directive fallback is unchanged and documented. All prior
+  error/missing/opaque, determinism, ownership and lifetime tests still pass.
+- Review-fix logs are `build/Win64/Debug/M2.Review.Parser.Tests.log` and
+  `build/Win64/Debug/M2.Review.Lexer.Tests.log` (ignored build outputs).
+- Merge assessment: the identified review issues are addressed; local
+  Win64/Debug validation passes. Exact Delphi 12.3 validation remains open.
 
 ## Known limitations
 
@@ -104,11 +129,11 @@ No M2.2 implementation was started in this task.
 
 | Artifact | Bytes | Last write UTC |
 | --- | ---: | --- |
-| DelphiFormatter.Parser.Tests.exe | 4436480 | 2026-10-25 18:50:30.7550699 |
-| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-25 18:50:29.4450632 |
-| DelphiFormatter.Lexer.bpl | 98816 | 2026-10-25 18:50:29.7235214 |
-| DelphiFormatter.Lexer.dcp | 150746 | 2026-10-25 18:50:29.7245522 |
+| DelphiFormatter.Parser.Tests.exe | 4466176 | 2026-10-25 19:10:12.3279175 |
+| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-25 19:10:11.0074705 |
+| DelphiFormatter.Lexer.bpl | 98816 | 2026-10-25 19:10:11.2840853 |
+| DelphiFormatter.Lexer.dcp | 150746 | 2026-10-25 19:10:11.2845975 |
 
-DelphiFormatter.Parser.Tests.exe SHA-256: `4611088074F2286113ECFD0BC2C1223A8E2AC1595BC562A0CED40B40FC77B4D5`
+DelphiFormatter.Parser.Tests.exe SHA-256: `EFB177028480E8E9AD1C58C7E04919C2DEAB70AFBA6CA4FC5EA05166FBA4DE59`
 
-DelphiFormatter.Lexer.Tests.exe SHA-256: `20FECD4304FB4D9FB6BF45307BB5EC0F9F2C7D872EEF8A78827B4FC4BBDDAF19`
+DelphiFormatter.Lexer.Tests.exe SHA-256: `6280E1D3333404D0074A504F80A0CD0E6BA2C1A3ABF5B5C124377DF790AA51AA`

@@ -96,7 +96,7 @@ independently reconstruct every token slice. See `M1_STATUS.md` for actual runs.
 - If no Delphi compiler available, do code review/static sanity checks and report tests as **not run**, not passing.
 - Never weaken a failing test just to make a build green; add a documented language-rule decision when behavior is disputed.
 
-## Implemented parser suite (28 tests)
+## Implemented parser suite (32 tests)
 
 `tests/DelphiFormatter.Parser.Tests/` is an independent DUnitX console project
 in `DelphiFormatter.groupproj`, using the same core/lexer units plus the five
@@ -129,3 +129,9 @@ Use the IDE Build All Projects with Win64/Debug, then execute both generated
 EXEs in `build/Win64/Debug`. Verify timestamps before trusting results.
 `M2_STATUS.md` records the actual compiler version, counts and fresh artifacts;
 Delphi 12 Update 1 success is not an exact Delphi 12.3 validation claim.
+
+PR #3 review regressions add long nested/unclosed angle lists, long comparison
+chains with substantial trivia and a missing final operand, Boolean identifier
+classification/casing within operator trees, and resource/include/conditional
+directives in all entry modes. Long-input tests assert coverage and structure;
+complexity follows the single-pass index rather than a flaky wall-time limit.

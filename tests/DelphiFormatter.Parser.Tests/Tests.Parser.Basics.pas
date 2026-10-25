@@ -44,6 +44,10 @@ type
     [Test] procedure ArbitraryUTF16;
     [Test] procedure IndependentTrees;
     [Test] procedure UnsupportedExpressions;
+    [Test] procedure LongGenericLookahead;
+    [Test] procedure LongComparisonLookahead;
+    [Test] procedure BooleanIdentifiers;
+    [Test] procedure DirectiveEntryModes;
   end;
 
 implementation
@@ -599,6 +603,110 @@ begin
       Assert.AreEqual(0, Count(T.Root, skBinaryExpression));
     finally T.Free; end;
   end;
+end;
+
+procedure TParserTests.LongGenericLookahead;
+var Builder: TStringBuilder; S: string; I: Integer; T, Again: TSyntaxTree;
+begin
+  Builder := TStringBuilder.Create;
+  try
+    Builder.Append('F<');
+    for I := 1 to 1024 do Builder.Append(' {gap} '#13#10' G<');
+    Builder.Append('T');
+    S := Builder.ToString; // many unclosed angles at EOF
+    T := Parse(S, 1);
+    try
+      Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(1025, Count(T.Root, skBinaryExpression));
+      Assert.AreEqual(0, T.DiagnosticCount); // also a syntactic comparison chain
+    finally T.Free; end;
+    for I := 1 to 1025 do Builder.Append('> {after} '#9);
+    Builder.Append('(A)');
+    S := Builder.ToString;
+    T := Parse(S, 1);
+    try
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(0, Count(T.Root, skBinaryExpression));
+      Assert.AreEqual(1, T.DiagnosticCount);
+      Again := Parse(S, 1);
+      try Assert.AreEqual(Shape(T.Root), Shape(Again.Root));
+      finally Again.Free; end;
+    finally T.Free; end;
+  finally Builder.Free; end;
+end;
+
+procedure TParserTests.LongComparisonLookahead;
+var Builder: TStringBuilder; I: Integer; T: TSyntaxTree;
+begin
+  Builder := TStringBuilder.Create;
+  try
+    Builder.Append('A');
+    for I := 1 to 768 do
+      Builder.Append(' {one} '#13#10' (*two*) '#9'< {three} B');
+    T := Parse(Builder.ToString, 1);
+    try
+      Assert.AreEqual(768, Count(T.Root, skBinaryExpression));
+      Assert.AreEqual(769, Count(T.Root, skIdentifierExpression));
+      Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+    Builder.Append(' < {missing operand} ');
+    T := Parse(Builder.ToString, 1);
+    try
+      Assert.AreEqual(769, Count(T.Root, skBinaryExpression));
+      Assert.AreEqual(1, Count(T.Root, skMissingToken));
+      Assert.AreEqual(1, T.DiagnosticCount);
+      Assert.AreEqual('PAR001', T.GetDiagnostic(0).Code);
+    finally T.Free; end;
+  finally Builder.Free; end;
+end;
+
+procedure TParserTests.BooleanIdentifiers;
+const Names: array[0..7] of string = ('True', 'False', 'true', 'false',
+  'TRUE', 'FALSE', 'tRuE', 'fAlSe');
+var Name: string; T: TSyntaxTree; N: TSyntaxNode;
+begin
+  for Name in Names do
+  begin
+    T := Parse(Name, 1);
+    try
+      N := Child(T.Root, 0);
+      Assert.AreEqual(Integer(skIdentifierExpression), Integer(N.Kind));
+      Assert.AreEqual(Integer(tkIdentifier),
+        Integer(TSyntaxToken(N.GetChild(0)).OriginalToken.Kind));
+      Assert.AreEqual(0, Count(T.Root, skLiteralExpression));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  end;
+  T := Parse('not tRuE or FaLsE and True', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skBinaryExpression), Integer(N.Kind));
+    Assert.AreEqual(Integer(skUnaryExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(Integer(skBinaryExpression), Integer(Child(N, 1).Kind));
+    Assert.AreEqual(3, Count(T.Root, skIdentifierExpression));
+    Assert.AreEqual(0, Count(T.Root, skLiteralExpression));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DirectiveEntryModes;
+const Sources: array[0..2] of string = (' {$R *.res} '#13#10'A + True',
+  '{$IFDEF X}begin F;{$ELSE}False + {$ENDIF}',
+  '(*$I file.inc*) '#9 + Char($D800));
+var S: string; Mode: Integer; T: TSyntaxTree;
+begin
+  for S in Sources do
+    for Mode := 0 to 2 do
+    begin
+      T := Parse(S, Mode);
+      try
+        Assert.AreEqual(Integer(skOpaqueRegion), Integer(Child(T.Root, 0).Kind));
+        Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+        Assert.AreEqual(0, Count(T.Root, skBinaryExpression));
+        Assert.AreEqual(0, Count(T.Root, skMissingToken));
+      finally T.Free; end;
+    end;
 end;
 
 initialization

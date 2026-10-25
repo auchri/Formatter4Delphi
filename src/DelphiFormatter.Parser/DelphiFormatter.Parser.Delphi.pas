@@ -16,6 +16,7 @@ type
     FArena: TObjectList<TSyntaxElement>;
     FDiagnostics: TList<TDiagnostic>;
     FDepth: Integer;
+    FGenericCallOpeners: TArray<Boolean>;
     function Node(Kind: TSyntaxKind; Children: TList<TSyntaxElement>): TSyntaxNode;
     procedure Take(Children: TList<TSyntaxElement>);
     procedure Report(const Code, Message: string);
@@ -25,6 +26,7 @@ type
     function Boundary: Boolean;
     function Precedence: Integer;
     function AmbiguousGenericCall: Boolean;
+    procedure IndexGenericCallOpeners;
     function Expression(MinPrecedence: Integer = 1): TSyntaxNode;
     function Primary: TSyntaxNode;
     function Statement: TSyntaxNode;
@@ -46,7 +48,7 @@ type
 implementation
 
 uses
-  DelphiFormatter.Core.Spans;
+  System.SysUtils, DelphiFormatter.Core.Spans;
 
 constructor TDelphiParser.Create(ALex: TDelphiLexResult);
 var
@@ -176,27 +178,57 @@ begin
   end;
 end;
 
-function TDelphiParser.AmbiguousGenericCall: Boolean;
+procedure TDelphiParser.IndexGenericCallOpeners;
 var
-  I, Angles: Integer;
+  I, Next, Opener: Integer;
+  Openers: TList<Integer>;
+  Token: TDelphiToken;
+  Text: string;
+begin
+  // Build once for the immutable stream. Each raw token is visited once;
+  // trivia immediately after a closer is visited at most once more. Each
+  // opener is pushed and removed once. This also avoids rescanning suffixes
+  // for successive identifiers in a long A < B < C ... comparison chain.
+  SetLength(FGenericCallOpeners, FLex.TokenCount);
+  Openers := TList<Integer>.Create;
+  try
+    for I := 0 to FLex.TokenCount - 1 do
+    begin
+      Token := FLex.GetToken(I);
+      if not (Token.Kind in [tkIdentifier, tkReservedWord, tkSymbol]) then
+        Continue;
+      Text := FLex.TokenText(I);
+      // Same barriers as the original conservative lookahead, not a generic
+      // grammar. Unclosed openers at a barrier or EOF remain false.
+      if (Text = ';') or (Text = '(') or SameText(Text, 'then') or
+        SameText(Text, 'end') then
+        Openers.Clear
+      else if Text = '<' then
+        Openers.Add(I)
+      else if (Text = '>') and (Openers.Count > 0) then
+      begin
+        Opener := Openers.Last;
+        Openers.Delete(Openers.Count - 1);
+        Next := I + 1;
+        while (Next < FLex.TokenCount - 1) and
+          TTokenReader.IsTrivia(FLex.GetToken(Next).Kind) do Inc(Next);
+        FGenericCallOpeners[Opener] :=
+          (FLex.GetToken(Next).Kind = tkSymbol) and
+          (FLex.TokenText(Next) = '(');
+      end;
+    end;
+  finally
+    Openers.Free;
+  end;
+end;
+
+function TDelphiParser.AmbiguousGenericCall: Boolean;
 begin
   Result := False;
   if (FReader.PeekSignificant.Kind <> tkIdentifier) or
     not FReader.Matches('<', 1) then Exit;
-  I := 1;
-  Angles := 0;
-  while FReader.PeekSignificant(I).Kind <> tkEOF do
-  begin
-    if FReader.Matches(';', I) or FReader.Matches('(', I) or
-      FReader.Matches('then', I) or FReader.Matches('end', I) then Exit;
-    if FReader.Matches('<', I) then Inc(Angles)
-    else if FReader.Matches('>', I) then
-    begin
-      Dec(Angles);
-      if Angles = 0 then Exit(FReader.Matches('(', I + 1));
-    end;
-    Inc(I); // bounded by the remaining original stream, ending at EOF
-  end;
+  if Length(FGenericCallOpeners) = 0 then IndexGenericCallOpeners;
+  Result := FGenericCallOpeners[FReader.SignificantIndex(1)];
 end;
 
 function TDelphiParser.Primary: TSyntaxNode;
@@ -234,7 +266,7 @@ begin
       Take(Children);
     end
     else if (FReader.PeekSignificant.Kind in [tkNumber, tkStringLiteral, tkCharCode]) or
-      FReader.Matches('nil') or FReader.Matches('true') or FReader.Matches('false') then
+      FReader.Matches('nil') then
     begin
       Kind := skLiteralExpression;
       if FReader.PeekSignificant.Kind in [tkStringLiteral, tkCharCode] then

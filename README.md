@@ -59,5 +59,5 @@ Implemented scope, validation results and limitations: [M1 status](docs/M1_STATU
 
 
 
-M2.1 adds **28/28 passing parser tests** on the same Win64/Debug toolchain.
+M2.1 adds **32/32 passing parser tests** on the same Win64/Debug toolchain.
 See [M2 status](docs/M2_STATUS.md) for CST coverage, limits and fresh artifacts.

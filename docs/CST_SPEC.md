@@ -58,7 +58,7 @@ Repeated consumption after EOF is a no-op. Lookahead never consumes tokens.
 ## Supported grammar
 
 - Identifiers, numbers, strings and character codes; adjacent string/char-code
-  components form one literal node. `nil` and Boolean constants are accepted.
+  components form one literal node. `nil` is a literal; `True` and `False` remain identifier expressions, independent of case. Resolving predefined constants belongs to semantic analysis.
 - Parentheses, prefix `+`, `-`, `not`, `@`, nested/simple calls with comma-separated
   arguments, including zero arguments. No member/index/dereference/set syntax.
 - Binary precedence climbing, equal precedence left-associative:
@@ -104,6 +104,13 @@ PAR004 and preserves the remaining fragment via opaque recovery. Binary chains,
 serialization and destruction do not require recursion proportional to chain
 length. All continuing loops consume original tokens (operators, separators,
 opaque/recovery tokens), or explicitly break/return on unchanged input.
+
+Generic ambiguity detection lazily indexes angle pairs in a single raw-token
+pass, skipping ordinary trivia and respecting the same barriers. Candidate
+queries reuse this parser-local index, including on long comparison chains.
+No reader position or original token is changed. The index requires O(tokens)
+memory and O(tokens + source text) construction time; no generics grammar is
+implemented. See the review decision in `DECISIONS.md`.
 
 ## Acceptance and next scope
 
