@@ -52,6 +52,7 @@
   <ItemGroup>
     <DelphiCompile Include="$(MainSource)"><MainSource>MainSource</MainSource></DelphiCompile>
     <DCCReference Include="Tests.Lexer.Basics.pas" />
+    <DCCReference Include="..\Fixtures\LexicalCorpus.pas" />
     <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas" />
     <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Diagnostics.pas" />
     <DCCReference Include="..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Tokens.pas" />

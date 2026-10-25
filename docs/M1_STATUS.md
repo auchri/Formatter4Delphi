@@ -1,121 +1,79 @@
-# M1.0 / M1.1 status — 2026-10-25
+# M1.2 status — 2026-10-25
 
-Implementation stops at M1.1. The review corrections were compiled through the
-installed RAD Studio IDE and all **24/24 DUnitX tests passed** on Win64/Debug.
-The installed version is Delphi 12 Community Edition Update 1, not Delphi 12.3;
-validation with exactly the requested 12.3 toolchain remains outstanding.
+M1.2 implements the regular lexer categories without changing the public API.
+No CST, AST, formatter, config reader or CLI was added.
 
-## Files
+## Changed files
 
-- `DelphiFormatter.groupproj`: runtime package and Win64 DUnitX project.
-- `src/DelphiFormatter.Core/DelphiFormatter.Core.Spans.pas`: validated UTF-16 spans.
-- `src/DelphiFormatter.Core/DelphiFormatter.Core.Diagnostics.pas`: diagnostic values.
-- `src/DelphiFormatter.Lexer/DelphiFormatter.Lexer.Tokens.pas`: token kinds, spans,
-  retained source snapshot and read-only accessors.
-- `src/DelphiFormatter.Lexer/DelphiFormatter.Lexer.Keywords.pas`: reserved words.
-- `src/DelphiFormatter.Lexer/DelphiFormatter.Lexer.Scanner.pas`: baseline lexer.
-- `src/DelphiFormatter.Lexer/DelphiFormatter.Lexer.dpk` / `.dproj`: RTL runtime package.
-- `tests/DelphiFormatter.Lexer.Tests/DelphiFormatter.Lexer.Tests.dpr` / `.dproj`:
-  console runner, Win64 Debug/Release and configurable DUnitX source path.
-- `tests/DelphiFormatter.Lexer.Tests/Tests.Lexer.Basics.pas`: 24 test methods
-  (18 baseline methods, with corrected `InvalidUTF16`, plus 6 regressions).
-- `tests/Fixtures/Minimal.pas`: basic source fixture; a fixed CRLF equivalent
-  is embedded in the test to avoid file I/O and checkout line-ending assumptions.
-- `README.md`, `docs/LEXER_SPEC.md`, `docs/DECISIONS.md`, this file: build/API/status notes.
+- `src/DelphiFormatter.Lexer/DelphiFormatter.Lexer.Scanner.pas`: specialized
+  string, comment, directive, numeric/char-code and symbol scanners; source-wide
+  UTF-16 validation.
+- `tests/DelphiFormatter.Lexer.Tests/Tests.Lexer.Basics.pas`: updated baseline
+  expectations and 16 new test methods (40 total), including deterministic fuzz.
+- Test `.dpr` / `.dproj`: compile the language-syntax corpus as an ordinary unit.
+- `tests/Fixtures/LexicalCorpus.pas`: generics, classes/methods, comments,
+  directives, Unicode, classic/multiline strings, numbers and character codes.
+- `README.md`, `LEXER_HANDOFF.md`, `LEXER_SPEC.md`, `TEST_PLAN.md`, `ROADMAP.md`, `DECISIONS.md`
+  and this status: current coverage, compiler evidence and remaining limits.
 
 ## Supported syntax
 
-EOF, Delphi control blanks/spaces/tabs, CR/LF/CRLF, basic BMP Unicode identifiers,
-escaped identifiers (`&Type`), case-insensitive reserved words, contextual words
-as identifiers, single punctuation/operators and longest matches for `:=`, `<=`,
-`>=`, `<>`, `..`, `(.`, `.)`. All offsets count UTF-16 code units.
+Identifiers/BMP Unicode and escaped identifiers, reserved/contextual words,
+all existing symbols, blanks and CR/LF/CRLF; classic strings with doubled
+apostrophes; odd-delimiter multiline strings; line/XML-doc and both block
+comment styles; both compiler-directive forms; decimal/hex/binary numbers,
+fractions/exponents and digit separators; decimal/hex character codes.
 
-Fallback consumes one code unit, or one valid surrogate pair (two code units),
-and emits a diagnostic. It preserves all source, including NUL, isolated
-surrogates and unfinished input. No file I/O or source normalization occurs;
-token text is sliced only on request.
-
-Review corrections:
-
-- Valid UTF-16 pairs are kept together as length-2 `tkUnknown` spans with
-  `LEX006` warnings. Isolated high/low surrogates use `LEX007` encoding errors;
-  BMP non-identifier characters use `LEX005` source-character errors.
-- Tests distinguish emoji, supplementary letters, scalar boundaries, isolated
-  surrogates, BMP letters and BMP non-identifier characters. Added regressions
-  cover EOF fallbacks, deterministic tokens/diagnostics, array-copy isolation,
-  and invalid caller-supplied result spans.
-- Result construction validates full token coverage, exactly one trailing EOF
-  and diagnostic bounds before retaining source/arrays. Public API shapes and
-  ownership remain unchanged. Empty token text avoids offset arithmetic.
-- Project files now declare Base/Debug/Release inheritance recognized by the
-  IDE, explicitly select Win64 and import Delphi targets once. The original
-  group omitted `BorlandProject/Default.Personality` and loaded without projects;
-  the group was regenerated in the IDE and successfully reopened with both.
-- `DCC_DebugInformation` uses numeric values 1/0; the original boolean value
-  caused compiler warning W1030 (invalid directive `true`). Char helper calls
-  replace deprecated `TCharacter` calls, removing their W1000 warnings.
-- The runner rejects an empty run instead of accepting a vacuous success.
-  No TestInsight define/dependency is needed; local `TestInsightSettings.ini`
-  is ignored. `.dpk`/`.groupproj` now use the declared Delphi CRLF policy.
+All input remains lossless, including NUL and isolated surrogates. Adjacent
+character codes remain separate tokens. No directive is evaluated. Malformed
+constructs use LEX001..LEX005 or LEX007; LEX006 is no longer emitted.
+See `LEXER_SPEC.md` for recovery boundaries and `DECISIONS.md` for syntax probes.
 
 ## Verification
 
-The installed `C:\Program Files (x86)\Embarcadero\Studio\23.0` includes
-`dcc64.exe`, RTL and DUnitX. The IDE About dialog reports Delphi 12 Community
-Edition, version **29.0.51961.7529**, installed **Update 1**. This is not evidence
-of a Delphi 12.3 build. No toolchain upgrade was performed.
+Installed toolchain: Delphi 12 Community Edition Update 1,
+version **29.0.51961.7529**, under
+`C:\Program Files (x86)\Embarcadero\Studio\23.0`.
+This is not Delphi 12.3. Its command-line compiler refuses compilation even
+with exit code 0, so builds were performed through the RAD Studio IDE.
 
-Earlier command-line attempts (historical, superseded by the IDE validation):
+Win64/Debug tests: **40 found, 40 passed, 0 ignored, failed, errored or leaked**;
+process exit code 0. Range and overflow checking are enabled in this configuration.
+The suite includes 500 seeded malformed/random UTF-16 inputs, each tokenized twice
+and checked for deterministic token kinds, exact spans, diagnostics and coverage.
+A 100,000-character ordinary string and a 10,000-digit number exercise long input.
+The realistic corpus is both compiler-checked and tokenized with mixed CR/LF/CRLF
+endings, requiring all expected categories and no unknown tokens or diagnostics.
 
-1. Direct `dcc64.exe -B tests\DelphiFormatter.Lexer.Tests\DelphiFormatter.Lexer.Tests.dpr`
-   prints `This version of the product does not support command line compiling.`
-   Its exit code is 0, but it produces no test executable.
-2. Framework64 MSBuild on the group fails with internal `MSB0001`/FormatException.
-3. Framework (32-bit) MSBuild reaches Embarcadero targets but cannot read registry
-   information inside the sandbox. Repeating outside the sandbox with `BDS` set
-   reaches the compiler and produces the same unsupported-compilation message,
-   again without a test executable.
+Final IDE **Project > Build All Projects** started at
+**2026-10-25 18:17:30.016 UTC** and completed successfully without warnings.
+Both projects were rebuilt; the executable above was then run again.
 
-Actual review validation via the computer-use skill:
-
-1. Opened RAD Studio, inspected About, loaded the corrected test project,
-   selected Win64/Debug and built it through **Project > Build**.
-2. Executed the newly generated test EXE: 24 tests found, 24 passed, 0 ignored,
-   0 failed, 0 errored, 0 reported leaks; process exit code 0.
-3. Added and built the RTL runtime package. Regenerated/saved the project group,
-   closed it, reopened it and confirmed that both projects and Debug configuration
-   load correctly. Fixed W1030 and performed **Build All Projects** again.
-4. Final group rebuild after the target-import cleanup started
-   **2026-10-25 17:58:34.092 UTC**. All artifacts below
-   were created after that time. The resulting test EXE was executed again with
-   **24/24 passed**, no ignored/failed/errored/leaked tests and exit code 0.
-
-| Final Win64/Debug artifact | Bytes | Last write (UTC) |
+| Win64/Debug artifact | Bytes | Last write UTC |
 | --- | ---: | --- |
-| `build/Win64/Debug/DelphiFormatter.Lexer.Tests.exe` | 4,363,776 | 17:58:35.2377157 |
-| `build/Win64/Debug/DelphiFormatter.Lexer.bpl` | 95,744 | 17:58:35.4495211 |
-| `build/Win64/Debug/DelphiFormatter.Lexer.dcp` | 146,812 | 17:58:35.4500323 |
+| DelphiFormatter.Lexer.Tests.exe | 4,667,904 | 18:17:31.1621506 |
+| DelphiFormatter.Lexer.bpl | 98,816 | 18:17:31.4099540 |
+| DelphiFormatter.Lexer.dcp | 150,746 | 18:17:31.4104661 |
 
 Test EXE SHA-256:
-`EE2348AD903E54C64D62F2C4719EF7DD71BC0E4A92325BC439BC7249076FAFE9`.
-The older `build/Win64/Base` executable was not used for these review results.
-
-Static checks also validate project XML, source references, configuration keys,
-single target imports, keyword-table size and test method declarations.
-Release and platforms other than Win64 were not executed.
+FF5CA2BF33D3E02BCDFE3FF400509B0EDE06E8DC67D0AF633DF4CE0305523BA1.
+All three artifacts are newer than the recorded build start. Static validation
+also checked project XML/source references and git diff whitespace.
 
 ## Limitations and next small task
 
-Numbers (including decimal digits), strings, comments, compiler directives and
-character codes are deliberately incomplete. Their introducers/digits become
-`tkUnknown` plus `LEX006` warning, and following content is scanned normally.
-Consequently comment/string contents can currently appear as identifiers or
-symbols. No unterminated string/comment diagnostics are claimed yet.
-Supplementary Unicode identifiers require compiler validation; valid pairs are
-preserved together without claiming identifier support. No parser, AST or
-formatter exists.
+- Exact Delphi 12.3 validation remains outstanding; Release/other targets were
+  not executed. Repeat the Win64/Debug group build and 40-test suite on 12.3.
+- Supplementary identifier letters are rejected by the installed compiler and
+  preserved as unknown scalars with LEX005. Valid pairs inside strings/comments
+  are accepted; isolated surrogates anywhere use LEX007.
+- Multiline indentation/value rules, numeric magnitude/type semantics, parser
+  syntax and conditional-compilation semantics are intentionally not evaluated.
+  Malformed-number recovery preserves digit components rather than attempting
+  to reproduce compiler parser recovery for every invalid source spelling.
+- Corpus loading is test-only, explicit UTF-8, relative to the standard build
+  output directory; run the executable from its generated location in the checkout.
 
-No known local build/test blocker remains for M1.0/M1.1. For an unconditional
-claim that the stated Delphi 12.3 acceptance gate is met, repeat the group build
-and suite on Delphi 12.3. That is the next small validation task. M1.2 remains
-outside this review; no new lexical scanners were added.
+Recommended next small task: validate this exact branch with Delphi 12.3 before
+M2 CST work. M1.3 remains optional corpus expansion/stabilization; no later
+milestone was started.

@@ -1,4 +1,4 @@
-# Lexer specification — initial implementation milestone
+# Lexer specification — M1.2
 
 ## Scope
 
@@ -30,7 +30,7 @@ Properties required:
 | `tkReservedWord` | Delphi reserved words, case-insensitive | `virtual`, `override`, `read`, `write` remain identifiers; parser reclassifies contextually. |
 | `tkNumber` | Decimal, `$` hex, `%` binary, real/exponent and `_` digit separators | Keep entire literal as is; validate and diagnose malformed separators/digits without truncating unknown text. |
 | `tkStringLiteral` | Ordinary single-quoted and Delphi 12+ multiline string literals | Must handle doubled quotes in ordinary strings. |
-| `tkCharCode` | `#13`, `#$0A`, `#%1010` where supported | Separate lexical tokens for adjacent `#13#10` and quoted strings. Verify accepted forms with compiler. |
+| `tkCharCode` | Decimal/hex codes with optional digit separators | Separate tokens for adjacent codes/strings; range 0..65535. Binary codes are invalid. |
 | `tkSymbol` | Single/multi-char special symbols and operators | Longest applicable match (`:=`, `..`, `<=`, `>=`, `<>`, `(.`, `.)`, etc.). |
 | `tkCompilerDirective` | `{$...}` or `(*$...*)` | Begins with `$` immediately after opening delimiter; preserve entire directive. |
 | `tkComment` | `{...}`, `(*...*)`, `//...` | Includes XML doc `///`, which remains source text, optional later subtype. |
@@ -72,7 +72,10 @@ At each position:
 ### Comments / directives
 
 - `{comment}` and `(*comment*)` may contain newlines.
-- Two styles of block delimiters may nest **across styles**, e.g. `(* { hello } *)`; same-style nesting is not generally valid. Implement a delimiter stack if necessary to match documented behavior, and validate real compiler behavior in tricky cases.
+- Each block comment ends at the first closer of its own style. Other-style
+  delimiters are inert. Thus `(* { hello } *)` works without a stack, while
+  `{ (* } X` ends before `X`. Same-style openers do not increase depth.
+  These boundaries were checked with the installed Delphi 12 compiler.
 - `//` extends to, but does not absorb, newline.
 - Compiler directive only when `$` appears immediately following `{` or `(*`; `//$IFDEF` is plain comment.
 - Unterminated block comment/directive: one token to EOF plus diagnostic; never drop content.
@@ -82,6 +85,14 @@ At each position:
 
 - decimal integers, real literals with decimal separator `.`, optional exponent `e/E` with optional sign, numeric digit separators `_` with validated placement.
 - hex via `$` prefix, binary via `%` prefix.
+- Separators require digits on both sides in each digit component.
+- `1.` is accepted; `1.ToString` and `1.e2` keep the dot as a separate symbol
+  before an identifier. A fraction/exponent must not swallow member access.
+- Malformed digit runs retain separators, exponent signs and invalid binary
+  digits in one numeric token with `LEX004`. A nonnumeric suffix begins a
+  following token (`$G` is invalid `$` then identifier `G`). Numeric magnitude
+  is not evaluated, except char-code range checking. Parsing/type errors such
+  as adjacent numeral/identifier tokens belong to the parser.
 - **Important:** `1..10` = number `1`, symbol `..`, number `10` (do not absorb the first dot into float).
 - Unary `+`/`-` are separate tokens, not part of number (except sign after `E/e` inside exponent).
 - Unusual malformed numeric syntax must be preserved and diagnosed, with exact splitting validated against Delphi where possible.
@@ -91,8 +102,14 @@ At each position:
 - Ordinary `'It''s Delphi'`: doubled quote escapes quote.
 - Delphi 12+ multiline strings begin with an odd sequence of at least three quotes, followed by a newline; end with a matching-length closing quote sequence on a line of its own. Matching delimiters must be carefully validated (3, 5, 7, ...).
 - The indentation of closing multiline delimiters changes string **value**, so lexer must never normalize spaces or line endings inside a multiline literal.
-- Unterminated ordinary or multiline strings: preserve source and produce diagnostic.
-- `#13`, `#$0A` (and compiler-validated binary variants) are char-code tokens; combined string expressions may consist of adjacent string and char-code tokens.
+- Unterminated ordinary strings stop before CR/LF (or at EOF), allowing the
+  next line to recover. Unterminated multiline strings extend to EOF. Both
+  preserve all input and produce `LEX003`. Closing multiline quote runs must
+  match the opening run exactly and follow only indentation on their line.
+  Indentation validity/value calculation is outside lexical classification.
+- `#13`, `#$0A`, `#1_0` are char-code tokens. `#%1010` is retained as a
+  malformed char-code token with `LEX004` (compiler rejects binary codes).
+  Combined string expressions consist of adjacent string and char-code tokens.
 - Make ambiguous sequences of quotes explicit regression fixtures (2, 3, 4, 5, 6, 7 quotes; quotes inside multiline bodies).
 
 ### Special symbols
@@ -111,21 +128,15 @@ Use a small stable code set, e.g.:
 - `LEX003`: unterminated string literal
 - `LEX004`: malformed numeric literal
 - `LEX005`: unknown/invalid source character
-- `LEX006`: category deferred by the M1.1 baseline (warning, not a claim that
-  the source is invalid Delphi). Numeric digits/prefixes, quote and comment
-  openers are preserved as individual `tkUnknown` code units. Remaining text
-  is scanned normally; M1.1 does not infer string/comment boundaries or issue
-  unterminated-construct diagnostics. A valid supplementary Unicode scalar
-  is preserved as one `tkUnknown` span of length 2 with a specific unsupported
-  Unicode message. Its Delphi identifier validity is not decided in M1.1.
-  Replace these fallbacks in M1.2.
+- `LEX006`: reserved historical code for deferred M1.1 categories; M1.2 does
+  not emit it. All regular categories have scanners.
 - `LEX007`: invalid UTF-16 encoding (error); an isolated high or low surrogate,
-  preserved as one `tkUnknown` code unit. `LEX005` instead means an unrecognized
-  source character, not an encoding error.
+  preserved in its containing token (one `tkUnknown` code unit outside a
+  construct). `LEX005` means an unrecognized source character, not an encoding error.
 
 Each diagnostic includes code, severity, span, message; location conversion can be added via `TLineMap` when needed. Don't throw for lexical errors.
 
-### Implemented M1.0/M1.1 API details
+### Implemented API details
 
 - `TSourceSpan.Create(StartOffset, Length)` validates nonnegative values and
   Integer overflow; the two values are read-only properties, `EndOffset` is
@@ -145,8 +156,11 @@ Each diagnostic includes code, severity, span, message; location conversion can 
 - Baseline blanks are U+0000 through U+0020 except CR/LF, which produce
   newline tokens. BMP letters/underscore start identifiers; RTL Unicode
   letters/numbers/underscore continue them. Valid surrogate pairs form one
-  length-2 unknown token with `LEX006`; isolated surrogates use `LEX007`.
-  Supplementary identifier rules await M1.2 compiler validation.
+  length-2 unknown token with `LEX005` outside literals/comments; isolated
+  surrogates use `LEX007` everywhere, including inside constructs. Valid pairs
+  inside literals/comments have no encoding diagnostic. A supplementary letter
+  in an identifier was rejected by the installed compiler; 12.3 revalidation
+  remains outstanding. Encoding diagnostics precede scanner diagnostics.
 - Keyword matching folds ASCII keyword letters without locale dependence.
   The documented reserved-word table plus `at`/`on` is centralized; contextual
   visibility/declaration directives remain identifiers.

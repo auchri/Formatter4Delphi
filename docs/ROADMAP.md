@@ -20,6 +20,9 @@
 - Ordinary and Delphi 12+ multiline strings, comments, compiler directives, binary/hex/real/underscored numerals, char-code sequences, Unicode.
 - Diagnostics for malformed/unfinished constructs; no loss on invalid input.
 - **Gate:** all defined lexer test matrix cases pass; no hangs; 100% coverage property on tested source snapshots.
+- Implemented: 40/40 tests pass on Delphi 12 CE Update 1, Win64/Debug.
+  Exact 12.3 validation remains open; see `M1_STATUS.md`. Stop implementation
+  here for this task; M2 is not started.
 
 ### M1.3 — Lexer corpus and stabilization
 - Real `.pas`, `.dpr`, `.dpk`, `.inc` fixture samples; fuzz/property tests.

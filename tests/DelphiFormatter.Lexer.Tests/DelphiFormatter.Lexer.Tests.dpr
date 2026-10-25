@@ -5,6 +5,7 @@ program DelphiFormatter.Lexer.Tests;
 
 uses
   System.SysUtils,
+  LexicalCorpus in '..\Fixtures\LexicalCorpus.pas',
   DUnitX.TestFramework,
   DUnitX.Loggers.Console,
   Tests.Lexer.Basics in 'Tests.Lexer.Basics.pas',

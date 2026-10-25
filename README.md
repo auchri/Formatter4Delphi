@@ -28,7 +28,7 @@
 
 Documentation and test fixtures are project-authored. Do not copy implementation code from third-party parsers without a licensing review.
 
-## M1.0 / M1.1 implementation
+## M1.2 lexer implementation
 
 Open `DelphiFormatter.groupproj` in Delphi 12.3 and select Win64 / Debug.
 The runtime package contains only RTL-based core/lexer units; the console
@@ -50,8 +50,8 @@ The test runner returns 0 for success, 1 for failed/empty test runs, 2 for runne
 Check that a fresh executable was produced before running tests: the installed
 compiler can report unsupported command-line compilation with exit code 0.
 
-The review correction was built through the installed Delphi 12 Community
-Edition Update 1 IDE on Win64/Debug: **24/24 DUnitX tests passed**. That is a real
+The lexer was built through the installed Delphi 12 Community
+Edition Update 1 IDE on Win64/Debug: **40/40 DUnitX tests passed**. That is a real
 IDE build and execution; a build with exactly Delphi 12.3 is still unverified.
 
 Implemented scope, validation results and limitations: [M1 status](docs/M1_STATUS.md).

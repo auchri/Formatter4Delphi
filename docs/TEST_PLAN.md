@@ -2,7 +2,7 @@
 
 ## Important
 
-A trivial 'roundtrip is equal' test is necessary, but **not sufficient**: a broken lexer returning the entire source as `tkUnknown` would pass it. Assert precise kinds, spans and diagnostics. All tests work on `string` input and avoid external file encoding assumptions in the lexer phase.
+A trivial 'roundtrip is equal' test is necessary, but **not sufficient**: a broken lexer returning the entire source as `tkUnknown` would pass it. Assert precise kinds, spans and diagnostics. All lexer calls work on `string` input. Focused cases are embedded; the realistic corpus is loaded explicitly as UTF-8 by test code and also compiled into the runner.
 
 ## Common invariant assertion (`AssertTokenCoverage`)
 
@@ -73,6 +73,15 @@ tests/DelphiFormatter.Lexer.Tests/
 ```
 
 Start with one test fixture unit if simpler, split as tests grow. Tests should not depend on the library internal scanning implementation; use public lexer result API.
+
+M1.2 keeps one fixture with 40 test methods. Added cases cover quote runs
+1..12, multiline delimiters 3/5/7/9 with all newline forms, exact string recovery,
+comment/directive boundaries, valid/malformed numerals, numeric member access,
+char-code boundaries/ranges, encoding errors inside constructs and the compiled
+`LexicalCorpus.pas` fixture. `SeededMalformedInputs` uses an explicit 32-bit LCG
+seed `$4D312E32` for 500 cases, including arbitrary UTF-16; each case is scanned
+twice and compared for kinds, spans and diagnostic code/spans. Coverage checks
+independently reconstruct every token slice. See `M1_STATUS.md` for actual runs.
 
 ## Additional future CST test obligations
 
