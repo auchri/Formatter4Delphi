@@ -83,7 +83,7 @@ seed `$4D312E32` for 500 cases, including arbitrary UTF-16; each case is scanned
 twice and compared for kinds, spans and diagnostic code/spans. Coverage checks
 independently reconstruct every token slice. See `M1_STATUS.md` for actual runs.
 
-## Additional future CST test obligations
+## M2.1 CST test obligations
 
 - Leaf-token sequence matches lexer sequence exactly (synthetic missing tokens excluded).
 - Reconstruct from CST token leaves (NOT raw source passthrough).
@@ -95,3 +95,43 @@ independently reconstruct every token slice. See `M1_STATUS.md` for actual runs.
 - Attempt build / DUnitX execution with a real Delphi 12.3 toolchain when available. Report exact commands and environment if run.
 - If no Delphi compiler available, do code review/static sanity checks and report tests as **not run**, not passing.
 - Never weaken a failing test just to make a build green; add a documented language-rule decision when behavior is disputed.
+
+## Implemented parser suite (32 tests)
+
+`tests/DelphiFormatter.Parser.Tests/` is an independent DUnitX console project
+in `DelphiFormatter.groupproj`, using the same core/lexer units plus the five
+new syntax/parser units. Debug enables range/overflow checks. The test runner
+also enables RTL leak reporting.
+
+Every parser helper frees the original lexer result before checking the tree.
+Coverage independently re-lexes its source and compares every original leaf's
+index, kind, offset and length, including EOF. Missing leaves must have length
+zero, index -1 and expected spelling. Unique reachability, ordered children,
+parent span unions, full root span and actual leaf serialization are asserted.
+
+Focused tests check binary hierarchy, all 20 binary operators and equal-group
+left association, mixed Delphi word-operator precedence, prefix/parenthesized
+expressions, nested/empty calls, string/char-code components, assignments,
+blocks/empty statements, nearest-if else binding, else after a block, invalid
+semicolon-before-else recovery, minimal/dotted units and uses clauses. Missing
+operands/closers/headers, malformed uses and statements check diagnostics and
+continued structural parsing. Directive/include input and unknown declarations
+must expose opaque nodes rather than fabricated grammar.
+
+Seeded malformed token-sequence inputs are parsed twice in all three entry
+modes, comparing structure and diagnostic codes/messages/spans. Seeded arbitrary
+UTF-16 inputs exercise controls and isolated surrogates. Deep parentheses test
+the nesting guard; long binary chains test shape and iterative serialization.
+Repeated construction/destruction, independent trees from one lexer and lexical
+diagnostic survival exercise ownership. Lexer tests remain intact.
+
+Use the IDE Build All Projects with Win64/Debug, then execute both generated
+EXEs in `build/Win64/Debug`. Verify timestamps before trusting results.
+`M2_STATUS.md` records the actual compiler version, counts and fresh artifacts;
+Delphi 12 Update 1 success is not an exact Delphi 12.3 validation claim.
+
+PR #3 review regressions add long nested/unclosed angle lists, long comparison
+chains with substantial trivia and a missing final operand, Boolean identifier
+classification/casing within operator trees, and resource/include/conditional
+directives in all entry modes. Long-input tests assert coverage and structure;
+complexity follows the single-pass index rather than a flaky wall-time limit.

@@ -1,9 +1,12 @@
-# Codex prompt — initial task (copy this text into Codex)
+# Current Codex entry point
 
-We're building a reusable **Delphi 12.3+ lossless parsing foundation** for a future Delphi-compatible source formatter. The full architecture is already documented in this repository. Follow `AGENTS.md`, and start with the compact, self-contained `docs/LEXER_HANDOFF.md`. Consult the larger architecture and lexical-reference docs only for unresolved details; do not redesign settled decisions without a correctness reason.
+Read `AGENTS.md`, `docs/CST_SPEC.md`, `docs/ARCHITECTURE.md` and
+`docs/ROADMAP.md`. M1.0-M1.2 and the M2.1 lossless CST/basic parser are implemented.
+See `docs/M1_STATUS.md` and `docs/M2_STATUS.md` for actual scope and verification.
 
-**Implement only roadmap steps M1.0 and M1.1 now: project skeleton, DUnitX test runner, immutable source spans/diagnostics, token result model, and a first functional, lossless, hand-written lexer.** Support basic identifiers/true reserved words, whitespace/newlines, common symbols/operators and EOF. Write DUnitX tests for expected token kinds/spans and UTF-16 exact roundtrips. Keep the lexer extensible for strings, comments, compiler directives, Unicode and advanced numeric syntax to be added in M1.2, but **do not implement a CST/AST, formatter, config parser or CLI now**.
-
-Use Delphi 12.3 syntax and RTL; no VCL/FMX or extra dependencies other than DUnitX in tests. Every source code unit must be preserved, scanner loops must progress, diagnostics must not drop source, zero-based UTF-16 spans must be consistently used. Avoid needless abstractions. Before creating files, inspect any existing repository structure and integrate with it rather than replacing it. Implement directly and do not spend tokens re-explaining the architecture.
-
-If Delphi 12.3 is available, compile and run tests. Otherwise state that validation is not available. Finish with a terse report: files added/changed, lexer features, tests actually run, limitations, and proposed next small Codex task (M1.2). Do not proceed to M1.2 without a new instruction.
+Implement only a newly authorized roadmap milestone. Preserve lexer APIs and
+all original tokens; require hierarchical CST assertions as well as roundtrips.
+Do not begin declarations, AST, formatting, configuration, CLI or IDE integration
+without a new task. Use Delphi 12.3-compatible pure RTL and DUnitX for tests.
+Build all projects with Win64/Debug when available, execute both test runners,
+verify fresh artifacts and report the exact toolchain and outstanding limits.

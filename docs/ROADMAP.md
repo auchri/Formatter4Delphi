@@ -21,18 +21,25 @@
 - Diagnostics for malformed/unfinished constructs; no loss on invalid input.
 - **Gate:** all defined lexer test matrix cases pass; no hangs; 100% coverage property on tested source snapshots.
 - Implemented: 40/40 tests pass on Delphi 12 CE Update 1, Win64/Debug.
-  Exact 12.3 validation remains open; see `M1_STATUS.md`. Stop implementation
-  here for this task; M2 is not started.
+  Exact 12.3 validation remains open; see `M1_STATUS.md`. M2.1 follows below.
 
 ### M1.3 — Lexer corpus and stabilization
 - Real `.pas`, `.dpr`, `.dpk`, `.inc` fixture samples; fuzz/property tests.
 - Profile allocations/performance on representative source. Optimize only known bottlenecks.
 - **Gate:** documented lexical syntax coverage; deterministic roundtrips and diagnostics; stable public contract.
 
-### M2 — Lossless CST core
+### M2.1 — Lossless CST foundation and basic Delphi parser
 - Syntax nodes, tree, builder, token reader, error/missing/opaque leaves.
-- Expressions, statements, basic units, then extended Delphi 12.3+ grammar.
+- Basic expressions/calls with Delphi operator groups; assignments, blocks, if/else; minimal units and uses clauses. Unsupported declarations and directive-bearing input stay opaque.
 - **Gate:** exact CST roundtrip and correct tree shape; no discarded original tokens under error recovery.
+
+- Implemented scope and actual build/test evidence: `M2_STATUS.md`.
+- Stop after M2.1; no subsequent grammar is authorized by this milestone.
+
+### M2.2 — Basic declarations and routine bodies (next proposed task)
+- Small const/var declarations and procedure/function headers/bodies.
+- Preserve opaque regions for unsupported declarations; add structure/recovery tests.
+- Repeat Win64/Debug validation on exact Delphi 12.3 when available.
 
 ### M3 — Grammar completion and validation
 - Real-world projects and conditional compiler directives/inclusions handled conservatively.

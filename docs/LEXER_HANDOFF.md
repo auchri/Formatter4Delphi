@@ -1,9 +1,9 @@
-# Lexer handoff (read this first)
+# Historical lexer handoff
 
 M1.0, M1.1 and M1.2 are implemented. Read `M1_STATUS.md` for current syntax
 coverage, actual build/test evidence and remaining Delphi 12.3 validation.
 The baseline instructions below are historical; do not reimplement them or
-start M2 without a new task.
+use them to limit the active parser milestone. M2.1 is now implemented; read `CST_SPEC.md` and `M2_STATUS.md` for current scope.
 
 ## Historical M1.0 + M1.1 handoff
 
