@@ -1185,13 +1185,14 @@ end;
 
 function TDelphiParser.PropertyFragment(InParameters: Boolean): TSyntaxNode;
 var C: TList<TSyntaxElement>; Parens, Brackets, Angles: Integer;
-  ProceduralType: Boolean;
+  ProceduralType, AfterComma: Boolean;
 begin
   C := TList<TSyntaxElement>.Create;
   try
     Report('PAR003', 'Unsupported property fragment preserved as opaque');
     Parens := 0; Brackets := 0; Angles := 0;
     ProceduralType := InParameters and MethodStart and FReader.Matches('(', 1);
+    AfterComma := False;
     while not FReader.AtEOF do
     begin
       // A procedural parameter type can start here, but a later method is recovery.
@@ -1199,6 +1200,8 @@ begin
       if (Parens = 0) and (Brackets = 0) and (Angles = 0) then
       begin
         if FReader.Matches(';') or PropertySpecifierStart then Break;
+        // Do not rescan each suffix of a comma-separated opaque name list.
+        if not AfterComma and FieldStart then Break;
         if InParameters and (FReader.Matches(']') or FReader.Matches(':')) then Break;
       end;
       if FReader.Matches('(') then Inc(Parens)
@@ -1209,6 +1212,7 @@ begin
       else if FReader.Matches('<') then Inc(Angles)
       else if (FReader.Matches('>') or FReader.Matches('>=')) and
         (Angles > 0) then Dec(Angles);
+      AfterComma := FReader.Matches(',');
       Take(C);
     end;
     Result := Node(skOpaqueRegion, C);
@@ -1305,7 +1309,7 @@ begin
         if Signed then Take(V);
         if FReader.PeekSignificant.Kind in [tkNumber, tkStringLiteral, tkCharCode] then
         begin Take(L); V.Add(Node(skLiteralExpression, L)); end
-        else if FReader.PeekSignificant.Kind = tkIdentifier then
+        else if not FieldStart and (FReader.PeekSignificant.Kind = tkIdentifier) then
         begin PropertyName(L); V.Add(Node(skIdentifierExpression, L)); end
         else if Signed then Missing(V, 'constant')
         else V.Add(PropertyFragment);
@@ -1349,15 +1353,18 @@ begin
     HasParameters := FReader.Matches('[');
     if HasParameters then C.Add(PropertyIndexParameters);
     if FReader.Matches(':') then
-    begin Take(C); C.Add(PropertyType); end
+    begin
+      Take(C);
+      if FieldStart then Missing(C, 'type identifier') else C.Add(PropertyType);
+    end
     else if not PropertySpecifierStart and not MemberBoundary and
-      not FReader.Matches(';') and not FReader.AtEOF then
+      not FieldStart and not FReader.Matches(';') and not FReader.AtEOF then
     begin Missing(C, ':'); C.Add(PropertyType); end;
     while not FReader.AtEOF and not MemberBoundary and not FReader.Matches(';') do
     begin
       Before := FReader.Position;
-      if PropertySpecifierStart then C.Add(PropertySpecifier)
-      else if FieldStart then Break
+      if FieldStart then Break
+      else if PropertySpecifierStart then C.Add(PropertySpecifier)
       else C.Add(PropertyFragment);
       if Before = FReader.Position then Break;
     end;

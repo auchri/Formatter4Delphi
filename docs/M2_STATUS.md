@@ -269,3 +269,72 @@ Lexer EXE SHA-256: 223F034532B146D19B58C6BE692511641A2ADE92F937B8066553A9C58E0E6
 Remaining limits are unchanged: exact Delphi 12.3+, Release and other platforms
 remain unvalidated; unsupported/unbalanced syntax keeps conservative opaque
 recovery. These changes address the two reviewed lookaheads only. No M2.5 work.
+
+## PR #7 review fix: property recovery at field boundaries (2026-10-26)
+
+The reported bug was reproduced before changing production code: the new
+PropertyFieldBoundaryRecovery test failed with zero field declarations for
+`property Name` followed by `FCount: Integer; procedure Save;`. The original
+parser suite plus the other two new tests passed (96/97 overall, exit 1).
+The missing-colon fallback consumed FCount as a property type and opaque
+recovery then consumed the field's colon/type/semicolon.
+
+Only PropertyDeclaration, PropertyFragment and PropertySpecifier change:
+
+- PropertyDeclaration checks FieldStart before its missing-colon type fallback,
+  after an explicit colon with a missing type, and before specifier dispatch.
+  Thus a contextual field name such as Stored cannot become a property clause.
+  Existing Expect(';') inserts a zero-width missing semicolon before pending
+  trivia without consuming the following field.
+- PropertyFragment stops at a clear field start at balanced delimiter depth.
+  It avoids repeated FieldStart scans after commas in an opaque name list;
+  nested parameter/type fragments retain their existing delimiter protection.
+- PropertySpecifier rechecks FieldStart after a constant's unary sign, so a
+  missing signed default value cannot consume a following field name.
+
+PropertyType, FieldStart, MemberBoundary and Reader remain unchanged. No new
+APIs/kinds/grammar. In particular, no unconditional field check is added inside
+parameter type parsing: malformed array headers keep their existing recovery.
+Lookahead does not change Reader.Position; the linear FieldStart is unchanged.
+
+Three new DUnitX methods: PropertyFieldBoundaryRecovery runs 120 combinations
+of incomplete headers, completed/missing accessors, default/opaque suffixes and
+missing implements values, with plain/grouped/contextual fields and spaces,
+LF, CR or CRLF plus comments. It asserts separate ordered member nodes, exact
+property/field spans, the missing semicolon's spelling/zero-width anchor and
+complete deterministic diagnostic data across two parses. The other methods
+check recovery to a following property (missing accessor and semicolon), and
+unchanged valid redeclaration/typed/array hierarchies without diagnostics.
+Every parse uses the existing token-order/span/ownership/leaf reconstruction
+checks after lexer disposal; repeated allocation/free is exercised throughout.
+
+Final validation: **Delphi 12 CE Update 1**, IDE **29.0.51961.7529**, **not 12.3**.
+IDE Project > Alle Projekte erzeugen, Win64/Debug, started after
+**2026-10-26 09:48:12 UTC**, succeeded in 2.4 seconds with no compiler
+errors/warnings/hints shown. Both runners and lexer package were rebuilt.
+Executed both fresh EXEs from repository root: **97/97 parser**, **40/40 lexer**,
+both exit 0, zero ignored/leaked/failed/errored. Debug range/overflow checks and
+RTL shutdown leak reporting remain enabled; no unexpected leak dialog observed.
+No separate heap profiler run claimed. All existing compiled corpus tests pass.
+
+| Fresh artifact under build/Win64/Debug | Bytes | Last write UTC |
+| --- | ---: | --- |
+| DelphiFormatter.Parser.Tests.exe | 4869632 | 2026-10-26 09:48:34 |
+| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-26 09:48:33 |
+| DelphiFormatter.Lexer.bpl | 98816 | 2026-10-26 09:48:33 |
+| DelphiFormatter.Lexer.dcp | 150746 | 2026-10-26 09:48:33 |
+| ParserTests/DeclarationCorpus.dcu | 1983 | 2026-10-26 09:48:34 |
+| ParserTests/PostfixCorpus.dcu | 5705 | 2026-10-26 09:48:34 |
+| ParserTests/ClassRecordCorpus.dcu | 5901 | 2026-10-26 09:48:34 |
+| ParserTests/PropertyCorpus.dcu | 5977 | 2026-10-26 09:48:34 |
+
+Parser EXE SHA-256: 0D076CC557BA39657B1A4E877347AC0E302F300359574196FCE92CDCCBF0E459
+
+Lexer EXE SHA-256: 2CBDBE1168EA36D4A81A82DC9AB3A808F84FDF7FDED0061B566826CA12E7C97B
+
+Parser EXE is newer than every Pascal source in src/tests. Git whitespace
+checks pass. Ignored logs: M2.5.Review.Before.log,
+M2.5.Review.Parser.Tests.log and M2.5.Review.Lexer.Tests.log under build/Win64/Debug.
+Existing limitations remain: ambiguous unbalanced syntax can preserve larger
+opaque regions; exact Delphi 12.3+, Release and other platforms are unvalidated.
+Stop after this review fix; no automatic merge or subsequent milestone.

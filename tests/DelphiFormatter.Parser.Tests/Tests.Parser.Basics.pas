@@ -98,6 +98,9 @@ type
     [Test] procedure PropertyHierarchy;
     [Test] procedure PropertyRedeclarations;
     [Test] procedure PropertyRecovery;
+    [Test] procedure PropertyFieldBoundaryRecovery;
+    [Test] procedure PropertyFollowingPropertyRecovery;
+    [Test] procedure PropertyBoundaryValidDeclarations;
     [Test] procedure PropertyStress;
     [Test] procedure CompiledPropertyCorpus;
     [Test] procedure UnsupportedAggregates;
@@ -2097,6 +2100,136 @@ begin
     '{$ENDIF} end; implementation end.');
   try Assert.AreEqual(0, Count(T.Root, skPropertyDeclaration));
   finally T.Free; end;
+end;
+
+procedure TParserTests.PropertyFieldBoundaryRecovery;
+const Prefixes: array[0..9] of string = (
+  'property Name',
+  'property Name: string read FName',
+  'property Name:',
+  'property Name: string read',
+  'property Name: Integer default -',
+  'property Name: Integer default (1 + 2)',
+  'property Name: string read GetName()',
+  'property Name: TObject implements',
+  'property Name: Integer nodefault',
+  'property Name: Integer default 1 + 2');
+  Gaps: array[0..3] of string = (' ', #10, #13, #13#10);
+  Fields: array[0..2] of string = ('FCount', 'FCount, FOther', 'stored');
+var Prefix, Gap, Names, Source, Input: string; T, U: TSyntaxTree;
+  A, P, F, M: TSyntaxNode; I: Integer; Leaf: TSyntaxToken;
+begin
+  for Prefix in Prefixes do
+    for Gap in Gaps do
+      for Names in Fields do
+      begin
+        Input := 'unit X; interface type TExample=class ';
+        Source := Input + Prefix + Gap + '{ boundary }' + Gap + Names +
+          ': Integer;' + Gap + 'procedure Save; end; implementation end.';
+        T := Parse(Source); U := Parse(Source);
+        try
+          Assert.AreEqual(1, Count(T.Root, skPropertyDeclaration), Source);
+          Assert.AreEqual(1, Count(T.Root, skFieldDeclaration), Source);
+          Assert.AreEqual(1, Count(T.Root, skMethodDeclaration), Source);
+          A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+          P := Child(A, 0); F := Child(A, 1); M := Child(A, 2);
+          Assert.AreEqual(Integer(skPropertyDeclaration), Integer(P.Kind));
+          Assert.AreEqual(Integer(skFieldDeclaration), Integer(F.Kind));
+          Assert.AreEqual(Integer(skMethodDeclaration), Integer(M.Kind));
+          Assert.AreEqual(' ' + Prefix,
+            Copy(T.Source, P.Span.StartOffset+1, P.Span.Length));
+          Assert.AreEqual(Gap + '{ boundary }' + Gap + Names + ': Integer;',
+            Copy(T.Source, F.Span.StartOffset+1, F.Span.Length));
+          Assert.AreEqual(P.Span.EndOffset, F.Span.StartOffset);
+          Leaf := TSyntaxToken(P.GetChild(P.ChildCount-1));
+          Assert.IsTrue(Leaf.IsMissing);
+          Assert.AreEqual(';', Leaf.ExpectedText);
+          Assert.AreEqual(0, Leaf.Span.Length);
+          Assert.AreEqual(Length(Input + Prefix), Leaf.Span.StartOffset);
+          Assert.IsTrue(T.DiagnosticCount > 0);
+          Assert.AreEqual('PAR001', T.GetDiagnostic(T.DiagnosticCount-1).Code);
+          Assert.AreEqual('Expected ;', T.GetDiagnostic(T.DiagnosticCount-1).Message);
+          Assert.AreEqual(Shape(T.Root), Shape(U.Root));
+          Assert.AreEqual(T.DiagnosticCount, U.DiagnosticCount);
+          for I := 0 to T.DiagnosticCount-1 do
+          begin
+            Assert.AreEqual(T.GetDiagnostic(I).Code, U.GetDiagnostic(I).Code);
+            Assert.AreEqual(T.GetDiagnostic(I).Message, U.GetDiagnostic(I).Message);
+            Assert.AreEqual(Integer(T.GetDiagnostic(I).Severity), Integer(U.GetDiagnostic(I).Severity));
+            Assert.AreEqual(T.GetDiagnostic(I).Span.StartOffset, U.GetDiagnostic(I).Span.StartOffset);
+            Assert.AreEqual(T.GetDiagnostic(I).Span.Length, U.GetDiagnostic(I).Span.Length);
+          end;
+        finally U.Free; T.Free; end;
+      end;
+end;
+
+procedure TParserTests.PropertyFollowingPropertyRecovery;
+var T, U: TSyntaxTree; A, P, Q: TSyntaxNode; S: string; I: Integer;
+begin
+  S := 'unit X; interface type TExample=class property Name: string read' +
+    #13#10 + 'property Count: Integer read FCount; procedure Save; end; implementation end.';
+  T := Parse(S); U := Parse(S);
+  try
+    Assert.AreEqual(2, Count(T.Root, skPropertyDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    P := Child(A, 0); Q := Child(A, 1);
+    Assert.AreEqual(' property Name: string read', Copy(S, P.Span.StartOffset+1, P.Span.Length));
+    Assert.AreEqual(#13#10 + 'property Count: Integer read FCount;',
+      Copy(S, Q.Span.StartOffset+1, Q.Span.Length));
+    Assert.AreEqual(2, Count(P, skMissingToken));
+    Assert.AreEqual(0, Count(Q, skMissingToken));
+    Assert.AreEqual(2, T.DiagnosticCount);
+    Assert.AreEqual('Expected property specifier value', T.GetDiagnostic(0).Message);
+    Assert.AreEqual('Expected ;', T.GetDiagnostic(1).Message);
+    Assert.AreEqual(Shape(T.Root), Shape(U.Root));
+    Assert.AreEqual(T.DiagnosticCount, U.DiagnosticCount);
+    for I := 0 to T.DiagnosticCount-1 do
+    begin
+      Assert.AreEqual(T.GetDiagnostic(I).Code, U.GetDiagnostic(I).Code);
+      Assert.AreEqual(T.GetDiagnostic(I).Message, U.GetDiagnostic(I).Message);
+      Assert.AreEqual(Integer(T.GetDiagnostic(I).Severity), Integer(U.GetDiagnostic(I).Severity));
+      Assert.AreEqual(T.GetDiagnostic(I).Span.StartOffset, U.GetDiagnostic(I).Span.StartOffset);
+      Assert.AreEqual(T.GetDiagnostic(I).Span.Length, U.GetDiagnostic(I).Span.Length);
+    end;
+  finally U.Free; T.Free; end;
+end;
+
+procedure TParserTests.PropertyBoundaryValidDeclarations;
+var T, U: TSyntaxTree; S: string; A, P: TSyntaxNode;
+begin
+  S := 'unit X; interface type TExample=class property Name; ' +
+    'property Name read GetName; property Caption stored False; ' +
+    'property Name: string read FName write SetName; ' +
+    'property Count: Integer read FCount; ' +
+    'property Items[Index: Integer]: TObject read GetItem; ' +
+    'procedure Save; end; implementation end.';
+  T := Parse(S); U := Parse(S);
+  try
+    Assert.AreEqual(0, T.DiagnosticCount);
+    Assert.AreEqual(0, U.DiagnosticCount);
+    Assert.AreEqual(6, Count(T.Root, skPropertyDeclaration));
+    Assert.AreEqual(6, Count(T.Root, skPropertySpecifier));
+    Assert.AreEqual(4, Count(T.Root, skTypeReference));
+    Assert.AreEqual(1, Count(T.Root, skPropertyIndexParameters));
+    Assert.AreEqual(1, Count(T.Root, skParameterDeclaration));
+    Assert.AreEqual(0, Count(T.Root, skMissingToken));
+    Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    Assert.AreEqual(0, Count(Child(A, 0), skTypeReference));
+    Assert.AreEqual(0, Count(Child(A, 1), skTypeReference));
+    Assert.AreEqual(0, Count(Child(A, 2), skTypeReference));
+    P := Child(A, 3);
+    Assert.AreEqual(Integer(skTypeReference), Integer(Child(P, 0).Kind));
+    Assert.AreEqual(Integer(skPropertySpecifier), Integer(Child(P, 1).Kind));
+    Assert.AreEqual(Integer(skPropertySpecifier), Integer(Child(P, 2).Kind));
+    P := Child(A, 5);
+    Assert.AreEqual(Integer(skPropertyIndexParameters), Integer(Child(P, 0).Kind));
+    Assert.AreEqual(Integer(skTypeReference), Integer(Child(P, 1).Kind));
+    Assert.AreEqual(Integer(skPropertySpecifier), Integer(Child(P, 2).Kind));
+    Assert.AreEqual(Shape(T.Root), Shape(U.Root));
+  finally U.Free; T.Free; end;
 end;
 
 procedure TParserTests.PropertyStress;
