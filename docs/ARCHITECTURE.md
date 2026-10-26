@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**Current stopping point: M2.7 corpus analysis; grammar stays at M2.6.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
+**Current stopping point: M2.8 directive-aware safe pilot; other grammar stays at M2.6.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -250,3 +250,22 @@ SkipHeader and SkipBalanced consume tokens monotonically. Compound nesting is
 iterative; recursive envelopes use the existing depth budget and conservative
 PAR004 fallback. Only Take creates leaves, preserving directive detection and
 arena ownership. No Reader reset, public API change or full unsupported grammar.
+
+## M2.8 — directive-aware safe pilot (supersedes historical directive policy)
+
+M2.8 is separately authorized. Other grammar remains at M2.6; stop after M2.8.
+See [M2_8_DIRECTIVES.md](M2_8_DIRECTIVES.md) for the exact finite classifier,
+linear stack index, 32-level guard, PAR005 diagnostics, supported UnitSection
+boundaries and deliberately narrow branch-envelope proof. Switches remain
+explicit skDirective nodes. Appended kind skConditionalDirectiveRegion (56)
+contains a completely opaque protected child; the analyzer protects both kinds.
+Includes, unknown directives and directives inside productions retain complete
+input fallback. No branches are evaluated and no member/statement contexts or
+new type grammar are enabled. A future formatter must preserve these barriers.
+
+The unchanged pinned corpus comparison, actual diagnostics and runtime results
+are recorded in [comparison.md](../reports/m2_8/comparison.md); concrete source
+examples and limitations are in [examples.md](../reports/m2_8/examples.md).
+DirectiveCorpus is compiled by the parser test runner but does not change the
+pinned manifest. The suite adds eight parser methods and one coverage method.
+Delphi 12 CE Update 1 validation is distinct from still-open exact Delphi 12.3.

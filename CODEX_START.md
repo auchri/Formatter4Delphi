@@ -1,21 +1,21 @@
 # Current Codex entry point
 
-Read `AGENTS.md`, `docs/CST_SPEC.md`, `docs/ARCHITECTURE.md` and
-`docs/ROADMAP.md`. M1.0-M1.2 and M2.1-M2.6 lossless CST/declarations/postfix/class-record/property/control-flow parser are implemented.
-See `docs/M1_STATUS.md` and `docs/M2_STATUS.md` for actual scope and verification.
+Read AGENTS.md, docs/CST_SPEC.md, docs/ARCHITECTURE.md, docs/ROADMAP.md and
+docs/M2_8_DIRECTIVES.md. M2.8 is the separately authorized directive-aware safe
+pilot; all other grammar remains at M2.6. Stop after M2.8. AST, formatting,
+configuration, product CLI, IDE integration and further grammar require a new task.
 
-Implement only a newly authorized roadmap milestone. Preserve lexer APIs and
-all original tokens; require hierarchical CST assertions as well as roundtrips.
-Do not begin further grammar, AST, formatting, configuration, CLI or IDE integration
-without a new task. Use Delphi 12.3-compatible pure RTL and DUnitX for tests.
-Build all projects with Win64/Debug when available, execute both test runners,
-verify fresh artifacts and report the exact toolchain and outstanding limits.
+Preserve the lexer/reader/public parser APIs, original token order, UTF-16 spans
+and arena ownership. Require hierarchical assertions and lossless roundtrips
+after lexer disposal. Never evaluate conditional branches or expand includes.
+Unknown/unsafe contexts retain complete-input fallback. Exact pilot boundaries
+and the finite directive whitelist are documented in docs/M2_8_DIRECTIVES.md.
 
-M2.7 is the active analysis stopping point; see docs/PARSER_COVERAGE.md for
-the independent analyzer, pinned corpus, method, reports and actual validation.
-No lexer/parser grammar changes are authorized in M2.7.
+Actual validation: docs/M2_STATUS.md. Paired measurements and concrete examples:
+reports/m2_8/comparison.md and reports/m2_8/examples.md. Keep the pinned M2.7
+manifest, hashes, archived fixtures and decoding policy unchanged when comparing.
 
-M2.6 remains the grammar stopping point: for/for-in, while, repeat, case, try/finally,
-try/except with handlers and simple raise. Class properties, richer types
-and generics remain opaque. Exact Delphi 12.3+ validation is still required;
-see M2_STATUS.md. Do not start another grammar milestone without authorization.
+Use Delphi 12.3-compatible pure RTL and DUnitX. Build all five projects with
+Win64/Debug, execute all three runners and verify fresh executable/corpus DCUs.
+Reopen the group after changing DPR/DPROJ files: a loaded IDE can retain stale
+project source. Delphi 12 CE Update 1 is available; it is not Delphi 12.3.

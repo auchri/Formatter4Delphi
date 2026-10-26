@@ -644,3 +644,122 @@ with/inline-variable grammar. Exact Delphi 12.3+, Release and other platforms
 remain unvalidated. Review assessment: this reported blocker is resolved with
 compiled regressions; ready for human review subject to the existing version
 validation gap. Keep PR #8 open, do not merge automatically, and stop here.
+
+## M2.8 directive-aware safe pilot — actual validation (2026-10-26)
+
+The separately authorized pilot is implemented in TDelphiParser, one appended
+SyntaxKind and the independent Coverage.Analysis consumer. Lexer, Reader,
+expression precedence, generic ambiguity and ownership are unchanged. Switches
+are explicit nodes; conditional procedure-declaration envelopes at UnitSection
+boundaries are complete opaque islands. Includes, unknown directives, incomplete
+branches and directives inside productions retain full-input protection.
+Class/member and statement-list conditional support is deliberately deferred.
+See [M2_8_DIRECTIVES.md](M2_8_DIRECTIVES.md) for the exact whitelist and proof.
+
+Final IDE **Build All Projects**, from the freshly reopened tracked
+DelphiFormatter.groupproj, **Win64/Debug**, completed successfully in **4.2 s**,
+with fresh artifacts at **2026-10-26 14:42:49–53 UTC**. Exact installed toolchain:
+**Delphi 12 Community Edition Update 1, 29.0.51961.7529**, not Delphi 12.3.
+The analyzer retains W1002 for platform-specific GetMemoryManagerState; existing
+H2443 inline-expansion hints and H2077 unused FileResult assignment also appeared.
+No compiler error was reported. The initial build exposed a reserved parameter
+name in new code, which was corrected before successful validation. A new comment
+fixture initially contained an extra closing brace and was corrected. Final runs
+below contain neither failure.
+
+| Executed fresh runner | Result | Exit |
+|---|---:|---:|
+| Lexer | 40/40 | 0 |
+| Parser (including eight new directive methods) | 128/128 | 0 |
+| Coverage (including protected-branch unit counting) | 18/18 | 0 |
+
+All runners reported zero ignored, failed, errored and leaked tests. New tests
+include 1,024 consecutive groups, nesting up to/over the 32-level guard, long
+contents, invalid UTF-16, deterministic malformed groups and repeated lifetimes.
+Every parser Parse helper frees the lexer before independent exact token order,
+kind/span, ownership/reachability, zero-width missing and serialization checks.
+DirectiveCorpus.pas is valid and compiled into the runner; its assertions verify
+one unit/class/field/routine, two switch nodes and two protected conditional
+regions. Both conditional choices contain actual valid Delphi declarations.
+
+The IDE's previously loaded project cached the old DPR and initially omitted the
+new fixture from compilation. That was detected by the absent DCU; reopening the
+tracked group rebuilt DirectiveCorpus and all previous corpora. The validated
+final runner is newer than every Pascal source under src/tests. No source files
+in the external corpus were modified or compiled.
+
+| Fresh artifact under build/Win64/Debug | Bytes | Last write UTC |
+|---|---:|---|
+| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-26 14:42:50 |
+| DelphiFormatter.Parser.Tests.exe | 4946944 | 2026-10-26 14:42:51 |
+| DelphiFormatter.Coverage.exe | 2354176 | 2026-10-26 14:42:52 |
+| DelphiFormatter.Coverage.Tests.exe | 5135360 | 2026-10-26 14:42:53 |
+| Tests/LexicalCorpus.dcu | 18130 | 2026-10-26 14:42:49 |
+| ParserTests/DirectiveCorpus.dcu | 2267 | 2026-10-26 14:42:51 |
+| ParserTests/DeclarationCorpus.dcu | 1983 | 2026-10-26 14:42:51 |
+| ParserTests/PostfixCorpus.dcu | 5705 | 2026-10-26 14:42:51 |
+| ParserTests/ClassRecordCorpus.dcu | 5901 | 2026-10-26 14:42:51 |
+| ParserTests/PropertyCorpus.dcu | 5977 | 2026-10-26 14:42:51 |
+| ParserTests/ControlFlowCorpus.dcu | 3013 | 2026-10-26 14:42:51 |
+
+SHA-256 values:
+
+- Lexer runner: E75AC595B06C16A3320C6F7AF046E530DFB4A47976D192E8FFB063B001734F0A
+- Parser runner: 78C5403D4F83D2CFD8EF402D2325600696EF17E6B38BF929BFE27592BD927556
+- Analyzer: F842E987B49763B13468327C440D5D043146C2E435515F647103EAB65462CC0C
+- Coverage runner: EA1315B28214B5FF28D232E93D1DB2CFB1DE29C5072A46838506046C4AB48774
+
+Pinned-corpus validation passed, including exact selection, strata, order,
+commits/hashes and repeatability. The final analyzer ran three repetitions with
+unchanged strict UTF-8/BOM policy: **154/160 external files** and **7/7 internal**
+analyzed; the same six encoding_ambiguous rows remain excluded. Exit **1** reflects
+those six input exclusions; zero exceptions, lossless violations or nondeterminism
+were observed. Schema/CSV/JSON/source-token partitions and weighted aggregate QA
+passed for all 167 rows. Analysis console file/directory/include/exclude and
+failure-exit checks passed. Git whitespace checks passed.
+
+| Same 154 successful external snapshots | M2.7 | M2.8 |
+|---|---:|---:|
+| Structured code coverage | 3.596240% | 3.827748% |
+| Opaque code coverage | 96.057847% | 95.644739% |
+| Complete directive fallbacks | 133 | 130 |
+| Structured code units | 141235 | 150327 |
+| Retained unit hierarchies | 21 (inferred) | 24 (direct count) |
+| Lexer diagnostics | 0 | 0 |
+| Parser errors | 372 | 616 |
+| Lossless / deterministic | 154/154 | 154/154 |
+
+This is **9,092 additional structured code units**, not merely new directive
+node kinds. Two external files gain recognized code; one further fallback removal
+exposes only errors. All conditional branches remain protected. No external
+conditional island meets the narrow pilot proof; one internal switch-only
+conditional island is recovered. The frozen internal LexicalCorpus separately
+gains 648 structured code units. Five improved locations across the two external
+files and seven remaining problem examples are documented; no claim of five
+improved files is made.
+
+The remaining 130 external full fallbacks have diagnostic-evidenced priority
+causes: **118 includes**, **6 unknown directives**, **6 unproven contexts**.
+No malformed conditional fallback was observed in this corpus; malformed cases
+are exercised by tests. Method/type/uses subcategories are only manually evidenced
+examples, not invented prevalence statistics. Newly exposed unsupported grammar
+produces 244 additional external parser errors (22/77/145 in the three changed
+external files), plus three internal errors; exact records are in the comparison.
+No new grammar was added to conceal those diagnostics.
+
+Full paired repository, runtime, error and encoding data:
+[comparison.md](../reports/m2_8/comparison.md),
+[examples.md](../reports/m2_8/examples.md),
+[diagnostic-changes.json](../reports/m2_8/diagnostic-changes.json).
+Logs remain under ignored build/M2.8.*. Existing Debug range/overflow checks and
+RTL shutdown leak reporting remain enabled. No separate heap profiler, Release,
+other platform, full upstream build or exact Delphi 12.3 validation is claimed.
+Next small task: validate this exact scope and all corpora on Delphi 12.3, then
+seek separate authorization before broadening directive contexts or grammar.
+Stop after M2.8.
+
+Repository-base verification: fetched origin/main **98fdb7e** (merge PR #9).
+The original local HEAD **5a08085** and this merged main have the identical tree
+**b73a67958c0bdfc5fe45d16e307b50e0a0dc8dad** (empty git diff). The implementation
+therefore uses the requested post-M2.7 source baseline. Working changes are on
+**codex/m2.8-directive-aware**, based on that main.

@@ -50,6 +50,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="..\Fixtures\DirectiveCorpus.pas"/>
         <DCCReference Include="..\Fixtures\DeclarationCorpus.pas"/>
         <DCCReference Include="Tests.Parser.Basics.pas"/>
         <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas"/>

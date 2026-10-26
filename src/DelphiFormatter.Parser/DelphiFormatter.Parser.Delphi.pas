@@ -9,6 +9,9 @@ uses
   DelphiFormatter.Parser.Reader;
 
 type
+  TDirectiveClass = (dcNone, dcUnknown, dcSwitch, dcOpen, dcBranch,
+    dcElse, dcClose, dcInclude, dcResource);
+
   TDelphiParser = class
   private
     FLex: TDelphiLexResult;
@@ -18,8 +21,19 @@ type
     FDepth: Integer;
     FRoutineBody: Boolean;
     FAllowDirective, FUnsafeDirective: Boolean;
+    FUnsafeDirectiveIndex: Integer;
     FInMember: Boolean;
     FGenericCallOpeners: TArray<Boolean>;
+    FDirectives: TArray<TDirectiveClass>;
+    FConditionalEnd: TArray<Integer>;
+    FConditionalNext: TArray<Integer>;
+    FConditionalSafe: TArray<Boolean>;
+    FConditionalSafeImplementation: TArray<Boolean>;
+    FDirectiveErrors: TArray<TDiagnostic>;
+    procedure IndexDirectives;
+    function ClassifyDirective(Index: Integer): TDirectiveClass;
+    function SafeConditional(Index: Integer; IsInterface: Boolean): Boolean;
+    function SectionDirective(IsInterface: Boolean): TSyntaxNode;
     function Node(Kind: TSyntaxKind; Children: TList<TSyntaxElement>): TSyntaxNode;
     procedure Take(Children: TList<TSyntaxElement>);
     procedure Report(const Code, Message: string);
@@ -101,6 +115,7 @@ begin
   inherited Create;
   FReader := TTokenReader.Create(ALex);
   FLex := ALex;
+  FUnsafeDirectiveIndex := -1;
   FArena := TObjectList<TSyntaxElement>.Create(True);
   FDiagnostics := TList<TDiagnostic>.Create;
   for I := 0 to ALex.DiagnosticCount - 1 do
@@ -130,7 +145,11 @@ end;
 procedure TDelphiParser.Take(Children: TList<TSyntaxElement>);
 begin
   if (FReader.PeekSignificant.Kind = tkCompilerDirective) and
-    not FAllowDirective then FUnsafeDirective := True;
+    not FAllowDirective then
+  begin
+    FUnsafeDirective := True;
+    if FUnsafeDirectiveIndex < 0 then FUnsafeDirectiveIndex := FReader.SignificantIndex;
+  end;
   FReader.ConsumeWithTriviaInto(Children, FArena);
 end;
 
@@ -150,7 +169,10 @@ var
   Leaf: TSyntaxToken;
 begin
   if FReader.PeekSignificant.Kind = tkCompilerDirective then
+  begin
     FUnsafeDirective := True;
+    if FUnsafeDirectiveIndex < 0 then FUnsafeDirectiveIndex := FReader.SignificantIndex;
+  end;
   Report('PAR001', 'Expected ' + Expected);
   // Anchor BEFORE pending trivia so sibling spans remain ordered.
   Leaf := TSyntaxToken.CreateMissing(Expected,
@@ -1878,6 +1900,224 @@ begin
   finally D.Free; C.Free; end;
 end;
 
+function TDelphiParser.ClassifyDirective(Index: Integer): TDirectiveClass;
+var S, Name: string; P, First, Last, Q: Integer;
+begin
+  Result := dcNone;
+  if FLex.GetToken(Index).Kind <> tkCompilerDirective then Exit;
+  Result := dcUnknown;
+  S := FLex.TokenText(Index);
+  Last := Length(S);
+  if Copy(S, 1, 2) = '{$' then
+  begin
+    if (Last < 4) or (S[Last] <> '}') then Exit;
+    P := 3; Dec(Last);
+  end
+  else if Copy(S, 1, 3) = '(*$' then
+  begin
+    if Copy(S, Last - 1, 2) <> '*)' then Exit;
+    P := 4; Dec(Last, 2);
+  end
+  else Exit;
+  while (P <= Last) and CharInSet(S[P], [' ', #9, #10, #13]) do Inc(P);
+  First := P;
+  while (P <= Last) and CharInSet(S[P], ['a'..'z', 'A'..'Z', '0'..'9', '_']) do Inc(P);
+  Name := UpperCase(Copy(S, First, P - First));
+  if Name = '' then Exit;
+  if (P <= Last) and not CharInSet(S[P], [' ', #9, #10, #13, '+', '-']) then Exit;
+  if (Length(Name) = 1) and (P <= Last) and CharInSet(S[P], ['+', '-']) then
+  begin
+    // A finite switch alphabet, including I/O and range checking, not files.
+    Q := First;
+    repeat
+      if (Q + 1 > Last) or
+        not CharInSet(UpCase(S[Q]), ['A'..'D', 'F'..'P', 'Q'..'Z']) or
+        not CharInSet(S[Q + 1], ['+', '-']) then Exit;
+      Inc(Q, 2);
+      if Q > Last then Break;
+      if S[Q] <> ',' then
+      begin
+        if CharInSet(S[Q], [' ', #9, #10, #13]) then Break;
+        Exit;
+      end;
+      Inc(Q);
+    until False;
+    Result := dcSwitch;
+    Exit;
+  end;
+  if (P <= Last) and CharInSet(S[P], ['+', '-']) then Exit;
+  if (Name = 'IFDEF') or (Name = 'IFNDEF') or (Name = 'IF') or
+    (Name = 'IFOPT') then Result := dcOpen
+  else if Name = 'ELSEIF' then Result := dcBranch
+  else if Name = 'ELSE' then Result := dcElse
+  else if (Name = 'ENDIF') or (Name = 'IFEND') then Result := dcClose
+  else if (Name = 'I') or (Name = 'INCLUDE') then Result := dcInclude
+  else if (Name = 'R') or (Name = 'RESOURCE') then Result := dcResource
+  else if (Name = 'DEFINE') or (Name = 'UNDEF') or (Name = 'WARN') or
+    (Name = 'HINTS') or (Name = 'WARNINGS') or (Name = 'RANGECHECKS') or
+    (Name = 'OVERFLOWCHECKS') or (Name = 'ASSERTIONS') or
+    (Name = 'OPTIMIZATION') or (Name = 'INLINE') or (Name = 'ALIGN') or
+    (Name = 'IOCHECKS') or (Name = 'LONGSTRINGS') or
+    (Name = 'BOOLEVAL') or (Name = 'STACKFRAMES') or
+    (Name = 'SCOPEDENUMS') then Result := dcSwitch;
+end;
+
+procedure TDelphiParser.IndexDirectives;
+type
+  TFrame = record
+    Opener, LastBoundary, InterfaceState, ImplementationState: Integer;
+    InterfaceOK, ImplementationOK, SeenElse: Boolean;
+  end;
+var
+  Stack: TArray<TFrame>; Depth, I, J: Integer; K: TDirectiveClass;
+  Errors: TList<TDiagnostic>; S: string;
+  procedure Error(Index: Integer; const Message: string);
+  begin
+    Errors.Add(TDiagnostic.Create('PAR005', Message, dsError,
+      FLex.GetToken(Index).Span));
+  end;
+  procedure Step(var State: Integer; InImplementation: Boolean);
+  begin
+    case State of
+      0: if (FLex.GetToken(I).Kind = tkReservedWord) and (S = 'procedure') then
+           State := 1 else State := -1;
+      1: if FLex.GetToken(I).Kind = tkIdentifier then State := 2 else State := -1;
+      2: if S = ';' then
+           begin if InImplementation then State := 3 else State := 0; end
+         else State := -1;
+      3: if S = 'begin' then State := 4 else State := -1;
+      4: if S = 'end' then State := 5 else State := -1;
+      5: if S = ';' then State := 0 else State := -1;
+    end;
+  end;
+begin
+  SetLength(FDirectives, FLex.TokenCount);
+  SetLength(FConditionalEnd, FLex.TokenCount);
+  SetLength(FConditionalNext, FLex.TokenCount);
+  SetLength(FConditionalSafe, FLex.TokenCount);
+  SetLength(FConditionalSafeImplementation, FLex.TokenCount);
+  SetLength(Stack, 32);
+  Errors := TList<TDiagnostic>.Create;
+  try
+    Depth := 0;
+    for I := 0 to FLex.TokenCount - 1 do
+    begin
+      FConditionalEnd[I] := -1;
+      FConditionalNext[I] := -1;
+      K := ClassifyDirective(I);
+      FDirectives[I] := K;
+      case K of
+        dcOpen:
+          begin
+            if Depth = Length(Stack) then SetLength(Stack, Depth * 2);
+            Stack[Depth].Opener := I;
+            Stack[Depth].LastBoundary := I;
+            Stack[Depth].InterfaceState := 0;
+            Stack[Depth].ImplementationState := 0;
+            Stack[Depth].InterfaceOK := True;
+            Stack[Depth].ImplementationOK := True;
+            Stack[Depth].SeenElse := False;
+            Inc(Depth);
+            if Depth = 33 then Error(I, 'Conditional nesting exceeds 32 levels');
+          end;
+        dcBranch, dcElse:
+          if Depth = 0 then Error(I, 'Conditional branch without opener')
+          else
+          begin
+            J := Depth - 1;
+            FConditionalNext[Stack[J].LastBoundary] := I;
+            Stack[J].LastBoundary := I;
+            if Stack[J].SeenElse then Error(I, 'Conditional branch after ELSE');
+            Stack[J].SeenElse := Stack[J].SeenElse or (K = dcElse);
+            Stack[J].InterfaceOK := Stack[J].InterfaceOK and
+              (Stack[J].InterfaceState = 0);
+            Stack[J].ImplementationOK := Stack[J].ImplementationOK and
+              (Stack[J].ImplementationState = 0);
+            Stack[J].InterfaceState := 0;
+            Stack[J].ImplementationState := 0;
+          end;
+        dcClose:
+          if Depth = 0 then Error(I, 'Conditional closer without opener')
+          else
+          begin
+            Dec(Depth); J := Stack[Depth].Opener;
+            FConditionalNext[Stack[Depth].LastBoundary] := I;
+            FConditionalEnd[J] := I;
+            FConditionalSafe[J] := Stack[Depth].InterfaceOK and
+              (Stack[Depth].InterfaceState = 0);
+            FConditionalSafeImplementation[J] := Stack[Depth].ImplementationOK and
+              (Stack[Depth].ImplementationState = 0);
+            if Depth > 0 then
+            begin
+              Stack[Depth - 1].InterfaceOK := Stack[Depth - 1].InterfaceOK and
+                FConditionalSafe[J] and (Stack[Depth - 1].InterfaceState = 0);
+              Stack[Depth - 1].ImplementationOK := Stack[Depth - 1].ImplementationOK and
+                FConditionalSafeImplementation[J] and
+                (Stack[Depth - 1].ImplementationState = 0);
+            end;
+          end;
+      else
+        if Depth > 0 then
+        begin
+          J := Depth - 1;
+          if K in [dcSwitch, dcResource] then
+          begin
+            Stack[J].InterfaceOK := Stack[J].InterfaceOK and (Stack[J].InterfaceState = 0);
+            Stack[J].ImplementationOK := Stack[J].ImplementationOK and
+              (Stack[J].ImplementationState = 0);
+          end
+          else if not TTokenReader.IsTrivia(FLex.GetToken(I).Kind) then
+          begin
+            S := LowerCase(FLex.TokenText(I));
+            Step(Stack[J].InterfaceState, False);
+            Step(Stack[J].ImplementationState, True);
+          end;
+        end;
+      end;
+    end;
+    for I := 0 to Depth - 1 do Error(Stack[I].Opener, 'Missing conditional closer');
+    FDirectiveErrors := Errors.ToArray;
+  finally Errors.Free; end;
+end;
+
+function TDelphiParser.SafeConditional(Index: Integer; IsInterface: Boolean): Boolean;
+begin
+  if IsInterface then Result := FConditionalSafe[Index]
+  else Result := FConditionalSafeImplementation[Index];
+end;
+
+function TDelphiParser.SectionDirective(IsInterface: Boolean): TSyntaxNode;
+var C: TList<TSyntaxElement>; Index, Last: Integer; Protected: TSyntaxNode;
+begin
+  Result := nil;
+  Index := FReader.SignificantIndex;
+  if (FDirectives[Index] = dcResource) and not ResourceDirective(Index) then Exit;
+  if FDirectives[Index] = dcOpen then
+  begin
+    if not SafeConditional(Index, IsInterface) then Exit;
+    Last := FConditionalEnd[Index];
+    if Last < Index then Exit;
+  end
+  else if FDirectives[Index] in [dcSwitch, dcResource] then Last := Index
+  else Exit;
+  C := TList<TSyntaxElement>.Create;
+  try
+    FAllowDirective := True;
+    try
+      repeat Take(C); until FReader.Position > Last;
+    finally FAllowDirective := False; end;
+    // Keep every branch opaque, including nested groups. No branch selection.
+    if FDirectives[Index] = dcOpen then
+    begin
+      Protected := Node(skOpaqueRegion, C);
+      C.Clear;
+      C.Add(Protected);
+      Result := Node(skConditionalDirectiveRegion, C);
+    end
+    else Result := Node(skDirective, C);
+  finally C.Free; end;
+end;
+
 function TDelphiParser.ResourceDirective(Index: Integer): Boolean;
 var S: string; I, P: Integer; Span: TSourceSpan;
 begin
@@ -1918,10 +2158,12 @@ end;
 
 procedure TDelphiParser.UnitSection(Children: TList<TSyntaxElement>;
   IsInterface: Boolean);
-var C: TList<TSyntaxElement>; Before: Integer;
+var C: TList<TSyntaxElement>; Before: Integer; Directive: TSyntaxNode;
+  SafeBoundary: Boolean;
 begin
   C := TList<TSyntaxElement>.Create;
   try
+    SafeBoundary := True;
     while not SectionEnd do
     begin
       Before := FReader.Position;
@@ -1930,16 +2172,18 @@ begin
         Children.Add(DeclarationSection(FReader.Matches('const')))
       else if FReader.Matches('type') then Children.Add(TypeSection)
       else if MethodStart then Children.Add(Routine(IsInterface))
-      else if (FReader.PeekSignificant.Kind = tkCompilerDirective) and
-        ResourceDirective(FReader.SignificantIndex) then
+      else if FReader.PeekSignificant.Kind = tkCompilerDirective then
       begin
-        C.Clear;
-        FAllowDirective := True;
-        try Take(C);
-        finally FAllowDirective := False; end;
-        Children.Add(Node(skDirective, C));
+        if not SafeBoundary then FUnsafeDirective := True;
+        Directive := SectionDirective(IsInterface);
+        if Directive <> nil then Children.Add(Directive)
+        else begin FUnsafeDirective := True; Children.Add(OpaqueDeclaration); end;
       end
-      else Children.Add(OpaqueDeclaration);
+      else
+      begin
+        SafeBoundary := False;
+        Children.Add(OpaqueDeclaration);
+      end;
       if FReader.Position = Before then
       begin
         C.Clear;
@@ -1964,6 +2208,8 @@ begin
       Identifier(Children);
     end;
     Expect(Children, ';');
+    while FDirectives[FReader.SignificantIndex] = dcSwitch do
+      Children.Add(SectionDirective(True));
     Expect(Children, 'interface');
     UnitSection(Children, True);
     Expect(Children, 'implementation');
@@ -1981,29 +2227,67 @@ var
   Children, Tail: TList<TSyntaxElement>;
   Root: TSyntaxNode;
   I: Integer;
-  HasDirective: Boolean;
+  HasDirective, ContainsDirective: Boolean;
+  FailureIndex: Integer;
+  FailureMessage: string;
 begin
   Children := TList<TSyntaxElement>.Create;
   Tail := TList<TSyntaxElement>.Create;
   try
-    HasDirective := False;
+    IndexDirectives;
+    HasDirective := Length(FDirectiveErrors) > 0;
+    ContainsDirective := False;
+    FailureIndex := -1;
+    FailureMessage := 'Directive-bearing input preserved as opaque';
     for I := 0 to FLex.TokenCount - 1 do
-      if (FLex.GetToken(I).Kind = tkCompilerDirective) and
-        ((RootKind <> skCompilationUnit) or not ResourceDirective(I)) then
-        HasDirective := True;
+      if FLex.GetToken(I).Kind = tkCompilerDirective then
+      begin
+        ContainsDirective := True;
+        if (RootKind <> skCompilationUnit) or
+          (FDirectives[I] in [dcUnknown, dcInclude]) then HasDirective := True;
+        if (FDirectives[I] = dcInclude) and
+          ((FailureIndex < 0) or (FDirectives[FailureIndex] <> dcInclude)) then
+        begin
+          FailureIndex := I;
+          FailureMessage := 'Include directive requires unresolved source expansion';
+        end
+        else if (FDirectives[I] = dcUnknown) and (FailureIndex < 0) then
+        begin
+          FailureIndex := I;
+          FailureMessage := 'Unknown compiler directive preserved as opaque';
+        end;
+      end;
+    for I := 0 to High(FDirectiveErrors) do FDiagnostics.Add(FDirectiveErrors[I]);
     if HasDirective then
-      Report('PAR003', 'Directive-bearing input preserved as opaque')
+    begin
+      if Length(FDirectiveErrors) > 0 then
+        FailureMessage := 'Malformed conditional structure preserved as opaque';
+      if FailureIndex >= 0 then
+        FDiagnostics.Add(TDiagnostic.Create('PAR003', FailureMessage, dsWarning,
+          FLex.GetToken(FailureIndex).Span))
+      else Report('PAR003', FailureMessage);
+    end
     else if RootKind = skExpressionRoot then Children.Add(Expression)
     else if RootKind = skStatementRoot then
     begin
       Children.Add(Statement);
       if FReader.Matches(';') then Take(Children);
     end
-    else if FReader.Matches('unit') then Children.Add(UnitDeclaration)
-    else Report('PAR003', 'Unsupported compilation unit preserved as opaque');
+    else
+    begin
+      while FDirectives[FReader.SignificantIndex] = dcSwitch do
+        Children.Add(SectionDirective(True));
+      if FReader.Matches('unit') then Children.Add(UnitDeclaration)
+      else
+      begin
+        FUnsafeDirective := Children.Count > 0;
+        HasDirective := ContainsDirective;
+        Report('PAR003', 'Unsupported compilation unit preserved as opaque');
+      end;
+    end;
     if FUnsafeDirective then
     begin
-      // A resource directive away from a supported section boundary is unsafe.
+      // Any directive away from a proven section boundary is unsafe.
       // Discard construction state and preserve the complete input explicitly.
       Children.Clear;
       FArena.Clear;
@@ -2012,7 +2296,12 @@ begin
       FDiagnostics.Clear;
       for I := 0 to FLex.DiagnosticCount - 1 do
         FDiagnostics.Add(FLex.GetDiagnostic(I));
-      Report('PAR003', 'Directive outside a safe section boundary');
+      for I := 0 to High(FDirectiveErrors) do FDiagnostics.Add(FDirectiveErrors[I]);
+      if FUnsafeDirectiveIndex >= 0 then
+        FDiagnostics.Add(TDiagnostic.Create('PAR003',
+          'Directive outside a safe section boundary', dsWarning,
+          FLex.GetToken(FUnsafeDirectiveIndex).Span))
+      else Report('PAR003', 'Directive outside a safe section boundary');
       HasDirective := True;
     end;
     if not FReader.AtEOF then

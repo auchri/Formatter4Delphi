@@ -1,0 +1,1763 @@
+[
+  {
+    "path": "build/coverage-corpora/DelphiMVCFramework/sources/MSHeap.pas",
+    "before": 0,
+    "after": 22,
+    "added": [
+      {
+        "code": "PAR001",
+        "message": "Expected begin",
+        "severity": "dsError",
+        "start": 2571,
+        "length": 6
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 2580,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected begin",
+        "severity": "dsError",
+        "start": 2683,
+        "length": 6
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 2724,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected begin",
+        "severity": "dsError",
+        "start": 3069,
+        "length": 6
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 3078,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected begin",
+        "severity": "dsError",
+        "start": 3738,
+        "length": 6
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 3747,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 4095,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected =",
+        "severity": "dsError",
+        "start": 4130,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected expression",
+        "severity": "dsError",
+        "start": 4130,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected =",
+        "severity": "dsError",
+        "start": 4160,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected expression",
+        "severity": "dsError",
+        "start": 4160,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected =",
+        "severity": "dsError",
+        "start": 4186,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected expression",
+        "severity": "dsError",
+        "start": 4186,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected =",
+        "severity": "dsError",
+        "start": 4248,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected expression",
+        "severity": "dsError",
+        "start": 4248,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected =",
+        "severity": "dsError",
+        "start": 4318,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected expression",
+        "severity": "dsError",
+        "start": 4318,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected .",
+        "severity": "dsError",
+        "start": 4324,
+        "length": 14
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 4324,
+        "length": 14
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected trailing source",
+        "severity": "dsError",
+        "start": 4324,
+        "length": 14
+      }
+    ],
+    "removed": []
+  },
+  {
+    "path": "build/coverage-corpora/DelphiMVCFramework/sources/MVCFramework.ActiveRecordController.pas",
+    "before": 0,
+    "after": 77,
+    "added": [
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 7795,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 7796,
+        "length": 8
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 7804,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 7804,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 7804,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 7804,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 7805,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 7805,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 9331,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 9332,
+        "length": 10
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9342,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9342,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 9342,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9343,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 9343,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 9909,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 9910,
+        "length": 11
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9921,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9921,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in statement list",
+        "severity": "dsError",
+        "start": 9921,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9922,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in statement list",
+        "severity": "dsError",
+        "start": 9922,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9947,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 9947,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in statement list",
+        "severity": "dsError",
+        "start": 9947,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected expression",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected finally or except",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected finally or except",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected finally or except",
+        "severity": "dsError",
+        "start": 10232,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected identifier",
+        "severity": "dsError",
+        "start": 10241,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 10303,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 10617,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 12490,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 12491,
+        "length": 10
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12501,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12501,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12501,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12502,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12502,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 15439,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 15440,
+        "length": 10
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 15450,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 15450,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 15450,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 15451,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 15451,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Expected assignment or call",
+        "severity": "dsError",
+        "start": 15783,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 16997,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 16998,
+        "length": 10
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 17008,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 17008,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 17008,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 17009,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 17009,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 17507,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 17508,
+        "length": 10
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 17518,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 17518,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in statement list",
+        "severity": "dsError",
+        "start": 17518,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 17519,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in statement list",
+        "severity": "dsError",
+        "start": 17519,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Expected assignment or call",
+        "severity": "dsError",
+        "start": 17573,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 18853,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 18854,
+        "length": 10
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 18864,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 18864,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 18864,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 18865,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 18865,
+        "length": 1
+      }
+    ],
+    "removed": []
+  },
+  {
+    "path": "build/coverage-corpora/DelphiMVCFramework/sources/MVCFramework.DotEnv.Parser.pas",
+    "before": 0,
+    "after": 145,
+    "added": [
+      {
+        "code": "PAR001",
+        "message": "Expected =",
+        "severity": "dsError",
+        "start": 3152,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected identifier",
+        "severity": "dsError",
+        "start": 3152,
+        "length": 5
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 3152,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ]",
+        "severity": "dsError",
+        "start": 3183,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 3926,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 3927,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3932,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3932,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 3932,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3948,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3948,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 3948,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3964,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3964,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 3964,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3971,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3971,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 3971,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 3972,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 3972,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Else cannot follow a statement separator",
+        "severity": "dsError",
+        "start": 3979,
+        "length": 4
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 4059,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 4060,
+        "length": 5
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4065,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4065,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4065,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4081,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4081,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4081,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4088,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4088,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4088,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4089,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4089,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 4416,
+        "length": 6
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 4527,
+        "length": 6
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 4807,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 4808,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected do",
+        "severity": "dsError",
+        "start": 4808,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4811,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4811,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4811,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4816,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4816,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4816,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4817,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4817,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 4819,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 4819,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 5135,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 5136,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected do",
+        "severity": "dsError",
+        "start": 5136,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5139,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5139,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5139,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5143,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5143,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5143,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5144,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5144,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5146,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5146,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 5307,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 5308,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected do",
+        "severity": "dsError",
+        "start": 5308,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5311,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5311,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5311,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5316,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5316,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5316,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5320,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5320,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5320,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5321,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5321,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 5323,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 5323,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 6200,
+        "length": 6
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 6961,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 6962,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected then",
+        "severity": "dsError",
+        "start": 6962,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 6965,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 6965,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 6965,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 6970,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 6970,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 6970,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 6971,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 6971,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 6973,
+        "length": 4
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 6973,
+        "length": 4
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 7072,
+        "length": 4
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 7072,
+        "length": 4
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 7072,
+        "length": 4
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 7990,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 8035,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected begin",
+        "severity": "dsError",
+        "start": 8490,
+        "length": 9
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected end",
+        "severity": "dsError",
+        "start": 8490,
+        "length": 9
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 8714,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 8715,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 8715,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected do",
+        "severity": "dsError",
+        "start": 8715,
+        "length": 3
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8718,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8718,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 8718,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8723,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8723,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 8723,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8724,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 8724,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8725,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 8725,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 8727,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 8727,
+        "length": 2
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 11291,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 11292,
+        "length": 4
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11296,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11296,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 11296,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11307,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11307,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 11307,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11317,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11317,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 11317,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 11318,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 11318,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 12237,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 12238,
+        "length": 8
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12246,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12246,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12246,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12247,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12247,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 12491,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected )",
+        "severity": "dsError",
+        "start": 12492,
+        "length": 8
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12500,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12500,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12500,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12511,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12511,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12511,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected ;",
+        "severity": "dsError",
+        "start": 12512,
+        "length": 1
+      },
+      {
+        "code": "PAR002",
+        "message": "Unexpected token in block",
+        "severity": "dsError",
+        "start": 12512,
+        "length": 1
+      }
+    ],
+    "removed": []
+  },
+  {
+    "path": "build/coverage-corpora/Formatter4Delphi/tests/Fixtures/LexicalCorpus.pas",
+    "before": 0,
+    "after": 3,
+    "added": [
+      {
+        "code": "PAR002",
+        "message": "Unexpected expression token",
+        "severity": "dsError",
+        "start": 1083,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected :",
+        "severity": "dsError",
+        "start": 1194,
+        "length": 1
+      },
+      {
+        "code": "PAR001",
+        "message": "Expected identifier",
+        "severity": "dsError",
+        "start": 1194,
+        "length": 1
+      }
+    ],
+    "removed": []
+  }
+]

@@ -11,6 +11,7 @@ type
     [Test] procedure StructuredManualCounts;
     [Test] procedure PartialOpaque;
     [Test] procedure DirectiveFallback;
+    [Test] procedure ProtectedConditionalCoverage;
     [Test] procedure MissingTokens;
     [Test] procedure NestedOpaquePartition;
     [Test] procedure ErrorWinsOverOpaque;
@@ -61,6 +62,22 @@ begin
   finally R.Free; end;
 end;
 
+procedure TCoverageTests.ProtectedConditionalCoverage;
+var R: TJSONObject;
+begin
+  R := AnalyzeSource('unit U; interface {$IFDEF X} procedure A; {$ELSE}' +
+    'procedure B; {$ENDIF} procedure C; implementation end.');
+  try
+    Assert.IsFalse(R.GetValue<Boolean>('directiveFallback'));
+    Assert.AreEqual(1, R.GetValue<Integer>('structuredUnitDeclarations'));
+    Assert.AreEqual(1, R.GetValue<Integer>('protectedConditionalRegions'));
+    // Two unknown branches are protected: procedure(9), name(1), semicolon(1).
+    Assert.AreEqual(22, R.GetValue<Integer>('opaqueCodeUnits'));
+    Assert.AreEqual(44, R.GetValue<Integer>('structuredCodeUnits'));
+    Assert.AreEqual(0, R.GetValue<Integer>('errorCodeUnits'));
+    Assert.IsTrue(R.GetValue<Boolean>('lossless'));
+  finally R.Free; end;
+end;
 procedure TCoverageTests.DirectiveFallback;
 var R: TJSONObject;
 begin

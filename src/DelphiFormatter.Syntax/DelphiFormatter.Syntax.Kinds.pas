@@ -18,7 +18,8 @@ type
     skPropertyDeclaration, skPropertyIndexParameters, skPropertySpecifier,
     skForStatement, skForInStatement, skWhileStatement, skRepeatStatement,
     skCaseStatement, skCaseBranch, skTryFinallyStatement, skTryExceptStatement,
-    skExceptionHandler, skRaiseStatement, skStatementList);
+    skExceptionHandler, skRaiseStatement, skStatementList,
+    skConditionalDirectiveRegion);
 
 implementation
 

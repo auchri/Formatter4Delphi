@@ -62,7 +62,8 @@ var
   I, J, NextToken, Offset, PreviousEnd, Category, Nodes, OpaqueCount,
     Errors, Missing, TriviaTokens, CodeTokens, DirectiveTokens,
     Line, Column, Posn, LexDiagnostics, ParserDiagnostics, ParserErrors: Integer;
-  TriviaUnits, DirectiveUnits: Int64;
+  TriviaUnits, DirectiveUnits, ProtectedConditionalUnits: Int64;
+  ProtectedConditionals, StructuredUnits: Integer;
   Regions, Diagnostics, Codes, TokenCategories: TJSONArray;
   Region, Diagnostic, TokenRun: TJSONObject;
   RunCategory, RunCount: Integer;
@@ -89,6 +90,7 @@ begin
     NextToken := 0; Offset := 0; Nodes := 0; OpaqueCount := 0;
     Errors := 0; Missing := 0; TriviaTokens := 0; CodeTokens := 0;
     DirectiveTokens := 0; TriviaUnits := 0; DirectiveUnits := 0;
+    ProtectedConditionalUnits := 0; ProtectedConditionals := 0; StructuredUnits := 0;
     HasDirectives := False; CompleteOpaque := False;
     LexDiagnostics := Lex.DiagnosticCount; ParserDiagnostics := 0; ParserErrors := 0;
     LineStarts.Add(0); Posn := 1;
@@ -154,10 +156,17 @@ begin
         (Element.Span.EndOffset <= Length(Source)), 'element span');
       Category := Frame.Category;
       if Element.Kind = skError then Category := 2
-      else if (Element.Kind = skOpaqueRegion) and (Category < 1) then Category := 1;
+      else if (Element.Kind in [skOpaqueRegion, skConditionalDirectiveRegion]) and
+        (Category < 1) then Category := 1;
       if Element is TSyntaxNode then
       begin
         Node := TSyntaxNode(Element); Inc(Nodes);
+        if Node.Kind = skUnitDeclaration then Inc(StructuredUnits);
+        if Node.Kind = skConditionalDirectiveRegion then
+        begin
+          Inc(ProtectedConditionals);
+          Inc(ProtectedConditionalUnits, Node.Span.Length);
+        end;
         if Node.Kind = skError then Inc(Errors);
         // A missing/error descendant taints this immediate node's other leaves.
         // Propagation upwards would mark the entire document unsafe and hide useful structure.
@@ -189,6 +198,7 @@ begin
           Region.AddPair('snippet', Copy(Source, Node.Span.StartOffset + 1, 160));
           // Context is evidence; isolated keyword occurrences are not.
           Reason := 'unknown';
+          if Frame.Parent = skConditionalDirectiveRegion then Reason := 'protected-conditional';
           if Frame.Parent = skMethodDeclaration then Reason := 'method-directives'
           else if Frame.Parent = skTypeDeclaration then Reason := 'unsupported-type'
           else if Frame.Parent in [skBlockStatement, skStatementList] then Reason := 'unsupported-statement';
@@ -301,6 +311,9 @@ begin
       Result.AddPair(Names[I] + 'IncludingTriviaPercent', Percentage(Counts[I], Length(Source)));
     end;
     Result.AddPair('nodes', TJSONNumber.Create(Nodes));
+    Result.AddPair('structuredUnitDeclarations', TJSONNumber.Create(StructuredUnits));
+    Result.AddPair('protectedConditionalRegions', TJSONNumber.Create(ProtectedConditionals));
+    Result.AddPair('protectedConditionalUnits', TJSONNumber.Create(ProtectedConditionalUnits));
     Result.AddPair('opaqueNodes', TJSONNumber.Create(OpaqueCount));
     Result.AddPair('errorNodes', TJSONNumber.Create(Errors));
     Result.AddPair('missingTokens', TJSONNumber.Create(Missing));
