@@ -181,9 +181,37 @@ freeing the lexer. Enum ordinals are explicitly pinned.
 
 `PostfixCorpus.pas` must appear in the runner DPR and DPROJ and produce a fresh
 `PostfixCorpus.dcu`; add the unit through the IDE if an already loaded project
-still uses its previous DPR buffer. Its classes/records/array/pointer type
-section stays opaque while all five routine bodies are structured. The fixture
+still uses its previous DPR buffer. In M2.4 its class/record types and all five routine bodies are structured;
+array/pointer aliases and complex field types remain opaque. The fixture
 contains ordinary and keyword/escaped member names, multi-index and alternative
 brackets, `P^`, `PP^^`, method calls and assignments. It is compiled, not executed
 with fabricated object/pointer values. Actual results and artifact freshness are
 recorded only in `M2_STATUS.md`.
+
+## M2.4 additions
+
+Sixteen new test methods bring the parser suite to 84. Table cases cover empty
+and multiple aggregates, mixed unsupported aliases, procedural signatures of
+object, generic constraints/ancestors, multiple type sections around const/var/
+routines, all visibility forms, grouped/qualified fields, record methods,
+constructors/destructors and their implementation bodies. Directives assert
+exact trailing opaque spans; properties assert a single complete opaque span
+and following structured fields/methods, including default-property markers.
+
+Recovery covers missing field/header/end punctuation, incomplete ancestors,
+invalid fields, nested anonymous records, variant parts, nested types, class
+member prefixes, helpers/interfaces/forward/class-of/generic types and safe
+continuation. Provisorily parsed keywords in opaque type syntax must never
+become fabricated methods. Historical opaque-section expectations are updated
+only where M2.4 adds structure. Eight enum ordinals are appended; old pins remain.
+
+400 seeded malformed type/member sequences are parsed twice, comparing shape
+and complete diagnostic code/message/spans. 300 repeated malformed UTF-16
+aggregate lifetimes exercise ownership. Every case invokes the existing exact
+leaf sequence, unique reachability, span/zero-width and post-lexer-disposal
+serialization checks. The 40 lexer tests are unchanged.
+
+ClassRecordCorpus.pas is referenced by DPR/DPROJ, compiled into the runner,
+and parsed as UTF-8 with counts for type wrappers, aggregates, fields, methods
+and seven real implementation bodies. Require its fresh DCU as build evidence.
+Actual execution results and compiler identity are recorded in M2_STATUS.md.

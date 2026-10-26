@@ -156,3 +156,33 @@ rejects `Customer.Property` with E2029, so the compiled corpus uses
 compiler observation does not establish a 12.3 language-rule deviation.
 Paired/mixed bracket spellings are also exercised by the corpus. Exact build
 evidence is in `M2_STATUS.md`.
+
+## M2.4 type/member boundaries (2026-10-26)
+
+TypeSection uses individual TypeDeclaration wrappers even for opaque types,
+so an alias cannot absorb the next supported aggregate. AggregateDeclaration
+shares class/record member dispatch without recursion into unsupported nested
+types. Explicit visibility owns its members; default visibility is represented
+by direct children, without inferring semantics. AncestorList is the eighth
+appended kind. No other public API or arena/Reader/lexer changes are needed.
+
+RoutineHeader is factored from Routine and reused by MethodDeclaration. Common
+method directives are a finite opaque tail, including every semicolon; arbitrary
+identifiers are not treated as directives because they may start fields.
+Constructors/destructors share the existing routine machinery for their simple
+qualified implementations; this is the minimal support needed by the corpus.
+No inherited/operator/new statement grammar was added.
+
+Opaque recovery tracks block, bracket/parenthesis and generic angle depth.
+Class-of, forward classes, class member prefixes and procedural of-object
+signatures do not open blocks. Angle constraints do not open class/record
+blocks. Nested records inside variant parentheses do open blocks. Generic
+ancestors stay opaque as a complete RHS. Properties scan their entire balanced
+member and optional default/nodefault marker, without dispatching their internal
+keywords as methods. Unbalanced properties/types may preserve a larger region.
+Nested type sections and variant tails stay opaque to the enclosing end; no
+false structure is invented for those members. Hard unit boundaries terminate
+even unfinished recovery. Existing directive fallback remains unchanged.
+
+No Delphi 12.3 language-rule deviation was established. Execution uses the
+available Delphi 12 CE Update 1; see M2_STATUS.md for evidence.

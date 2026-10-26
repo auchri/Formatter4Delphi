@@ -12,7 +12,9 @@ type
     skConstSection, skConstDeclaration, skVarSection, skVarDeclaration,
     skTypeReference, skRoutineDeclaration, skRoutineHeader, skParameterList,
     skParameterDeclaration, skReturnType, skDirective,
-    skMemberAccessExpression, skIndexExpression, skDereferenceExpression);
+    skMemberAccessExpression, skIndexExpression, skDereferenceExpression,
+    skTypeSection, skTypeDeclaration, skClassDeclaration, skRecordDeclaration,
+    skVisibilitySection, skFieldDeclaration, skMethodDeclaration, skAncestorList);
 
 implementation
 

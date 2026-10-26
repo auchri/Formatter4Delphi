@@ -84,6 +84,25 @@ type
     [Test] procedure PostfixLifetimes;
     [Test] procedure CompiledPostfixCorpus;
     [Test] procedure SyntaxKindOrdinals;
+    [Test] procedure TypeSectionHierarchy;
+    [Test] procedure MixedTypeDeclarations;
+    [Test] procedure MultipleTypeSections;
+    [Test] procedure ClassAncestors;
+    [Test] procedure ClassVisibility;
+    [Test] procedure AggregateFields;
+    [Test] procedure AggregateMethods;
+    [Test] procedure MethodDirectives;
+    [Test] procedure OpaqueProperties;
+    [Test] procedure UnsupportedAggregates;
+    [Test] procedure AggregateRecovery;
+    [Test] procedure AggregateDeterminism;
+    [Test] procedure AggregateLifetimes;
+    [Test] procedure CompiledClassRecordCorpus;
+    [Test] procedure OpaqueMemberTypeKeywords;
+    [Test] procedure NestedOpaqueTypeBoundaries;
+    [Test] procedure LongFieldLookahead;
+    [Test] procedure LongAncestorLookahead;
+    [Test] procedure TypeLookaheadRecovery;
 
 
   end;
@@ -444,7 +463,8 @@ var T: TSyntaxTree;
 begin
   T := Parse('unit X; interface type T = class end; implementation procedure F; begin end; end. trailing');
   try
-    Assert.AreEqual(2, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
     Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
     Assert.AreEqual(1, Count(T.Root, skBlockStatement));
   finally T.Free; end;
@@ -1396,9 +1416,11 @@ begin
     Assert.IsTrue(Count(T.Root, skDereferenceExpression) >= 5);
     Assert.IsTrue(Count(T.Root, skAssignmentStatement) >= 15);
     Assert.AreEqual(1, Count(T.Root, skIfStatement));
-    // Only the intentionally unsupported type section is opaque.
-    Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
-    Assert.AreEqual(1, T.DiagnosticCount);
+    // Pointer/array aliases and the complex array field type remain opaque.
+    Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skRecordDeclaration));
+    Assert.AreEqual(4, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(4, T.DiagnosticCount);
     Assert.AreEqual('PAR003', T.GetDiagnostic(0).Code);
   finally T.Free; end;
 end;
@@ -1410,6 +1432,500 @@ begin
   Assert.AreEqual(31, Ord(skMemberAccessExpression));
   Assert.AreEqual(32, Ord(skIndexExpression));
   Assert.AreEqual(33, Ord(skDereferenceExpression));
+end;
+
+procedure TParserTests.TypeSectionHierarchy;
+var T: TSyntaxTree; S, D: TSyntaxNode;
+begin
+  T := Parse('unit X; interface type A=class end; B=record end; '+
+    'C=class end; implementation end.');
+  try
+    S := Child(Child(T.Root, 0), 0);
+    Assert.AreEqual(Integer(skTypeSection), Integer(S.Kind));
+    Assert.AreEqual(3, Count(S, skTypeDeclaration));
+    D := Child(S, 0);
+    Assert.AreEqual(Integer(skTypeDeclaration), Integer(D.Kind));
+    Assert.AreEqual(Integer(skClassDeclaration), Integer(Child(D, 0).Kind));
+    Assert.AreEqual(2, Count(S, skClassDeclaration));
+    Assert.AreEqual(1, Count(S, skRecordDeclaration));
+    Assert.AreEqual(0, T.DiagnosticCount);
+    Assert.AreEqual(34, Ord(skTypeSection));
+    Assert.AreEqual(41, Ord(skAncestorList));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.MixedTypeDeclarations;
+const Aliases: array[0..8] of string = ('A=Integer;', 'A=^B;',
+  'A=array of Integer;', 'A=(New, Active, Closed);', 'A=set of Byte;',
+  'A=TList<string>;', 'A=procedure(X: Integer; Y: string);',
+  'A=function(X: Integer): Integer of object;', 'A=reference to procedure;');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Aliases do
+  begin
+    T := Parse('unit X; interface type '+S+' B=class end; C=record X: Integer; end; '+
+      'implementation end.');
+    try
+      Assert.AreEqual(3, Count(T.Root, skTypeDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skClassDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skRecordDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion), S);
+      Assert.AreEqual(0, Count(T.Root, skRoutineDeclaration), S);
+      Assert.AreEqual('PAR003', T.GetDiagnostic(0).Code);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.MultipleTypeSections;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface const C=1; type A=class end; '+
+    'var V: Integer; type B=record end; procedure P; '+
+    'implementation type D=class end; procedure P; begin end; type E=record end; end.');
+  try
+    Assert.AreEqual(4, Count(T.Root, skTypeSection));
+    Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ClassAncestors;
+var T: TSyntaxTree; A: TSyntaxNode;
+begin
+  T := Parse('unit X; interface type A=class(System.TObject, ICustomer, '+
+    'Example.IPrintable) end; implementation end.');
+  try
+    A := Child(Child(Child(Child(Child(T.Root, 0), 0), 0), 0), 0);
+    Assert.AreEqual(Integer(skAncestorList), Integer(A.Kind));
+    Assert.AreEqual(3, Count(A, skTypeReference));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ClassVisibility;
+var T: TSyntaxTree; A, V: TSyntaxNode; I: Integer;
+begin
+  T := Parse('unit X; interface type A=class Before: Integer; '+
+    'private A: Integer; protected B: Integer; public C: Integer; '+
+    'published D: Integer; automated E: Integer; strict private F: Integer; '+
+    'strict protected G: Integer; end; implementation end.');
+  try
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    Assert.AreEqual(Integer(skFieldDeclaration), Integer(Child(A, 0).Kind));
+    Assert.AreEqual(7, Count(A, skVisibilitySection));
+    for I := 1 to 7 do
+    begin
+      V := Child(A, I);
+      Assert.AreEqual(Integer(skVisibilitySection), Integer(V.Kind));
+      Assert.AreEqual(1, Count(V, skFieldDeclaration));
+    end;
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.AggregateFields;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface type A=class FX,FY: Double; '+
+    'P: System.Types.TPoint; end; B=record X,Y: Integer; '+
+    '{between members} Z: string; end; implementation end.');
+  try
+    Assert.AreEqual(4, Count(T.Root, skFieldDeclaration));
+    Assert.AreEqual(4, Count(T.Root, skTypeReference));
+    Assert.AreEqual(0, Count(T.Root, skVarDeclaration));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.AggregateMethods;
+var T: TSyntaxTree; A, M: TSyntaxNode;
+begin
+  T := Parse('unit X; interface type A=class procedure Save; '+
+    'procedure SetName(const Value: string); function Calculate(A,B: Integer): Integer; '+
+    'constructor Create; destructor Destroy; override; end; '+
+    'B=record function Sum: Integer; end; implementation '+
+    'constructor A.Create; begin end; destructor A.Destroy; begin end; end.');
+  try
+    Assert.AreEqual(6, Count(T.Root, skMethodDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skParameterDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skBlockStatement));
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    M := Child(A, 0);
+    Assert.AreEqual(Integer(skMethodDeclaration), Integer(M.Kind));
+    Assert.AreEqual(Integer(skRoutineHeader), Integer(Child(M, 0).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.MethodDirectives;
+var T: TSyntaxTree; A, M, D: TSyntaxNode;
+begin
+  T := Parse('unit X; interface type A=class '+
+    'procedure P; reintroduce; overload; virtual; abstract; '+
+    'procedure Q; override; F: Integer; virtual: Integer; end; implementation end.');
+  try
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    M := Child(A, 0); D := Child(M, 1);
+    Assert.AreEqual(Integer(skOpaqueRegion), Integer(D.Kind));
+    Assert.AreEqual(' reintroduce; overload; virtual; abstract;',
+      Copy(T.Source, D.Span.StartOffset+1, D.Span.Length));
+    Assert.AreEqual(2, Count(T.Root, skMethodDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skFieldDeclaration));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.OpaqueProperties;
+const Props: array[0..4] of string = (
+  'property Name: string read FName write FName;',
+  'property Items[Index: Integer]: TObject read GetItem;',
+  'property Caption: string read FCaption write SetCaption default '''';',
+  'property Items[Index: array of TList<Integer>]: TList<string> read GetItem;',
+  'property Items[Index: Integer]: TObject read GetItem; default;');
+var P: string; T: TSyntaxTree; A, O: TSyntaxNode;
+begin
+  for P in Props do
+  begin
+    T := Parse('unit X; interface type A=class '+P+
+      ' procedure Save; F: Integer; end; implementation end.');
+    try
+      A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+      O := Child(A, 0);
+      Assert.AreEqual(Integer(skOpaqueRegion), Integer(O.Kind));
+      Assert.AreEqual(' '+P, Copy(T.Source, O.Span.StartOffset+1, O.Span.Length));
+      Assert.AreEqual(1, Count(A, skMethodDeclaration));
+      Assert.AreEqual(1, Count(A, skFieldDeclaration));
+      Assert.AreEqual(1, T.DiagnosticCount);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.UnsupportedAggregates;
+const Types: array[0..7] of string = ('A<T>=class end;', 'A=class;',
+  'A=class of TObject;', 'A=class helper for TObject end;',
+  'A=record helper for Integer end;', 'A=interface procedure P; end;',
+  'A=class(TList<Integer>) end;', 'A=class abstract end;');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Types do
+  begin
+    T := Parse('unit X; interface type '+S+' B=class end; C=record end; '+
+      'implementation end.');
+    try
+      Assert.AreEqual(3, Count(T.Root, skTypeDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skClassDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skRecordDeclaration), S);
+      Assert.AreEqual(0, Count(T.Root, skMethodDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion), S);
+    finally T.Free; end;
+  end;
+  T := Parse('unit X; interface type A=class class procedure Hidden; '+
+    'class var HiddenField: Integer; procedure Good; type B=record X: Integer; end; '+
+    'end; C=record case Boolean of True:(X: Integer); False:(Y: Integer); end; '+
+    'D=class end; implementation end.');
+  try
+    Assert.AreEqual(2, Count(T.Root, skClassDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skRecordDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+    Assert.AreEqual(0, Count(T.Root, skFieldDeclaration));
+    Assert.IsTrue(Count(T.Root, skOpaqueRegion) >= 4);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.AggregateRecovery;
+const Bad: array[0..8] of string = ('A=class F: string procedure Save; end;',
+  'A=record X: Integer; Y: end;', 'A=class(TObject public procedure Save; end;',
+  'A=class procedure P(X: Integer; end;', 'A=class F Integer; end;',
+  'A=record X: Integer;', 'A=class end', 'A=class F: array[0..1] of Integer; end;',
+  'A=record X: record Y: Integer; end; end;');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Bad do
+  begin
+    T := Parse('unit X; interface type '+S+' B=class procedure Good; end; '+
+      'implementation procedure After; begin end; end.');
+    try
+      Assert.IsTrue(T.DiagnosticCount > 0, S);
+      Assert.AreEqual(2, Count(T.Root, skTypeDeclaration), S);
+      Assert.IsTrue(Count(T.Root, skMethodDeclaration) >= 1, S);
+      Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration), S);
+      Assert.AreEqual(1, Count(T.Root, skBlockStatement), S);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.AggregateDeterminism;
+const Parts: array[0..15] of string = ('X ', '= ', 'class ', 'record ',
+  'end; ', 'property ', 'procedure ', '( ', ') ', '[ ', '] ', '; ',
+  'strict private ', 'case ', ': ', 'Integer ');
+var I,J,K: Integer; Seed: Cardinal; S: string; A,B: TSyntaxTree;
+begin
+  Seed := 97;
+  for I := 1 to 400 do
+  begin
+    S := 'unit X; interface type A=class ';
+    for J := 1 to 24 do
+    begin
+      Seed := Cardinal((UInt64(Seed) * 1664525 + 1013904223) and UInt64($FFFFFFFF));
+      S := S + Parts[Integer((Seed shr 24) and 15)];
+    end;
+    S := S+' end; B=record X: Integer; end; implementation end.';
+    A := Parse(S);
+    try
+      B := Parse(S);
+      try
+        Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+        Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+        for K := 0 to A.DiagnosticCount-1 do
+        begin
+          Assert.AreEqual(A.GetDiagnostic(K).Code, B.GetDiagnostic(K).Code);
+          Assert.AreEqual(A.GetDiagnostic(K).Message, B.GetDiagnostic(K).Message);
+          Assert.AreEqual(A.GetDiagnostic(K).Span.StartOffset, B.GetDiagnostic(K).Span.StartOffset);
+          Assert.AreEqual(A.GetDiagnostic(K).Span.Length, B.GetDiagnostic(K).Span.Length);
+        end;
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.AggregateLifetimes;
+var I: Integer; T: TSyntaxTree;
+begin
+  for I := 1 to 300 do
+  begin
+    T := Parse('unit X; interface type A=class F: Integer; '+
+      'property P: string read F; procedure Save; end; B=record X: '+
+      Char($D800)+' end; implementation end.');
+    try
+      Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.OpaqueMemberTypeKeywords;
+var T: TSyntaxTree; A, M: TSyntaxNode;
+begin
+  T := Parse('unit X; interface type A=class '+
+    'property P: class of TObject read F; '+
+    'procedure RegisterCallback(A: procedure(X: Integer) of object); '+
+    'procedure Good; F: Integer; end; implementation end.');
+  try
+    Assert.AreEqual(2, Count(T.Root, skMethodDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skFieldDeclaration));
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    Assert.AreEqual(Integer(skOpaqueRegion), Integer(Child(A, 0).Kind));
+    M := Child(A, 1);
+    Assert.AreEqual(1, Count(M, skOpaqueRegion));
+    Assert.AreEqual(1, Count(M, skParameterDeclaration));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.NestedOpaqueTypeBoundaries;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface type A<T: class; U: record> = class end; '+
+    'B=record case Integer of 0:(R: record X: Integer; end); end; '+
+    'C=class procedure Good; end; implementation end.');
+  try
+    Assert.AreEqual(3, Count(T.Root, skTypeDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skRecordDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+    Assert.AreEqual(0, Count(T.Root, skFieldDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skOpaqueRegion));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.CompiledClassRecordCorpus;
+var T: TSyntaxTree;
+begin
+  T := Parse(TFile.ReadAllText('tests/Fixtures/ClassRecordCorpus.pas', TEncoding.UTF8));
+  try
+    Assert.AreEqual(1, Count(T.Root, skTypeSection));
+    Assert.AreEqual(5, Count(T.Root, skTypeDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skRecordDeclaration));
+    Assert.AreEqual(7, Count(T.Root, skMethodDeclaration));
+    Assert.AreEqual(7, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(7, Count(T.Root, skBlockStatement));
+    Assert.AreEqual(5, Count(T.Root, skFieldDeclaration));
+    Assert.AreEqual(3, T.DiagnosticCount); // alias, class reference, property
+  finally T.Free; end;
+end;
+
+procedure TParserTests.LongFieldLookahead;
+const NameCount = 2048;
+var Builder: TStringBuilder; Mode, I, Names, Commas, Colons: Integer;
+  T: TSyntaxTree; F: TSyntaxNode; Leaf: TSyntaxToken; Fields, Gap: string;
+begin
+  for Mode := 0 to 1 do
+  begin
+    if Mode = 0 then Gap := ''
+    else Gap := ' { , : < end ) are comment text } '#9#13#10' (* gap *) ';
+    Builder := TStringBuilder.Create;
+    try
+      for I := 1 to NameCount do
+      begin
+        if I > 1 then Builder.Append(Gap + ',' + Gap);
+        if I mod 7 = 0 then Builder.Append('&');
+        Builder.Append('F').Append(I);
+      end;
+      Builder.Append(Gap + ': Integer;');
+      Fields := Builder.ToString;
+    finally Builder.Free; end;
+    T := Parse('unit X; interface type A=class ' + Fields +
+      ' procedure Following; end; implementation end.');
+    try
+      Assert.AreEqual(0, T.DiagnosticCount);
+      Assert.AreEqual(1, Count(T.Root, skFieldDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+      F := Child(Child(Child(Child(Child(T.Root, 0), 0), 0), 0), 0);
+      Assert.AreEqual(Integer(skFieldDeclaration), Integer(F.Kind));
+      Assert.AreEqual(' ' + Fields, Copy(T.Source, F.Span.StartOffset + 1, F.Span.Length));
+      Names := 0; Commas := 0; Colons := 0;
+      for I := 0 to F.ChildCount - 1 do
+        if F.GetChild(I) is TSyntaxToken then
+        begin
+          Leaf := TSyntaxToken(F.GetChild(I));
+          if Leaf.OriginalToken.Kind = tkIdentifier then Inc(Names);
+          if Leaf.OriginalToken.Kind = tkSymbol then
+          begin
+            if T.Source[Leaf.Span.StartOffset + 1] = ',' then Inc(Commas);
+            if T.Source[Leaf.Span.StartOffset + 1] = ':' then Inc(Colons);
+          end;
+        end;
+      Assert.AreEqual(NameCount, Names);
+      Assert.AreEqual(NameCount - 1, Commas);
+      Assert.AreEqual(1, Colons);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.LongAncestorLookahead;
+const AncestorCount = 2048;
+var Builder: TStringBuilder; Mode, I: Integer; T, Again: TSyntaxTree;
+  S: string; A: TSyntaxNode;
+begin
+  for Mode := 0 to 1 do
+  begin
+    Builder := TStringBuilder.Create;
+    try
+      Builder.Append('unit X; interface type A=class(');
+      for I := 1 to AncestorCount do
+      begin
+        if I > 1 then Builder.Append(' { < ; end ) } , '#13#10#9);
+        Builder.Append('System.Example.I').Append(I);
+      end;
+      Builder.Append(', &end');
+      if Mode = 1 then Builder.Append(', TBase { comment } <TList<Integer>>');
+      Builder.Append(') end; B=record X: Integer; end; implementation end.');
+      S := Builder.ToString;
+    finally Builder.Free; end;
+    T := Parse(S);
+    try
+      Assert.AreEqual(2, Count(T.Root, skTypeDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skRecordDeclaration));
+      if Mode = 0 then
+      begin
+        Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+        Assert.AreEqual(1, Count(T.Root, skAncestorList));
+        A := Child(Child(Child(Child(Child(T.Root, 0), 0), 0), 0), 0);
+        Assert.AreEqual(Integer(skAncestorList), Integer(A.Kind));
+        Assert.AreEqual(AncestorCount + 1, Count(A, skTypeReference));
+        Assert.AreEqual(0, T.DiagnosticCount);
+      end
+      else
+      begin
+        Assert.AreEqual(0, Count(T.Root, skClassDeclaration));
+        Assert.AreEqual(0, Count(T.Root, skAncestorList));
+        Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+        Assert.AreEqual(1, T.DiagnosticCount);
+        Assert.AreEqual('PAR003', T.GetDiagnostic(0).Code);
+      end;
+      Again := Parse(S);
+      try
+        Assert.AreEqual(Shape(T.Root), Shape(Again.Root));
+        Assert.AreEqual(T.DiagnosticCount, Again.DiagnosticCount);
+      finally Again.Free; end;
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.TypeLookaheadRecovery;
+const Fragments: array[0..8] of string = (
+  'A=class F1 {gap}, &F2 Integer; end;',
+  'A=class F1, {gap} : Integer; end;',
+  'A=class(TObject {gap} public procedure Save; end;',
+  'A=class(TObject, {gap} ); end;',
+  'A=class(TBase {gap} <TList<Integer>>) end;',
+  'A=class(TObject; F: TList<Integer>; end;',
+  'A=class(TObject end; C=TList<Integer>;',
+  'A=class(''end'', ''<'', TObject) end;',
+  'A=class F1, F2 {gap} ; procedure Save; end;');
+  Directives: array[0..3] of string = (
+  'A=class F1, {$IFDEF X} F2 {$ENDIF}: Integer; end;',
+  'A=class(TObject, {$IFDEF X} ITest {$ENDIF}) end;',
+  'A=class F1, '#13#10'{$R missing.res}'#13#10' F2: Integer; end;',
+  'A=class(TObject, '#13#10'{$R missing.res}'#13#10' ITest) end;');
+var S: string; T, Again: TSyntaxTree; I: Integer;
+  procedure CheckDeterminism;
+  var J: Integer;
+  begin
+    Again := Parse(S);
+    try
+      Assert.AreEqual(Shape(T.Root), Shape(Again.Root));
+      Assert.AreEqual(T.DiagnosticCount, Again.DiagnosticCount);
+      for J := 0 to T.DiagnosticCount - 1 do
+      begin
+        Assert.AreEqual(T.GetDiagnostic(J).Code, Again.GetDiagnostic(J).Code);
+        Assert.AreEqual(T.GetDiagnostic(J).Message, Again.GetDiagnostic(J).Message);
+        Assert.AreEqual(Integer(T.GetDiagnostic(J).Severity), Integer(Again.GetDiagnostic(J).Severity));
+        Assert.AreEqual(T.GetDiagnostic(J).Span.StartOffset, Again.GetDiagnostic(J).Span.StartOffset);
+        Assert.AreEqual(T.GetDiagnostic(J).Span.Length, Again.GetDiagnostic(J).Span.Length);
+      end;
+    finally Again.Free; end;
+  end;
+begin
+  for I := Low(Fragments) to High(Fragments) do
+  begin
+    S := 'unit X; interface type ' + Fragments[I] +
+      ' B=record X: Integer; end; implementation end.';
+    T := Parse(S);
+    try
+      Assert.AreEqual(1, Count(T.Root, skRecordDeclaration), Fragments[I]);
+      Assert.AreEqual(1, Count(T.Root, skClassDeclaration) + Ord(I = 4));
+      Assert.IsTrue(T.DiagnosticCount > 0, Fragments[I]);
+      CheckDeterminism;
+    finally T.Free; end;
+  end;
+  for I := 0 to 1 do
+  begin
+    S := 'unit X; interface type A=class(TObject, { EOF }';
+    if I = 1 then S := S + ' ITest { EOF }';
+    T := Parse(S);
+    try
+      Assert.AreEqual(1, Count(T.Root, skAncestorList));
+      Assert.IsTrue(Count(T.Root, skMissingToken) > 0);
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      CheckDeterminism;
+    finally T.Free; end;
+  end;
+  for I := Low(Directives) to High(Directives) do
+  begin
+    S := 'unit X; interface type ' + Directives[I] +
+      ' B=record X: Integer; end; implementation end.';
+    T := Parse(S);
+    try
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(0, Count(T.Root, skClassDeclaration));
+      Assert.AreEqual(0, Count(T.Root, skFieldDeclaration));
+      Assert.AreEqual(0, Count(T.Root, skRecordDeclaration));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      CheckDeterminism;
+    finally T.Free; end;
+  end;
 end;
 
 initialization

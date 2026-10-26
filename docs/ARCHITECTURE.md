@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**Current milestone: M2.3 postfix expressions and assignment targets.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
+**Current milestone: M2.4 class and record declarations.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -176,3 +176,21 @@ complex declarations remain opaque. M2.3 folds member, index, call and dereferen
 postfix chains iteratively in Primary; IsAssignableTarget walks the receiver
 spine iteratively. Expression/Precedence, Reader and ownership are unchanged.
 AST, formatter and preprocessing remain deferred.
+
+## M2.4 aggregate declarations
+
+UnitSection dispatches type sections to TypeSection/TypeDeclaration. Each type
+has a wrapper even when its RHS is opaque. AggregateDeclaration shares member
+dispatch for classes and records; explicit visibility nodes contain their
+members, while initial members are direct aggregate children. AncestorList
+contains TypeReference nodes. FieldDeclaration groups names separately from
+variables. RoutineHeader is shared by Routine and body-free MethodDeclaration;
+method directives are one trailing opaque child. Constructors/destructors use
+the same header and implementation-body machinery as procedures.
+
+OpaqueTypeFragment is iterative delimiter recovery, not type grammar. It tracks
+blocks, parentheses/brackets and angle lists, excludes class-of, class-member
+prefixes and of-object signatures from block openers, and retains hard unit
+boundaries. Nested type sections and variant tails remain opaque through the
+aggregate boundary. No lexer, Reader, node/tree ownership or public parser API
+changes; only eight appended syntax kinds. See CST_SPEC.md for coverage.
