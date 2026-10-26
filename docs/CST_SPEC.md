@@ -1,4 +1,4 @@
-# Lossless CST parser - M2.3
+# Lossless CST parser - M2.4
 
 ## Public API and ownership
 
@@ -167,15 +167,9 @@ sections/routines and qualified method implementation names (`TCalc.Add`) are
 also structured. This is syntax recognition, not name/type/default validation.
 `tests/Fixtures/DeclarationCorpus.pas` is both compiled and parsed by the suite.
 
-Partially structured: `type T = class procedure M; end; procedure P;` retains
-the type section as opaque while parsing `P`. All type sections, including
-aliases, remain opaque in M2.2. The scanner tracks type/block nesting and
-parenthesis/bracket depth, recognizes class-method prefixes and forward classes,
-and distinguishes procedural type aliases from routine starts. A top-level
-semicolon permits synchronization at a following section or routine. Hard unit
-boundaries terminate even an unclosed type. Unsupported parameter type suffixes
-and declaration initializer/type suffixes are explicit opaque children; they
-are never claimed as complete type grammar.
+Type sections were opaque in M2.2/M2.3. M2.4 coverage supersedes that historical
+policy as described below. Other declaration/header suffixes still use explicit
+opaque children and are never claimed as complete type grammar.
 
 Fully opaque: a unit containing `{$IFDEF X}`, `{$I file.inc}`, an unknown
 compiler directive or a resource directive interrupting supported grammar.
@@ -183,7 +177,7 @@ compiler directive or a resource directive interrupting supported grammar.
 Missing declaration/header punctuation, names, types and body delimiters use
 PAR001 and zero-width missing leaves. Routine blocks stop before a following
 procedure/function or unit terminator. Unsupported routine modifiers, nested
-routines, advanced statements, classes/records, generics, anonymous methods,
+routines, advanced statements, generics, anonymous methods,
 array/pointer type declarations, set constructors and other richer expressions are outside structured coverage.
 Recovery is deliberately conservative on ambiguous malformed nesting; it can
 retain more than one unsupported declaration in one opaque region.
@@ -218,6 +212,50 @@ Missing names, indices and closers use PAR001 and missing leaves. Closing index
 brackets and `:=` are recovery boundaries, allowing a missing `]` before an
 assignment and preserving following statements at semicolons. Unsupported
 fragments retain the existing conservative opaque recovery and nesting guard.
-Full generics, type declarations, new statement kinds and preprocessing remain
-outside M2.3. `PostfixCorpus.pas` is compiled and parsed, with its type section
-intentionally opaque and routine bodies structured.
+Full generics, new statement kinds and preprocessing remain outside M2.4.
+`PostfixCorpus.pas` is compiled and parsed; M2.4 structures its class/record
+types while pointer/array aliases and complex field types remain opaque.
+
+## M2.4 type sections, classes and records
+
+Eight appended kinds (ordinals 34–41) preserve all existing ordinals:
+`skTypeSection`, `skTypeDeclaration`, `skClassDeclaration`,
+`skRecordDeclaration`, `skVisibilitySection`, `skFieldDeclaration`,
+`skMethodDeclaration`, `skAncestorList`. Each type section owns ordered
+individual type declarations. A simple name/equals wrapper contains either
+a structured class/record RHS plus semicolon or an opaque RHS. Generic names
+are entirely opaque inside their type wrapper. Multiple sections and mixed
+opaque/supported declarations resume at safe individual boundaries.
+
+Class/record bodies share field and method parsing. Fields group comma-separated
+names with a simple/dotted TypeReference; complex type suffixes are opaque.
+Class ancestors are ordered simple/dotted TypeReference children of AncestorList.
+Generic ancestors make the complete RHS opaque. Explicit private, protected,
+public, published, automated, strict private/protected sections own subsequent
+members; members before the first visibility marker are direct body children.
+These are contextual spellings, independent of reserved-word classification.
+
+MethodDeclaration contains the existing RoutineHeader, parameter groups and
+ReturnType/TypeReference nodes, without expecting a body. Procedures/functions,
+constructors/destructors are accepted. A finite list of common directives
+(virtual/dynamic, override/overload, reintroduce, abstract/final/static/inline,
+calling conventions, message/dispid, deprecated/platform/experimental) is kept
+as one opaque trailing child, including all directive semicolons. No directive
+semantics are inferred. Qualified constructor/destructor implementations use
+the existing routine-body parser; no new statements are added.
+
+Properties are a single opaque member through their balanced top-level
+semicolon, including a following default/nodefault marker. Nested parameter brackets and generic type arguments do not create
+fields/methods. An unterminated property may conservatively include later
+members. Class procedure/function/var and operator members remain opaque.
+Nested type sections and variant-record tails are opaque to the enclosing
+body end. Anonymous record fields retain opaque type children. Aliases, enums,
+arrays, sets, pointer/procedural/reference types, generic declarations, class-of,
+forward classes, helpers and interfaces remain opaque; no full type grammar.
+
+Recovery tracks block/delimiter nesting and preserves unit implementation/end
+boundaries. Missing punctuation/types/end produces PAR001 and zero-width leaves;
+unsupported regions use PAR003. A following name-equals declaration can recover
+a missing aggregate end. Ambiguous/unbalanced unsupported syntax may retain a
+larger opaque region. All token-order, span, lifetime and directive fallback
+contracts above are unchanged. Stop after M2.4.

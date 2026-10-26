@@ -19,7 +19,8 @@ uses
   DelphiFormatter.Syntax.Tree,
   DelphiFormatter.Parser.Reader,
   DelphiFormatter.Parser.Delphi,
-  PostfixCorpus in '..\Fixtures\PostfixCorpus.pas';
+  PostfixCorpus in '..\Fixtures\PostfixCorpus.pas',
+  ClassRecordCorpus in '..\Fixtures\ClassRecordCorpus.pas';
 
 var
   Runner: ITestRunner;

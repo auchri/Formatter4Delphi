@@ -1,7 +1,7 @@
 # Codex working instructions
 
 1. Read `docs/CST_SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/ROADMAP.md` first for parser work. Consult `docs/LEXER_SPEC.md`, `docs/TEST_PLAN.md` and `docs/DECISIONS.md` as needed. These are design authority unless a Delphi 12.3 compiler test disproves a detail; record deviations in `docs/DECISIONS.md`.
-2. Implement only the explicitly active milestone. M2.3 adds member/index/dereference postfix expressions and syntactic assignment targets to the M2.2 lossless CST parser. Stop after M2.3; further grammar requires a new task. No AST, formatter, configuration reader, CLI, IDE plugin or incremental parsing.
+2. Implement only the explicitly active milestone. M2.4 adds type sections, classical classes/records, visibility, fields and method signatures to the M2.3 lossless CST parser. Stop after M2.4; further grammar requires a new task. Properties, generics, interfaces/helpers, nested types and variant parts remain opaque. No AST, formatter, configuration reader, CLI, IDE plugin or incremental parsing.
 3. Use Delphi 12.3-compatible Object Pascal and RTL, no VCL/FMX in core. DUnitX is the only test dependency. Prefer Win64/Debug and keep core platform-neutral.
 4. Follow the declared public API shapes and filenames. Document necessary API changes. Preserve the lexer APIs and tests.
 5. Preserve every UTF-16 code unit, including malformed ones. Every original token, including EOF, occurs exactly once in CST leaf order. Serialization traverses leaves; it must not return the stored source wholesale.

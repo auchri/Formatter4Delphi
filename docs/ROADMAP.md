@@ -45,11 +45,18 @@
 ### M2.3 — Member/index/dereference expressions (completed)
 - Iterative mixed postfix chains, syntactic assignment targets and member call statements.
 - Lossless recovery, qualified generic fallback and compiled postfix corpus.
-- Evidence: `M2_STATUS.md`. Stop after M2.3; exact Delphi 12.3 validation remains open.
+- Evidence: `M2_STATUS.md`. Exact Delphi 12.3 validation remains open.
+
+### M2.4 — Class and record declarations (current stopping point)
+- Type sections and individual type wrappers; classical classes/records, simple
+  ancestors, visibility sections, fields and body-free method declarations.
+- Properties, richer types, generics, interfaces/helpers, class members, nested
+  types and variant tails retain opaque protection. No new statement grammar.
+- Actual build/test evidence and remaining toolchain limitation: M2_STATUS.md.
 
 ### Next small task (proposal only, requires new authorization)
-- Validate the current parser and corpus on exact Delphi 12.3+.
-- Define a narrow M2.4 scope separately; classes, richer statements and directive evaluation remain deferred.
+- Validate this suite and all compiled corpora on exact Delphi 12.3+.
+- A later narrow milestone may add property grammar; it is not part of M2.4.
 
 ### M3 — Grammar completion and validation
 - Real-world projects and conditional compiler directives/inclusions handled conservatively.
