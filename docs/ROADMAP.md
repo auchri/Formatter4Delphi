@@ -80,11 +80,11 @@
 - Method/tests/actual measurements: `PARSER_COVERAGE.md`, `M2_STATUS.md` and
   `reports/m2_7/coverage.md`. No grammar or formatter changes. Stop after M2.7.
 
-### Next small task (proposal only, requires new authorization)
+### Next small task after M2.8
 - Validate the suite and all compiled corpora on exact Delphi 12.3+.
-- M2.8 proposal from the measured corpus: directive-aware lossless design/pilot;
+- M2.8 directive-aware safe pilot is now implemented (see the current section below);
   M2.9 proposal: resource-string sections, then remeasure narrow declaration gaps.
-  See `PARSER_COVERAGE.md` and `M2_STATUS.md`; neither is implemented here.
+  See `PARSER_COVERAGE.md` and `M2_STATUS.md`; M2.9 remains unimplemented and requires separate authorization.
 - A subsequent narrow grammar milestone must be authorized separately.
 
 ### M3 — Grammar completion and validation
@@ -121,3 +121,22 @@
 ## Order note
 
 Developing a config/oracle comparison **test harness** in parallel with later parser work is useful, but it must not disrupt or complicate the initial lexer milestone.
+
+## M2.8 — directive-aware safe pilot (supersedes historical directive policy)
+
+M2.8 is separately authorized. Other grammar remains at M2.6; stop after M2.8.
+See [M2_8_DIRECTIVES.md](M2_8_DIRECTIVES.md) for the exact finite classifier,
+linear stack index, 32-level guard, PAR005 diagnostics, supported UnitSection
+boundaries and deliberately narrow branch-envelope proof. Switches remain
+explicit skDirective nodes. Appended kind skConditionalDirectiveRegion (56)
+contains a completely opaque protected child; the analyzer protects both kinds.
+Includes, unknown directives and directives inside productions retain complete
+input fallback. No branches are evaluated and no member/statement contexts or
+new type grammar are enabled. A future formatter must preserve these barriers.
+
+The unchanged pinned corpus comparison, actual diagnostics and runtime results
+are recorded in [comparison.md](../reports/m2_8/comparison.md); concrete source
+examples and limitations are in [examples.md](../reports/m2_8/examples.md).
+DirectiveCorpus is compiled by the parser test runner but does not change the
+pinned manifest. The suite adds eight parser methods and one coverage method.
+Delphi 12 CE Update 1 validation is distinct from still-open exact Delphi 12.3.

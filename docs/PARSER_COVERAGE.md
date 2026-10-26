@@ -1,6 +1,6 @@
-# M2.7: reproducible parser coverage
+# Reproducible parser coverage — M2.7 baseline and M2.8 comparison
 
-M2.7 is an analysis milestone. Lexer/parser behavior and grammar remain at M2.6.
+M2.7 was an analysis milestone with M2.6 grammar. M2.8 adds the narrow directive pilot documented below; reports/m2_7 remains the immutable baseline.
 The existing scanner API is `TDelphiLexer.Tokenize`, not `Scan`. The analyzer uses
 the public `TDelphiLexResult`, `TSyntaxTree`, generic node/token APIs, kinds,
 UTF-16 spans and diagnostic value records without changing them.
@@ -25,7 +25,7 @@ of exact Delphi 12.3 compatibility.
 build/Win64/Debug/DelphiFormatter.Lexer.Tests.exe --exitbehavior:Continue
 build/Win64/Debug/DelphiFormatter.Parser.Tests.exe --exitbehavior:Continue
 build/Win64/Debug/DelphiFormatter.Coverage.Tests.exe --exitbehavior:Continue
-build/Win64/Debug/DelphiFormatter.Coverage.exe --manifest tests/CoverageCorpus/manifest.json --output reports/m2_7 --repeat 3 --environment "record compiler/version, platform, configuration, OS and host here"
+build/Win64/Debug/DelphiFormatter.Coverage.exe --manifest tests/CoverageCorpus/manifest.json --output reports/m2_8 --repeat 3 --environment "record compiler/version, platform, configuration, OS and host here"
 ```
 
 Inputs may instead be `--file path.pas` or `--directory path` (recursive `.pas`).
@@ -229,3 +229,22 @@ observations intentionally vary between executions.
 Actual results and the final milestone recommendation follow in `M2_STATUS.md`
 and the checked-in report. Exact Delphi 12.3+, Release, other platforms, full
 upstream builds and formatter safety remain unvalidated. Stop after M2.7.
+
+## M2.8 — directive-aware safe pilot (supersedes historical directive policy)
+
+M2.8 is separately authorized. Other grammar remains at M2.6; stop after M2.8.
+See [M2_8_DIRECTIVES.md](M2_8_DIRECTIVES.md) for the exact finite classifier,
+linear stack index, 32-level guard, PAR005 diagnostics, supported UnitSection
+boundaries and deliberately narrow branch-envelope proof. Switches remain
+explicit skDirective nodes. Appended kind skConditionalDirectiveRegion (56)
+contains a completely opaque protected child; the analyzer protects both kinds.
+Includes, unknown directives and directives inside productions retain complete
+input fallback. No branches are evaluated and no member/statement contexts or
+new type grammar are enabled. A future formatter must preserve these barriers.
+
+The unchanged pinned corpus comparison, actual diagnostics and runtime results
+are recorded in [comparison.md](../reports/m2_8/comparison.md); concrete source
+examples and limitations are in [examples.md](../reports/m2_8/examples.md).
+DirectiveCorpus is compiled by the parser test runner but does not change the
+pinned manifest. The suite adds eight parser methods and one coverage method.
+Delphi 12 CE Update 1 validation is distinct from still-open exact Delphi 12.3.

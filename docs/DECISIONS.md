@@ -234,3 +234,22 @@ Recursive envelopes retain the 128-depth guard; hard routine/unit boundaries
 and directive fallback remain in force. This is protected recovery, not support
 for with, inline declarations or another grammar milestone. No public APIs or
 SyntaxKind ordinals change.
+
+## M2.8 — directive-aware safe pilot (supersedes historical directive policy)
+
+M2.8 is separately authorized. Other grammar remains at M2.6; stop after M2.8.
+See [M2_8_DIRECTIVES.md](M2_8_DIRECTIVES.md) for the exact finite classifier,
+linear stack index, 32-level guard, PAR005 diagnostics, supported UnitSection
+boundaries and deliberately narrow branch-envelope proof. Switches remain
+explicit skDirective nodes. Appended kind skConditionalDirectiveRegion (56)
+contains a completely opaque protected child; the analyzer protects both kinds.
+Includes, unknown directives and directives inside productions retain complete
+input fallback. No branches are evaluated and no member/statement contexts or
+new type grammar are enabled. A future formatter must preserve these barriers.
+
+The unchanged pinned corpus comparison, actual diagnostics and runtime results
+are recorded in [comparison.md](../reports/m2_8/comparison.md); concrete source
+examples and limitations are in [examples.md](../reports/m2_8/examples.md).
+DirectiveCorpus is compiled by the parser test runner but does not change the
+pinned manifest. The suite adds eight parser methods and one coverage method.
+Delphi 12 CE Update 1 validation is distinct from still-open exact Delphi 12.3.

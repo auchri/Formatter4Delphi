@@ -34,6 +34,14 @@ type
     [Test] procedure UnexpectedTokens;
     [Test] procedure IncompleteStatements;
     [Test] procedure TriviaAndSpans;
+    [Test] procedure DirectiveBoundarySpans;
+    [Test] procedure DirectiveSwitchBoundaries;
+    [Test] procedure DirectiveConditionalBoundaries;
+    [Test] procedure DirectiveUnsafeBoundaries;
+    [Test] procedure DirectiveMalformedIndex;
+    [Test] procedure DirectiveStressAndLifetimes;
+    [Test] procedure CompiledDirectiveCorpus;
+    [Test] procedure DirectiveCommentLookalikes;
     [Test] procedure DirectivesAreOpaque;
     [Test] procedure UnsupportedSections;
     [Test] procedure ReaderBounds;
@@ -474,6 +482,199 @@ begin
     Assert.AreEqual(11, N.Span.Length);
     Assert.AreEqual(0, T.DiagnosticCount);
     Assert.IsTrue(Count(T.Root, skToken) > 8);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DirectiveBoundarySpans;
+const Island = '{$IFDEF X} procedure A; {$ELSE}{$IFDEF Y} procedure B;' +
+  '{$ENDIF}{$ENDIF}';
+var T: TSyntaxTree; U, N: TSyntaxNode; I: Integer; Found: Boolean;
+begin
+  T := Parse('{$H+} unit X; {$I+} interface ' + Island +
+    ' procedure Execute; implementation procedure Execute; begin end; end.');
+  try
+    Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skDirective));
+    Assert.AreEqual(1, Count(T.Root, skConditionalDirectiveRegion));
+    Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(56, Ord(skConditionalDirectiveRegion));
+    U := Child(T.Root, 1); Found := False;
+    for I := 0 to U.ChildCount - 1 do
+      if U.GetChild(I).Kind = skConditionalDirectiveRegion then
+      begin
+        N := TSyntaxNode(U.GetChild(I)); Found := True;
+        Assert.AreEqual(1, N.ChildCount);
+        Assert.AreEqual(Integer(skOpaqueRegion), Integer(N.GetChild(0).Kind));
+        Assert.AreEqual(Island, Trim(Copy(T.Source, N.Span.StartOffset + 1, N.Span.Length)));
+        Assert.AreEqual(0, Count(N, skRoutineDeclaration));
+      end;
+    Assert.IsTrue(Found);
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DirectiveSwitchBoundaries;
+const Directives: array[0..11] of string = ('{$H+}', '{$R-}', '{$I+}',
+  '{$B+,R-,S-}', '{$RANGECHECKS OFF}', '{$WARN SYMBOL_DEPRECATED OFF}',
+  '{$DEFINE DEBUG}', '{$UNDEF DEBUG}', '(*$h+*)', '{$  H+}', '{$WARN'#9'X OFF}',
+  '{$SCOPEDENUMS ON}');
+var D: string; T: TSyntaxTree;
+begin
+  for D in Directives do
+  begin
+    T := Parse('unit X; interface ' + D +
+      ' type TExample = class end; implementation end.');
+    try
+      Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skDirective));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.DirectiveConditionalBoundaries;
+const Opens: array[0..4] of string = ('{$IFDEF X}', '(*$iFnDeF X*)',
+  '{$IF CompilerVersion >= 36}', '{$IFOPT R+}', '{$ IFDEF X}');
+var D: string; T: TSyntaxTree;
+begin
+  for D in Opens do
+  begin
+    T := Parse('unit X; interface ' + D + ' procedure A;' +
+      '{$ELSEIF Defined(Y)} procedure B; {$ELSE} procedure C; {$IFEND}' +
+      ' procedure Execute; implementation procedure Execute; begin end; end.');
+    try
+      Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
+      Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  end;
+  T := Parse('unit X; interface implementation {$IFDEF X}' +
+    'procedure A; begin end; {$ELSE} procedure B; begin end; {$ENDIF}' +
+    'procedure Execute; begin end; end.');
+  try
+    Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skBlockStatement));
+    Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DirectiveUnsafeBoundaries;
+const Bodies: array[0..12] of string = (
+  '{$I file.inc} type T = class end;', '{$INCLUDE file.inc}', '{$UNKNOWN X}',
+  '{$IFDEFsuffix X} procedure P; {$ENDIF}',
+  'type T = {$IFDEF X} Integer {$ELSE} string {$ENDIF};',
+  'procedure P {$IFDEF X} (A: Integer) {$ENDIF};',
+  '{$IFDEF X} procedure P {$ELSE} procedure Q; {$ENDIF}',
+  '{$IFDEF X} procedure P;; {$ENDIF}',
+  'type T = class {$IFDEF X} procedure P; {$ENDIF} end;',
+  '{$IFDEF X} type T = class end; {$ENDIF}',
+  '{$IFDEF X} procedure P; {$ELSE} procedure Q {$ENDIF}',
+  '{$IFDEF X} procedure P; {$ELSEIF X} + B {$ENDIF}',
+  'type T = record A: Integer; {$H+} end;');
+var B: string; T: TSyntaxTree;
+begin
+  for B in Bodies do
+  begin
+    T := Parse('unit X; interface ' + B + ' implementation end.');
+    try
+      Assert.AreEqual(0, Count(T.Root, skUnitDeclaration), B);
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion), B);
+    finally T.Free; end;
+  end;
+  T := Parse('unit X; interface implementation procedure P; begin Result := A '+
+    '{$IFDEF X} + B {$ENDIF} + C; end; end.');
+  try Assert.AreEqual(0, Count(T.Root, skUnitDeclaration));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DirectiveMalformedIndex;
+const Bodies: array[0..6] of string = ('{$IFDEF X} procedure P;', '{$ENDIF}',
+  '{$ELSE}', '{$IFDEF X}{$ELSE}{$ELSE}{$ENDIF}',
+  '{$IFDEF X}{$ELSE}{$ELSEIF Y}{$ENDIF}', '{$IFDEF X}{$IFDEF Y}{$ENDIF}',
+  '{$IFDEF X}{$ENDIF}{$IFEND}');
+var B: string; A, T: TSyntaxTree; I: Integer; Found: Boolean;
+begin
+  for B in Bodies do
+  begin
+    A := Parse('unit X; interface ' + B + ' implementation end.');
+    try
+      T := Parse(A.Source);
+      try
+        SameDiagnostics(A, T);
+        Assert.AreEqual(0, Count(T.Root, skUnitDeclaration));
+        Found := False;
+        for I := 0 to T.DiagnosticCount - 1 do
+          Found := Found or (T.GetDiagnostic(I).Code = 'PAR005');
+        Assert.IsTrue(Found, B);
+      finally T.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.DirectiveStressAndLifetimes;
+var S, B: string; I: Integer; T, U: TSyntaxTree;
+begin
+  S := 'unit X; interface ';
+  for I := 1 to 1024 do S := S + '{$IFDEF X} procedure A; {$ELSE} procedure B; {$ENDIF}';
+  S := S + 'procedure Execute; implementation end.';
+  T := Parse(S);
+  try
+    Assert.AreEqual(1024, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration));
+  finally T.Free; end;
+  for I := 1 to 33 do
+  begin
+    B := StringOfChar(' ', 16384);
+    S := 'unit X; interface ' + StringOfChar(' ', I);
+    B := '{$IFDEF X' + B + '}';
+    S := S + B;
+    // Build a nested group without recursive parser work.
+    S := S + StringReplace(StringOfChar('x', I - 1), 'x', '{$IFDEF X}', [rfReplaceAll]);
+    S := S + 'procedure P;' + StringReplace(StringOfChar('x', I), 'x', '{$ENDIF}', [rfReplaceAll]);
+    S := S + 'procedure Q; implementation end.';
+    T := Parse(S);
+    try
+      if I <= 32 then Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration))
+      else Assert.AreEqual(0, Count(T.Root, skUnitDeclaration));
+    finally T.Free; end;
+  end;
+  for I := 1 to 200 do
+  begin
+    S := 'unit X; interface {$IFDEF X}' + Char($D800) +
+      StringOfChar(';', I mod 9) + '{$ELSE}{$ELSEIF Y}';
+    T := Parse(S); U := Parse(S);
+    try SameDiagnostics(T, U); Assert.AreEqual(Shape(T.Root), Shape(U.Root));
+    finally U.Free; T.Free; end;
+  end;
+end;
+
+procedure TParserTests.CompiledDirectiveCorpus;
+var T: TSyntaxTree;
+begin
+  T := Parse(TFile.ReadAllText('tests/Fixtures/DirectiveCorpus.pas', TEncoding.UTF8));
+  try
+    Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skFieldDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(2, Count(T.Root, skDirective));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DirectiveCommentLookalikes;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface // {$IFDEF X}'#13#10 +
+    '{ text $IFDEF X } (* text $ENDIF *) const S = ''{$IFDEF X}'';' +
+    'implementation end.');
+  try
+    Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
+    Assert.AreEqual(0, Count(T.Root, skDirective));
+    Assert.AreEqual(0, T.DiagnosticCount);
   finally T.Free; end;
 end;
 

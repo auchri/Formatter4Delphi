@@ -1,3 +1,10 @@
+> Current milestone: **M2.8 directive-aware safe pilot**. Whitelisted switches
+> and independently complete conditional procedure groups at unit boundaries
+> preserve surrounding CST structure; all branches remain protected/opaque.
+> Includes, unknown directives and member/body/header directives remain conservative.
+> See [scope and safety](docs/M2_8_DIRECTIVES.md), [measured comparison](reports/m2_8/comparison.md)
+> and [actual validation](docs/M2_STATUS.md). Other grammar remains at M2.6.
+> No preprocessor, branch selection or formatter. Exact Delphi 12.3 remains unvalidated.
 # Delphi Formatter — implementation blueprint
 
 **Target:** a Delphi 12.3+ source formatter written in Delphi, independent of the Delphi IDE, with behavioral compatibility with the original Delphi formatter's `.config` profiles. Add separate settings for editor behavior (tabs, tab stops, indentation, line endings, encoding, etc.) without changing `.config` semantics.

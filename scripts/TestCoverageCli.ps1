@@ -10,7 +10,7 @@ try {
   & $Executable --directory tests/Fixtures --include '*Corpus.pas' --exclude 'LexicalCorpus.pas' --output build/coverage-cli-directory | Out-Null
   if ($LASTEXITCODE -ne 0) { throw 'Directory exit' }
   $directory = Get-Content -Raw build/coverage-cli-directory/coverage.json | ConvertFrom-Json
-  if ($directory.files.Count -ne 5) { throw 'Include/exclude selection' }
+  if ($directory.files.Count -ne 6) { throw 'Include/exclude selection' }
   & $Executable --file build/no-such-coverage-file.pas --output build/coverage-cli-missing | Out-Null
   if ($LASTEXITCODE -ne 1) { throw 'Missing-file exit' }
   $missing = Get-Content -Raw build/coverage-cli-missing/coverage.json | ConvertFrom-Json

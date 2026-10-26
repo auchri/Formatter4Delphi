@@ -7,6 +7,7 @@ uses
   System.SysUtils,
   DUnitX.TestFramework,
   DUnitX.Loggers.Console,
+  DirectiveCorpus in '..\Fixtures\DirectiveCorpus.pas',
   DeclarationCorpus in '..\Fixtures\DeclarationCorpus.pas',
   Tests.Parser.Basics in 'Tests.Parser.Basics.pas',
   DelphiFormatter.Core.Spans in '..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas',
