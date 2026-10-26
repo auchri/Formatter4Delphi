@@ -7,15 +7,19 @@ uses
   System.SysUtils,
   DUnitX.TestFramework,
   DUnitX.Loggers.Console,
-  DeclarationCorpus in '..\..\tests\Fixtures\DeclarationCorpus.pas',
+  DeclarationCorpus in '..\Fixtures\DeclarationCorpus.pas',
   Tests.Parser.Basics in 'Tests.Parser.Basics.pas',
   DelphiFormatter.Core.Spans in '..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas',
   DelphiFormatter.Core.Diagnostics in '..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Diagnostics.pas',
   DelphiFormatter.Lexer.Tokens in '..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Tokens.pas',
   DelphiFormatter.Lexer.Keywords in '..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Keywords.pas',
   DelphiFormatter.Lexer.Scanner in '..\..\src\DelphiFormatter.Lexer\DelphiFormatter.Lexer.Scanner.pas',
-  DelphiFormatter.Syntax.Kinds, DelphiFormatter.Syntax.Nodes, DelphiFormatter.Syntax.Tree,
-  DelphiFormatter.Parser.Reader, DelphiFormatter.Parser.Delphi;
+  DelphiFormatter.Syntax.Kinds,
+  DelphiFormatter.Syntax.Nodes,
+  DelphiFormatter.Syntax.Tree,
+  DelphiFormatter.Parser.Reader,
+  DelphiFormatter.Parser.Delphi,
+  PostfixCorpus in '..\Fixtures\PostfixCorpus.pas';
 
 var
   Runner: ITestRunner;

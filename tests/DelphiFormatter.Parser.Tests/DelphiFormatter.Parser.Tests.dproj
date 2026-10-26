@@ -53,6 +53,7 @@
     <DelphiCompile Include="$(MainSource)"><MainSource>MainSource</MainSource></DelphiCompile>
     <DCCReference Include="Tests.Parser.Basics.pas" />
     <DCCReference Include="..\Fixtures\DeclarationCorpus.pas" />
+    <DCCReference Include="..\Fixtures\PostfixCorpus.pas" />
 
     <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Spans.pas" />
     <DCCReference Include="..\..\src\DelphiFormatter.Core\DelphiFormatter.Core.Diagnostics.pas" />

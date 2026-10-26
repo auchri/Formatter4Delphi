@@ -4,7 +4,7 @@
 
 **Start here (token efficient):** `CODEX_START.md` → `AGENTS.md` → `docs/CST_SPEC.md`. Read the longer technical documents only as needed.
 
-**Current milestone: M2.2 declarations and routine bodies.** The lexer APIs remain stable. Expressions, basic statements, const/var sections and routine headers/bodies have hierarchical, lossless CSTs; unsupported regions stay opaque. AST, formatter and integrations remain future work. See [M2 status](docs/M2_STATUS.md).
+**Current milestone: M2.3 postfix expressions and assignment targets.** The lexer APIs remain stable. Expressions, basic statements, const/var sections and routine headers/bodies, member/index/dereference chains and assignment targets have hierarchical, lossless CSTs; unsupported regions stay opaque. AST, formatter and integrations remain future work. See [M2 status](docs/M2_STATUS.md).
 
 ## Documents
 
@@ -59,5 +59,5 @@ Implemented scope, validation results and limitations: [M1 status](docs/M1_STATU
 
 
 
-M2.2 has **48/48 passing parser tests** on the same Win64/Debug toolchain.
+M2.3 has **68/68 passing parser tests** on the same Win64/Debug toolchain.
 See [M2 status](docs/M2_STATUS.md) for CST coverage, limits and fresh artifacts.

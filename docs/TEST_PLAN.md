@@ -160,3 +160,30 @@ CST checks. Run both EXEs from the repository root (the fixture path is explicit
 `DeclarationCorpus.res` is a checked-in 32-byte empty Windows resource header,
 so its real standalone resource directive compiles without generated inputs.
 See `M2_STATUS.md` for actual build/test evidence and toolchain limitations.
+
+## M2.3 additions
+
+The suite has 68 parser tests (20 new methods) and the unchanged 40 lexer tests.
+New checks cover member hierarchy/names/trivia, single/multiple/nested/complex
+indices, alternative and mixed bracket spellings, repeated dereferences, mixed
+postfix order, unchanged unary/binary precedence, assignment designators,
+invalid binary/call targets, parameterless member calls, if/else and routine
+bodies, qualified generic fallback and directive fallback. Historical opaque
+expectations for `A.B` / `A[0]` are replaced by structural tests.
+
+Twelve malformed postfix forms test PAR001, missing leaves and recovery to the
+next assignment. A chain of 2,048 mixed postfix operators verifies nesting order
+without consuming parser recursion depth; an unfinished chain verifies recovery.
+300 seeded malformed sequences are parsed twice in expression and statement
+modes, comparing hierarchy and full diagnostic data. 200 valid and 200 malformed
+UTF-16 lifetimes exercise disposal. All use the common coverage helper after
+freeing the lexer. Enum ordinals are explicitly pinned.
+
+`PostfixCorpus.pas` must appear in the runner DPR and DPROJ and produce a fresh
+`PostfixCorpus.dcu`; add the unit through the IDE if an already loaded project
+still uses its previous DPR buffer. Its classes/records/array/pointer type
+section stays opaque while all five routine bodies are structured. The fixture
+contains ordinary and keyword/escaped member names, multi-index and alternative
+brackets, `P^`, `PP^^`, method calls and assignments. It is compiled, not executed
+with fabricated object/pointer values. Actual results and artifact freshness are
+recorded only in `M2_STATUS.md`.
