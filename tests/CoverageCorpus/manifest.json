@@ -1,0 +1,1378 @@
+{
+    "schemaVersion":  1,
+    "selection":  "size/directive strata; ordinal path round-robin v1",
+    "checkoutPolicy":  "core.autocrlf=false; core.eol=lf; repository attributes still apply",
+    "repositories":  [
+                         {
+                             "name":  "DUnitX",
+                             "url":  "https://github.com/VSoftTechnologies/DUnitX.git",
+                             "commit":  "0bc0bcb538ad2bb9c2c2f59f625ab5aac665b5a0",
+                             "license":  "Apache-2.0",
+                             "licenseSource":  "https://github.com/VSoftTechnologies/DUnitX/tree/0bc0bcb538ad2bb9c2c2f59f625ab5aac665b5a0",
+                             "root":  "build/coverage-corpora/DUnitX",
+                             "selectionPaths":  [
+                                                    "Source"
+                                                ],
+                             "files":  [
+                                           {
+                                               "path":  "Source/DUnitX.Utils.pas",
+                                               "bytes":  107335,
+                                               "sha256":  "e59310c6a823d8c36361519ccdc05a0933db2f92dd2a6b9e6c6287dda637790b",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  272,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUNitX.Loggers.GUIX.pas",
+                                               "bytes":  18582,
+                                               "sha256":  "5961e546bf0953133bac5c7cc2df8fbfd2031e710a534bdb2696c64f2b50db2b",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  9,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Assert.pas",
+                                               "bytes":  59693,
+                                               "sha256":  "b93e47cd4fa051d3d80b783fdd7bc328d08ea7e44165076137503990abd0701b",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  99,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUNitX.Loggers.MobileGUI.pas",
+                                               "bytes":  13751,
+                                               "sha256":  "954f95ec493b5865bee7a6e830046f6cb5a924b7b5c053a6c9463de7d51b52aa",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.CategoryExpression.pas",
+                                               "bytes":  8140,
+                                               "sha256":  "32c3115e912edbf641db6778220c597d9ce4fb2a641f093b6f9c5ee5ba636f08",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  18,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.FixtureBuilder.pas",
+                                               "bytes":  3533,
+                                               "sha256":  "b88efa075f4e26992689823ff1e5c560a15fe7c5db27847109bcb9105fdef436",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Loggers.GUI.VCL.pas",
+                                               "bytes":  46135,
+                                               "sha256":  "57a84d047e9154788cfc261bfe6ae258afca1946f7b0ddb1f5bffaeada85533b",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  8,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.DUnitCompatibility.pas",
+                                               "bytes":  18013,
+                                               "sha256":  "940149cccf50eae094c50532f24a910eef538cb500aee2f420bc80ac8e245481",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  64,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Assert.Ex.pas",
+                                               "bytes":  5157,
+                                               "sha256":  "56a6447cd47652b082d39dc05af544d60111012ca67aa1fe2c101ed804c99a9a",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  4,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.CommandLine.Parser.pas",
+                                               "bytes":  10366,
+                                               "sha256":  "2551274933d1c9832c80cf7574f2125de90ce8a3d88dcc6faeb35670ce67e2ea",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  19,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.InternalDataProvider.pas",
+                                               "bytes":  952,
+                                               "sha256":  "3f503e8562ca3cda3ca11c1f06d02b8d6607ca2f3638668c8d0b308764341e17",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.FixtureProvider.pas",
+                                               "bytes":  22524,
+                                               "sha256":  "71b243548214a231564327bcbeead36af4312b32fe91ce6e97705eebc1019bcf",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  15,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Attributes.pas",
+                                               "bytes":  15315,
+                                               "sha256":  "861528d2e0c6d78243e3079855ea63bbd93e7c3f85df26cd6f1132669739a1e2",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.ConsoleWriter.Base.pas",
+                                               "bytes":  7622,
+                                               "sha256":  "b965f0aca00434da071f90fe0328e1be7ce596236e1021bafdfe0700cc362861",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  14,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Loggers.Null.pas",
+                                               "bytes":  6724,
+                                               "sha256":  "509bf052007c2ddb7bbedcbae884de3b50e31d01cddc11bcad12e23d32e89ed6",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Loggers.Console.FMX.pas",
+                                               "bytes":  18941,
+                                               "sha256":  "a187c00e3865d17052be97810bb03e156cd4f0708f872656e63ac24158e4e961",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  13,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.AutoDetect.Console.pas",
+                                               "bytes":  3529,
+                                               "sha256":  "c04293c3cb62ea135dd603e9fb017e5417e6af79274df59ca1ccd695780a72f8",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  9,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Loggers.Text.pas",
+                                               "bytes":  13420,
+                                               "sha256":  "c8e630bffab98fa4d2c86b626540f11becba0644f844528b990489671e036c7b",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  11,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.ResStrs.pas",
+                                               "bytes":  10463,
+                                               "sha256":  "36ec141fdcf53c7c02f6eac8c6c321eaef114a481159e65e394daad17b8bd4ad",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.TestFixture.pas",
+                                               "bytes":  20912,
+                                               "sha256":  "a34c4f99f29e0bd73231817f21014d170d11de5ef58674d8a0fed4166fe9a48e",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  11,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Banner.pas",
+                                               "bytes":  3280,
+                                               "sha256":  "dad79b088f909e9845ca0c35134e7e0e621c2a83f376959319dce9f55e5cbf1f",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  4,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Loggers.XML.JUnit.pas",
+                                               "bytes":  12646,
+                                               "sha256":  "3b33380d072079cfd6f9d46aa5e57a159c38ff652d95cd85499975022b86f68f",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  25,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.TestFramework.pas",
+                                               "bytes":  34327,
+                                               "sha256":  "50b26c554160fa46f0638deed3c4c1c5d8d18434989eea0c3fe3e080d13fc8ff",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  38,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.CommandLine.OptionDef.pas",
+                                               "bytes":  9844,
+                                               "sha256":  "6f4ca8f6d39ee9c9201c54cbe2eaf51ab17cc742053138f6e06c88bd0ee8fe55",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Loggers.XML.NUnit.pas",
+                                               "bytes":  14874,
+                                               "sha256":  "feade9606b836b2aaecb38b4510e50a885bb42ba6d33b0192f6f49054b24487e",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  25,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.TestRunner.pas",
+                                               "bytes":  39771,
+                                               "sha256":  "bd177ca58674001270cfa74a470d17a258733f226631fb80dcce0a7b9d14126e",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  11,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.CommandLine.Options.pas",
+                                               "bytes":  8939,
+                                               "sha256":  "f2860046d8d3caddd57f92e339a2c5ae855eb3ecb03f28c131705930764201b5",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  4,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.MemoryLeakMonitor.FastMM4.pas",
+                                               "bytes":  5345,
+                                               "sha256":  "7a2fd65e98a56c8bec3c255e6c7c80d2c4b1432e187e2999b5b41794e295d76e",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  11,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.ComparableFormat.Csv.pas",
+                                               "bytes":  2187,
+                                               "sha256":  "21e5be9e7238d429f7a63ef115803c62e699b417519f34ad62c935b58e4d9acb",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.StackTrace.EurekaLog7.pas",
+                                               "bytes":  4028,
+                                               "sha256":  "d99c3c495384bca77120dc03652df991f4873c06f1d15cb1814bc6c0246e28a8",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  21,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.ComparableFormat.Xml.pas",
+                                               "bytes":  2187,
+                                               "sha256":  "3769d4d7f3cce5f648844980cc763f38b2c5a8c70c331a45031da93cdd661397",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.StackTrace.JCL.pas",
+                                               "bytes":  4255,
+                                               "sha256":  "b163f3312406d65ad4e5405c5fa76c9b362f3c7e0139a63fc06a7e9569f828db",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  23,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.ComparableFormat.pas",
+                                               "bytes":  2196,
+                                               "sha256":  "6df448914657c106ccace6cecc12e591d1e077cda28e1ecb90a8cb08373d49a7",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.StackTrace.MadExcept3.pas",
+                                               "bytes":  3879,
+                                               "sha256":  "6051424612277efdcb1e6504958da70f3f0d433ba1dd6132eb6c8f016db02699",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  19,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Constants.pas",
+                                               "bytes":  2232,
+                                               "sha256":  "997d842f108623466ff213fe4609af88f00163a6627401a26c85bc54375c8e35",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.StackTrace.MadExcept4.pas",
+                                               "bytes":  4123,
+                                               "sha256":  "e5c44426b0363049c0768a27bca60bd2418c4f22f9226334fc89cd03a8f4c838",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  28,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Exceptions.pas",
+                                               "bytes":  3617,
+                                               "sha256":  "0debeb14bb2ed0255065a4805a99d54ece9b93fabb22bedc6cb8a8bf295743d9",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.StackTrace.MadExcept5.pas",
+                                               "bytes":  3857,
+                                               "sha256":  "9fb54c14c1408c5997d23598933708d9de401c4b781f831d076461f25324c882",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  17,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Extensibility.pas",
+                                               "bytes":  10686,
+                                               "sha256":  "6965136258d61d99efe338f144db292c3f9952532eded5d5e1837f9dbc44f4d7",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Source/DUnitX.Test.pas",
+                                               "bytes":  14219,
+                                               "sha256":  "1d72584c1841a3ca4a03a1ee00ce5928dff6e49897cf360a97842a1ca7cf9a93",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  13,
+                                               "compatibility":  "unreviewed"
+                                           }
+                                       ]
+                         },
+                         {
+                             "name":  "Indy",
+                             "url":  "https://github.com/IndySockets/Indy.git",
+                             "commit":  "bd38a62c0089e5e40eeb00569a09b8a8410b8d7d",
+                             "license":  "Indy Modified BSD / MPL-1.1 (dual)",
+                             "licenseSource":  "https://github.com/IndySockets/Indy/tree/bd38a62c0089e5e40eeb00569a09b8a8410b8d7d",
+                             "root":  "build/coverage-corpora/Indy",
+                             "selectionPaths":  [
+                                                    "Lib"
+                                                ],
+                             "files":  [
+                                           {
+                                               "path":  "Lib/Protocols/IdCharsets.pas",
+                                               "bytes":  181537,
+                                               "sha256":  "3496ebdf6786dd611590799dc3e0b5e6c697ec0829c6ff367a0bc1c646909fa7",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdIOHandler.pas",
+                                               "bytes":  90614,
+                                               "sha256":  "8babf1bd27a8ad6ca4100026bae86c7a041c5d172f649d9b2b14a8ad0ef4a188",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  383,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdAssignedNumbers.pas",
+                                               "bytes":  131301,
+                                               "sha256":  "78eb00b6dc4cd92e2816bdd25f6b452366f395b8c36084ae71327f605e56e6b5",
+                                               "category":  "large/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdCmdTCPServer.pas",
+                                               "bytes":  17309,
+                                               "sha256":  "c649ab8d851d656cce86ec28052287d40aa278ef5701fc0bb196b17f94cb649e",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdBuffer.pas",
+                                               "bytes":  32851,
+                                               "sha256":  "5f0acf362e6e5e80199fa0998bcbaf711cb02b3f2b8a5c2b35af68a6235fc9ae",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  71,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdResourceStringsProtocols.pas",
+                                               "bytes":  46724,
+                                               "sha256":  "0b3b325e68e62fd01950511b2b41b975083e6bdb2c301b9c85143fd3dc0d611c",
+                                               "category":  "medium/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdAbout.pas",
+                                               "bytes":  819,
+                                               "sha256":  "709695a4a5992fa28376551ec0108dc2b696752f03871b9f425a26c5570400c9",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdAboutVCL.pas",
+                                               "bytes":  12112,
+                                               "sha256":  "9cce1f8e613c0122b5511d84294d5153303a2226783504b15ac4158a5f87a7a6",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  76,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Design/IdDsnCoreResourceStrings.pas",
+                                               "bytes":  4137,
+                                               "sha256":  "4130530312addde7e88eb84c217175352edef1e28154b5bed50486c66e692cbf",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdNNTPServer.pas",
+                                               "bytes":  113347,
+                                               "sha256":  "20e3b478199ee6e4bebcbbf370635db645ad96a1ceb81f40376b87e68084d955",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdCoderTNEF.pas",
+                                               "bytes":  124908,
+                                               "sha256":  "d02a0e8349eaf26a5bf871c780b01c4a9a54fd361c11dc593a95d1889b203f18",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  11,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdCommandHandlers.pas",
+                                               "bytes":  22779,
+                                               "sha256":  "0069992a38ba1dde8ffc8d5f8a357d2faf66a79d4618f9f3d9d92e15c3cc495f",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdCustomTCPServer.pas",
+                                               "bytes":  39193,
+                                               "sha256":  "cbef112bbf25088afe8db33486f82264e2980fde39fa1f689f3ab8ffc9bae3b9",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  62,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/SuperCore/IdFiber.pas",
+                                               "bytes":  17335,
+                                               "sha256":  "43a132ec32db5f782a2a56d83700e81993900cce27c6afd7acebf8c59b61958f",
+                                               "category":  "medium/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdAboutDotNET.pas",
+                                               "bytes":  12002,
+                                               "sha256":  "e1410bf0810eb9b84ca3139cad06f91c5fa0c45a50f24c9d84acc14cf152d146",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdAntiFreeze.pas",
+                                               "bytes":  6239,
+                                               "sha256":  "281e31680be020c2dc124dda1927bd6366d16e8c6c8e0488f37f5a1e9de2fd95",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  118,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Design/IdDsnNETCompEditor.pas",
+                                               "bytes":  1052,
+                                               "sha256":  "fb682e51f050b32404e6bce520c39da9a7a7d1d9021550ca166e743e1dcbf4fc",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdVCard.pas",
+                                               "bytes":  65621,
+                                               "sha256":  "db20bec4af74575bf9a0b8f499eb67f44d3931c90f33012ef1ed7461c833fae7",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdCustomHTTPServer.pas",
+                                               "bytes":  93791,
+                                               "sha256":  "53d860123f943f084a95c7e822796728c6847a7c0dbabeb074af64f955730f08",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  62,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdDsnPropEdBindingNET.pas",
+                                               "bytes":  22946,
+                                               "sha256":  "4f0859c4281ef0ddcd5b75dad96a8ab7d36b6a232e6bd007ab7649452636367b",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdDsnPropEdBindingVCL.pas",
+                                               "bytes":  23404,
+                                               "sha256":  "f53a9d1ff4f1f2faa1db06c2576d3794013ec45cc044c47f4b8a9e57f7e51b46",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  35,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/SuperCore/IdIOHandlerChain.pas",
+                                               "bytes":  26730,
+                                               "sha256":  "88a9f4577ea5118dbf89d00f58d1ff94c5f48067c9d4446c191f7053f33c2df0",
+                                               "category":  "medium/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdCmdTCPClient.pas",
+                                               "bytes":  8957,
+                                               "sha256":  "fb3dfdec523ba7d7ded35858ec60b4f701db8f9953b7f85160cf977dd139ad04",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdCoreDsnRegister.pas",
+                                               "bytes":  6453,
+                                               "sha256":  "7337b6ce49dfa6e0eb51792b7fbe80abd9c36601ac87e55a6ce917fd0c4ae316",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  48,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdPOP4Server.pas",
+                                               "bytes":  10633,
+                                               "sha256":  "384a2af560d39ccb814b26ea7a5f47901a75a63800705c54ab6d33ec30c2c511",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdDNSServer.pas",
+                                               "bytes":  143733,
+                                               "sha256":  "43646dd269bc9823398dbc163efe67015b8df4336f3955d93cbb00d66399b40e",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  45,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdRawFunctions.pas",
+                                               "bytes":  21486,
+                                               "sha256":  "ea99e3917dd216c0884590661c315e72bd3000ddc3fed80a5f346442c95a1c10",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdIOHandlerSocket.pas",
+                                               "bytes":  17253,
+                                               "sha256":  "65b1a58634c510a73bb2c1ac7230cd7d82a77e247b507294ff55b916873a0306",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  26,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdContext.pas",
+                                               "bytes":  5921,
+                                               "sha256":  "243eadc6ae861b25576c26d836a64af9b0374db788f86cc3710a0365f03302ae",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  8,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdCustomTransparentProxy.pas",
+                                               "bytes":  9456,
+                                               "sha256":  "8404ed3a84b2e342b7922636fc3eb7a4548097bdc4bcda923dbad60784b098b6",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  19,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdResourceStringsOpenSSL.pas",
+                                               "bytes":  1281,
+                                               "sha256":  "a5157d9100f68d28ba094a7a5af27e1f3b7272cabe7555fdc9123dd949199705",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdFTP.pas",
+                                               "bytes":  158664,
+                                               "sha256":  "bcc85031f5687231869e678d583a45046c32cb9e39d1f32205e9e2ca59184e8b",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  54,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdRawHeaders.pas",
+                                               "bytes":  63347,
+                                               "sha256":  "a44987dd8e86ade424dcf765c6bfc36bda998646ecbddd96a6871a193d66de4c",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdIcmpClient.pas",
+                                               "bytes":  30353,
+                                               "sha256":  "1360e50675b27dadebb904f5cb0ef2c5bd534033b2cc4b5e49e58396b994e45a",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  21,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdDsnCoreResourceStrings.pas",
+                                               "bytes":  4618,
+                                               "sha256":  "733b19cb709f02c43981b73916c6f9b21878f91fc4c59a9cadf7f1abdd198c94",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdDsnBaseCmpEdt.pas",
+                                               "bytes":  1801,
+                                               "sha256":  "99240837821aea1bb5668e1eac3580fa89ecfc7affdf20a5a66a21cd917b786b",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  13,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdResourceStringsSSLDotNet.pas",
+                                               "bytes":  211,
+                                               "sha256":  "8d9af4a4815a31837636ecdac35661ec6df6404eca85645d11cc031ba1601bf9",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Protocols/IdFTPCommon.pas",
+                                               "bytes":  93389,
+                                               "sha256":  "66ca0560d73afa2fc4a0a751cf5a8b5887d8b353dad86e46388124c651c3c6c2",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  221,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdSocks.pas",
+                                               "bytes":  36881,
+                                               "sha256":  "5805b33a197f8dc17d6e5bb23c35449af6b02befeb493f3ce3abfa198052ad65",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "Lib/Core/IdRegisterCore.pas",
+                                               "bytes":  18325,
+                                               "sha256":  "4e862899675ad60bb7cc5543fa1753495efaf479c7ef619ce3e6dab508037353",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  138,
+                                               "compatibility":  "unreviewed"
+                                           }
+                                       ]
+                         },
+                         {
+                             "name":  "DelphiMVCFramework",
+                             "url":  "https://github.com/danieleteti/delphimvcframework.git",
+                             "commit":  "8fed954c457a3e43f9fc3ddd43b0b1e979a14dd8",
+                             "license":  "Apache-2.0",
+                             "licenseSource":  "https://github.com/danieleteti/delphimvcframework/tree/8fed954c457a3e43f9fc3ddd43b0b1e979a14dd8",
+                             "root":  "build/coverage-corpora/DelphiMVCFramework",
+                             "selectionPaths":  [
+                                                    "sources"
+                                                ],
+                             "files":  [
+                                           {
+                                               "path":  "sources/MVCFramework.Commons.pas",
+                                               "bytes":  78074,
+                                               "sha256":  "21bccf871f242aa377ed4286a5b76529827405024cd768b0678dbff599667539",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  9,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/JsonDataObjects.pas",
+                                               "bytes":  330510,
+                                               "sha256":  "cc9dd67534b17e7fdf33909f8ecc6db3f3cc91758d1ef98f8e51186578b2b11c",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  988,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Swagger.Commons.pas",
+                                               "bytes":  82473,
+                                               "sha256":  "a76ea950ea2eab0ecb88077b0fb0b538710bd40a6cc0399e6ef1789bb4ff06c5",
+                                               "category":  "large/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/ExprEvaluator.pas",
+                                               "bytes":  43008,
+                                               "sha256":  "ccf51ff383d04c975d9dba703e3669848e8744119a59d995320d558d1dad65e4",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Logger.pas",
+                                               "bytes":  23928,
+                                               "sha256":  "5d3baf9c2e5843641902d1b29a48631436e254f2d338c365ffe018264ad1fc93",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  14,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.SSEClient.pas",
+                                               "bytes":  17903,
+                                               "sha256":  "15a9daa36efda73eeb4ba7e1733de95bab21294d5b013d88bd4a42f0bc505fc6",
+                                               "category":  "medium/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MSHeap.pas",
+                                               "bytes":  4418,
+                                               "sha256":  "3a9112428d70be865d0759683e167f34e00e81d3cdc66bcd77a0f59227a2b225",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.BloomFilter.pas",
+                                               "bytes":  11454,
+                                               "sha256":  "b239b3bc7b5a26047be0fe8e5b028977dfa41ea17622176779cc3f3186826e71",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  11,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Controllers.Register.pas",
+                                               "bytes":  5517,
+                                               "sha256":  "e1ac644ff069a4c042ee92f96d40fa568cbbec58ec97dce855233f315798bb3b",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Filters.pas",
+                                               "bytes":  109488,
+                                               "sha256":  "d68bb8e773714fbeb9823f3b3737e449fe8f795e809981a29e07f718c9dbf7f2",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.ActiveRecord.pas",
+                                               "bytes":  253586,
+                                               "sha256":  "5527e530b0a4e4e8dc15357560e4703f4bce628e40fc8b7dbe5859a886579d42",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  43,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.ActiveRecordController.pas",
+                                               "bytes":  20084,
+                                               "sha256":  "a62234cfb5e30efc98e7bdfe5365da39ac0584440614cf8e83b3f0857f9168a2",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.RESTClient.Indy.pas",
+                                               "bytes":  48172,
+                                               "sha256":  "2775759d070d00af9b39dae97588a6241d8f6efebfd3d256b4a789a7227f6c02",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  17,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.WebSocket.Server.pas",
+                                               "bytes":  33800,
+                                               "sha256":  "4ba5fa9f4d69b92dfefe609a8566f1ee05fa2ae89e5997505a4b6a004d8e8fba",
+                                               "category":  "medium/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.AsyncTask.pas",
+                                               "bytes":  5808,
+                                               "sha256":  "1934b9f828febc76a4cf43f91d3866cc1aec6540a6b0503eb1a0693a2861c786",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.HMAC.pas",
+                                               "bytes":  6707,
+                                               "sha256":  "b6d1aba4e41b8732c442004048364ba2bf064364a4d204ff1906d0794259dd5d",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  17,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Crypt.Utils.pas",
+                                               "bytes":  4607,
+                                               "sha256":  "92dbcf46e5205f8972e2e49bdc03cbabae5db82adb35d432efff62f9191715a4",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.MinimalAPI.pas",
+                                               "bytes":  112025,
+                                               "sha256":  "41917fb9a4b241ec1050d6eabd693a88f68a8646244a401634113c6b22303f95",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Console.pas",
+                                               "bytes":  66069,
+                                               "sha256":  "87e786602f56929048c0d703bb57441eadf7a0577987e23d3c592a5b3235a218",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  30,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Container.pas",
+                                               "bytes":  16758,
+                                               "sha256":  "3875119035d01e5e4d5a925e9f7d80d14cec787ab2ed7726fb690ac59405bf8f",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  8,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.RESTClient.Intf.pas",
+                                               "bytes":  27157,
+                                               "sha256":  "2689d5dbd27e8aa4c08d60d2446bf58aa45380ea11b2d8f9532fedbc7beca860",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  17,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Cache.pas",
+                                               "bytes":  13832,
+                                               "sha256":  "b293f4e16395508f9443e0044f3666c7ae5a540ff27fbc02c6ec4f12446259df",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.RESTClient.Commons.pas",
+                                               "bytes":  9567,
+                                               "sha256":  "f8d513c379bc6f394aa2a2c6a624911f95fcd5ccd73efb3b67dc7b433f491261",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  17,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.IntfObjectPool.pas",
+                                               "bytes":  7644,
+                                               "sha256":  "cd2a7f01da482db505ed720d1401b5e12f7e6b17e750bf22596a650158190fe0",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Nullables.pas",
+                                               "bytes":  126115,
+                                               "sha256":  "8fd8b499e00c1aa0b9e39aaa5cc7a75c52dd66b51da93119d4f573e4349789d7",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.JSONRPC.pas",
+                                               "bytes":  101405,
+                                               "sha256":  "5c00d23ee7481faed1e4833c438034e2182104c84a2c8a101a10fc4271345347",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  14,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.DataSet.Utils.pas",
+                                               "bytes":  34220,
+                                               "sha256":  "229dca760c6cebe2971c04dac5b21f6742b556263e9df022d06b9e1cc3d9cf64",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Rtti.Utils.pas",
+                                               "bytes":  30157,
+                                               "sha256":  "43e4a9121eac8a919e75bd68a9d9ff4094c8c0e86631eae4c4541262b73adad4",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  10,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Controllers.CacheController.pas",
+                                               "bytes":  9795,
+                                               "sha256":  "9d8e6adbb9ec89ec749f9fac7004daca9862946b752c6fcda076921ed9440223",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Signal.pas",
+                                               "bytes":  3341,
+                                               "sha256":  "a5128618ed5bbe93f97546372cd39692e1487911211b50ff108d1fe757b388c4",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  12,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.LRUCache.pas",
+                                               "bytes":  4254,
+                                               "sha256":  "04529ebf30513c70e1ff0763316b5f2ccdf41b91cfa7c6f772418906e22a6e7a",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Validators.pas",
+                                               "bytes":  104959,
+                                               "sha256":  "b844fca4c23385fd789f95a207f20321b8c9e269a0276c983e10442018e913e4",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.RESTClient.pas",
+                                               "bytes":  69946,
+                                               "sha256":  "7d16539dc249ddb62c448013afd6cca6953ea4f34388fed702244d7470abfac2",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  73,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.HTMX.pas",
+                                               "bytes":  19180,
+                                               "sha256":  "5bda7253930e71ee5b2782929f45b3d8f212be57fc1a97e1d7ffe408a10cf448",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Serializer.Streaming.pas",
+                                               "bytes":  55698,
+                                               "sha256":  "2d9a97af6eba3851b277173b1246a9213ade3adbc5d34fede942b843069edafd",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  14,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.DotEnv.Parser.pas",
+                                               "bytes":  12654,
+                                               "sha256":  "d8883fe8485e31df5bfac9e71b501ea650a8e3a81dab669003e8c9c197dd7258",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Middleware.Analytics.pas",
+                                               "bytes":  4718,
+                                               "sha256":  "0c675fee207df6ef328e95262f754d3f0c3a32775f0a537baa099f4db494104a",
+                                               "category":  "small/none",
+                                               "directiveCandidates":  0,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/TemplatePro.pas",
+                                               "bytes":  314062,
+                                               "sha256":  "d6d0ec31c54c137b57aca04e27e7efcf38531c70a7ec3dead5406d40faec5219",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  4,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.Serializer.Commons.pas",
+                                               "bytes":  69960,
+                                               "sha256":  "200d44ceaacc44449148595c885e78d59d873b6f727291eb02377f1c2c0db613",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  42,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "sources/MVCFramework.HttpSys.Request.pas",
+                                               "bytes":  35438,
+                                               "sha256":  "988a52e64e284b46c0a1a9f1f9b190688af62b9781e178620b9f371fa72ca838",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           }
+                                       ]
+                         },
+                         {
+                             "name":  "mORMot2",
+                             "url":  "https://github.com/synopse/mORMot2.git",
+                             "commit":  "fc4c033da5520d25221025efb78fcc4ea55a55a0",
+                             "license":  "MPL-1.1 / GPL-2.0-or-later / LGPL-2.1-or-later (tri-license)",
+                             "licenseSource":  "https://github.com/synopse/mORMot2/tree/fc4c033da5520d25221025efb78fcc4ea55a55a0",
+                             "root":  "build/coverage-corpora/mORMot2",
+                             "selectionPaths":  [
+                                                    "src"
+                                                ],
+                             "files":  [
+                                           {
+                                               "path":  "src/core/mormot.core.mustache.pas",
+                                               "bytes":  95052,
+                                               "sha256":  "8c18cd44aa2aa8e08eedfd41589df9fcc8664d979dd951c69842b312cb589dfd",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/app/mormot.app.agl.pas",
+                                               "bytes":  75574,
+                                               "sha256":  "6d2952d05bc0fb112183e621da996e264b9b9d95d60cffb24ccbb5775cccedc7",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  23,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.sql.odbc.pas",
+                                               "bytes":  59534,
+                                               "sha256":  "3ca54f4b64714144b75c8bdd9b0c4258684fef705a0dda6b21a82283f84b1427",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/app/mormot.app.daemon.pas",
+                                               "bytes":  24141,
+                                               "sha256":  "a5c925eac07cf0e3602d8d4fc209f9d88c71754a2106611f42c1077e11c6a5da",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  26,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/app/mormot.app.console.pas",
+                                               "bytes":  13090,
+                                               "sha256":  "5f09ca0c688bf2303dc02ae6410d88947f2bdc71a5e8dce95a141ef908b7ade7",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.fpclibcmm.pas",
+                                               "bytes":  6055,
+                                               "sha256":  "1ed39b04c796d7255d359065f7ad983d53d5dbc5d6f97f8879a0f119afc8054b",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  18,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.mvc.pas",
+                                               "bytes":  93239,
+                                               "sha256":  "b1529a4ad067fd3a1fc905dfdf3c6d82d1282cada0cb33fdbc26d4a3173e0d57",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  9,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.base.pas",
+                                               "bytes":  479027,
+                                               "sha256":  "5e93551e636f8444cb2c11d36d8a555fa1b525559002094cf18c4ffe9deda857",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  1221,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.sql.sqlite3.pas",
+                                               "bytes":  31438,
+                                               "sha256":  "c47907ec0872bcd6c88f15ae0d4d68eeeb208fda49daa0e0707be40ac02a3b5b",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.i18n.pas",
+                                               "bytes":  47266,
+                                               "sha256":  "69ca9cdd8fdd0605ebb2504f1036db0cf71c76097b67ea28a08c5567ae2e14c3",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  29,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.os.mac.pas",
+                                               "bytes":  6171,
+                                               "sha256":  "2b034c2d46dd2a2da9b25356b390cc4191d54a4f423fa81cf54ee8a3c10f6ce0",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.rad.ui.sql.pas",
+                                               "bytes":  15621,
+                                               "sha256":  "83ba82e2bc68f5ff5023bc37f548a2628c11faa171e78c73dc9ca38943b0df04",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  10,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/crypt/mormot.crypt.jwt.pas",
+                                               "bytes":  70373,
+                                               "sha256":  "d679e4543f10c5634853d8a55dc2fa42bb1048aa2d919ce1fd57f000a917961b",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.buffers.pas",
+                                               "bytes":  372194,
+                                               "sha256":  "17dfcd53191d5264b2760609fc2a7ecb6314d16aceabbed934b61785d26f0f4b",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  364,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/misc/mormot.misc.iso.pas",
+                                               "bytes":  21383,
+                                               "sha256":  "adcf84a4641d1b1acf749d84b9dcd72802dd9eb7eb830d3c8a7cfc5a134c7e29",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.os.delphi.pas",
+                                               "bytes":  22872,
+                                               "sha256":  "b4c7f13d24a02458488d3e92b793f30ffc965570f7150fd9f2b2911090d40b1a",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  33,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.rad.bde.pas",
+                                               "bytes":  8888,
+                                               "sha256":  "390da611a494d57d16006f9dec27e5ceffcc7d0313106be9c806f8fd710d82da",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/lib/mormot.lib.zstd.pas",
+                                               "bytes":  14677,
+                                               "sha256":  "beaeed371e293e9544992be23b17c0762fea07a56d7b060d97a0be8271fef0b8",
+                                               "category":  "small/many",
+                                               "directiveCandidates":  12,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/net/mormot.net.tunnel.pas",
+                                               "bytes":  94393,
+                                               "sha256":  "6e5f37842e76ca56d34f25906321634c9422c541309407e67baba8859837f629",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  7,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.collections.pas",
+                                               "bytes":  95038,
+                                               "sha256":  "9f4055b4b0e70ff3a53838d7dffa01718c663f23ca0651754ba16b83e393ae02",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  155,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/net/mormot.net.acme.pas",
+                                               "bytes":  60412,
+                                               "sha256":  "fcad22bc45fc0bbf77ee682edeb451dd58fef1036c9e563a6900bb386626b57a",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  6,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/crypt/mormot.crypt.pkcs11.pas",
+                                               "bytes":  45807,
+                                               "sha256":  "75d4297b552acdbae5e8ee2c1be8b40daa4d5f80365ca65a2b407359a55ca792",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  22,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.raw.postgres.pas",
+                                               "bytes":  15014,
+                                               "sha256":  "e8025a13d4234d79f7760ea8cc6ae5c8731696848f3ac71dc1541d6420ce82cb",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  9,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/orm/mormot.orm.sqlite3.pas",
+                                               "bytes":  102741,
+                                               "sha256":  "5261aeb8ef472756ab8df7579a5eda6cee52ecbd23e8aee563a9832aa625b301",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.data.pas",
+                                               "bytes":  388747,
+                                               "sha256":  "025cf3bcd44a266ae5fbe4ba78e0ccca4c8c02ecf7fdb52f0bbca33b2d8915ef",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  434,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/net/mormot.net.relay.pas",
+                                               "bytes":  46574,
+                                               "sha256":  "23414325f9967f706da2baf7bfa7d0121a8f664275abfce7f5677948546c144d",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/crypt/mormot.crypt.win.pas",
+                                               "bytes":  35202,
+                                               "sha256":  "3e3d2c4ec523bf7eb59fb7423b2ae417a89160f037a369a15738cfb6f1aa340e",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  14,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/lib/mormot.lib.uniscribe.pas",
+                                               "bytes":  13458,
+                                               "sha256":  "2d76b0aeae81c593bb8335f3396173a5778466495eaca11c3928d588277d614a",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  4,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/soa/mormot.soa.server.pas",
+                                               "bytes":  95835,
+                                               "sha256":  "3f0fbc0b57401a7c7037c5d6b67d819502c576911f613261a64307c94cdfe82d",
+                                               "category":  "large/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.datetime.pas",
+                                               "bytes":  162094,
+                                               "sha256":  "ccd4013b5e97839f460174cb73b84d58c387430857f460650f0b0fd8489d79d3",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  290,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/net/mormot.net.ws.async.pas",
+                                               "bytes":  31429,
+                                               "sha256":  "0d1849965d3000a9f46dcd411be5d860370d4d69c82226aec46fdf644b8c6a77",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  3,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.rad.firedac.pas",
+                                               "bytes":  26550,
+                                               "sha256":  "b9bac01f02c5f2ba386ee53c148043b1ae0d4c74c2a55361e5b51fd6d03ef9b9",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  36,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/net/mormot.net.rtsphttp.pas",
+                                               "bytes":  15213,
+                                               "sha256":  "24d2718dcab317a739f2a7585b3f68938c812631a4eb8953d46127f1f64f43c8",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.fmt.pas",
+                                               "bytes":  232203,
+                                               "sha256":  "1e310ad164fc86ec1f8db8aa135ef4fb0fa93bc1dfc7bc422d5ea2eab6818713",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  96,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/net/mormot.net.ws.server.pas",
+                                               "bytes":  22312,
+                                               "sha256":  "6f91185d1c93631f86c7da6b40174de9bbd65bc59c69da8f3e363cee717bf294",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  5,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.rad.nexusdb.pas",
+                                               "bytes":  20455,
+                                               "sha256":  "67b7a89b524c01e898a580e54b345adb3044129c41c246ecb7f45388e6f40cf9",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  19,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/tools/logview/mormot.tools.logview.remote.pas",
+                                               "bytes":  10832,
+                                               "sha256":  "c99df7c8d9d60d063260c5cea825ce25083d5391cd524925259a77b22ba2ba1a",
+                                               "category":  "small/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/core/mormot.core.fpcx64mm.pas",
+                                               "bytes":  164332,
+                                               "sha256":  "77ed6f6105641236bb3da5998f67a79f98b01fafe23bd8a17eb60a3bdd4e4013",
+                                               "category":  "large/many",
+                                               "directiveCandidates":  652,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/orm/mormot.orm.client.pas",
+                                               "bytes":  39499,
+                                               "sha256":  "5fe8bcfc069c8d2cff94592679d1f481f0d7c6e61c29a78c90043f92d7733632",
+                                               "category":  "medium/few",
+                                               "directiveCandidates":  1,
+                                               "compatibility":  "unreviewed"
+                                           },
+                                           {
+                                               "path":  "src/db/mormot.db.rad.pas",
+                                               "bytes":  35495,
+                                               "sha256":  "83ce30899fe0428c70b8a83ff9287c55569b54e29722ecb4e90e37b492e7121a",
+                                               "category":  "medium/many",
+                                               "directiveCandidates":  74,
+                                               "compatibility":  "unreviewed"
+                                           }
+                                       ]
+                         }
+                     ],
+    "internalRoot":  "build/coverage-corpora/Formatter4Delphi/tests/Fixtures",
+    "internalCommit":  "a0c55c6f6e56eb984634b5d99a96f74a6389df54",
+    "internalFiles":  [
+                          {
+                              "path":  "ClassRecordCorpus.pas",
+                              "bytes":  1306,
+                              "sha256":  "05e3a461d92b22d390c32fd1f2084f2d1a33b63da79d0b9c808d93276b94c4cc"
+                          },
+                          {
+                              "path":  "ControlFlowCorpus.pas",
+                              "bytes":  1316,
+                              "sha256":  "2dbb02d503e4e15b26ea6d3cee03a4ca7e9b04fd9e7cbed884aa3714389d4a63"
+                          },
+                          {
+                              "path":  "DeclarationCorpus.pas",
+                              "bytes":  691,
+                              "sha256":  "cf324b7d7d9ee4f3bd309dd5428599fb65c16b84983ab353ff1e382ef27492d9"
+                          },
+                          {
+                              "path":  "LexicalCorpus.pas",
+                              "bytes":  1272,
+                              "sha256":  "0bda60b5b3fd20b1d49b7416646d55bf2d423fe54a7f7de1d36712d6022b72f1"
+                          },
+                          {
+                              "path":  "Minimal.pas",
+                              "bytes":  54,
+                              "sha256":  "af38c67c06bb2a3f719cb679ee6bb9462028dd5215fb129fe52696f092b84d8a"
+                          },
+                          {
+                              "path":  "PostfixCorpus.pas",
+                              "bytes":  1807,
+                              "sha256":  "823dad049414266d3df6c5c4e7bf4abdef168a95cec095b2ab86ce91865f6d84"
+                          },
+                          {
+                              "path":  "PropertyCorpus.pas",
+                              "bytes":  1771,
+                              "sha256":  "040091918931ab7cd0606e71ad6ae65b5f3d3ee9424a7cb46f046080f6fee4fd"
+                          }
+                      ]
+}

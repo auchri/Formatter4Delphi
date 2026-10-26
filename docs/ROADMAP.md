@@ -62,16 +62,29 @@
   contextual recovery, exact leaf/span/lifetime invariants and compiled corpus.
 - Actual validation and toolchain limits: M2_STATUS.md. M2.6 was authorized separately.
 
-### M2.6 — Control-flow statements (current stopping point)
+### M2.6 — Control-flow statements (completed grammar scope)
 - For/to/downto, for-in, while, repeat/until, case labels/ranges/else,
   try/finally, catch-all except, on handlers with optional else, simple raise.
 - Contextual lists, separator/else ownership, hard routine/unit boundaries,
   unchanged nesting guard and opaque protection for unsupported fragments.
 - Compiled ControlFlowCorpus and hierarchy/recovery/stress/lifetime tests.
-- Actual validation and version limitations: M2_STATUS.md. Stop after M2.6.
+- Actual validation and version limitations: M2_STATUS.md. Grammar stops here.
+
+### M2.7 — Real-world coverage and corpus analysis (analysis stopping point)
+- Independent Delphi console analyzer, strict/reproducible decoding, original
+  token-length coverage, iterative lifetime/lossless validation and repetitions.
+- Pinned DUnitX/Indy/DelphiMVCFramework/mORMot2 corpus plus separate archived
+  internal fixtures; stratified deterministic selection and source hashes.
+- JSON/CSV/Markdown reports, directive-fallback groups, opaque inventory/ranking,
+  high-resolution timing medians and an RTL retained-tree heap observation.
+- Method/tests/actual measurements: `PARSER_COVERAGE.md`, `M2_STATUS.md` and
+  `reports/m2_7/coverage.md`. No grammar or formatter changes. Stop after M2.7.
 
 ### Next small task (proposal only, requires new authorization)
 - Validate the suite and all compiled corpora on exact Delphi 12.3+.
+- M2.8 proposal from the measured corpus: directive-aware lossless design/pilot;
+  M2.9 proposal: resource-string sections, then remeasure narrow declaration gaps.
+  See `PARSER_COVERAGE.md` and `M2_STATUS.md`; neither is implemented here.
 - A subsequent narrow grammar milestone must be authorized separately.
 
 ### M3 — Grammar completion and validation

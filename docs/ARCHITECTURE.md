@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**Current stopping point: M2.6 control-flow statements.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
+**Current stopping point: M2.7 corpus analysis; grammar stays at M2.6.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -27,6 +27,18 @@ Decoded source snapshot (UTF-16 string)
 
 Source I/O (later): original bytes/encoding/BOM <-> source snapshot
 ```
+
+M2.7 adds analysis-only source decoding under `tests/DelphiFormatter.Coverage`.
+`Coverage.Analysis` reads bytes, decodes with a declared policy, times the existing
+`TDelphiLexer.Tokenize` (the actual public API, not `Scan`) and
+`TDelphiParser.Parse`, frees the lexer, and iteratively verifies/analyzes the CST.
+`Coverage.Runner` handles pinned manifests/local files and per-file isolation;
+`Coverage.Reports` writes JSON/CSV/Markdown and weighted aggregates. These units
+depend on the existing core, lexer and syntax/parser; none is a core dependency.
+`scripts/FetchCoverageCorpus.ps1` alone uses Git/network access. Corpus source
+snapshots and archives stay under ignored `build/`. The console is an analysis
+consumer, not the future formatter CLI or a production source I/O layer.
+No public lexer/parser/CST API or behavior changes. See `PARSER_COVERAGE.md`.
 
 Dependency direction must stay downward: lexer never knows about syntax nodes; CST never depends on AST/formatter; AST never required for formatting.
 
