@@ -64,6 +64,27 @@ type
     [Test] procedure DeclarationRecoveryBoundaries;
     [Test] procedure OpaqueProceduralParameters;
     [Test] procedure DeclarationLifetimes;
+    [Test] procedure MemberHierarchy;
+    [Test] procedure QualifiedAndEscapedMembers;
+    [Test] procedure PostfixTrivia;
+    [Test] procedure IndexHierarchy;
+    [Test] procedure MultipleAndComplexIndices;
+    [Test] procedure AlternativeIndexBrackets;
+    [Test] procedure DereferenceHierarchy;
+    [Test] procedure MixedPostfixChains;
+    [Test] procedure PostfixPrecedence;
+    [Test] procedure DesignatorAssignments;
+    [Test] procedure InvalidAssignmentTargets;
+    [Test] procedure MemberCallStatements;
+    [Test] procedure PostfixRecovery;
+    [Test] procedure QualifiedGenericFallback;
+    [Test] procedure PostfixDirectives;
+    [Test] procedure LongPostfixChains;
+    [Test] procedure PostfixDeterminism;
+    [Test] procedure PostfixLifetimes;
+    [Test] procedure CompiledPostfixCorpus;
+    [Test] procedure SyntaxKindOrdinals;
+
 
   end;
 
@@ -608,7 +629,7 @@ begin
 end;
 
 procedure TParserTests.UnsupportedExpressions;
-const Sources: array[0..3] of string = ('Foo<T>(A)', 'A.B', 'A[0]', 'F(G<T,U>(A), B)');
+const Sources: array[0..1] of string = ('Foo<T>(A)', 'F(G<T,U>(A), B)');
 var S: string; T: TSyntaxTree;
 begin
   for S in Sources do
@@ -1006,6 +1027,389 @@ begin
     Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
     Assert.IsTrue(T.DiagnosticCount > 0);
   finally T.Free; end;
+end;
+
+procedure TParserTests.MemberHierarchy;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('Customer.Address.City', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    Assert.AreEqual(17, N.GetChild(2).Span.StartOffset);
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    Assert.AreEqual(0, N.Span.StartOffset);
+    Assert.AreEqual(16, N.Span.Length);
+    Assert.AreEqual(Integer(skIdentifierExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.QualifiedAndEscapedMembers;
+const Sources: array[0..4] of string = ('Customer.Name', 'Form1.Caption',
+  'System.SysUtils.Format', '&Type.&Name', 'GetObject().Property');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Sources do
+  begin
+    T := Parse(S, 1);
+    try
+      Assert.AreEqual(Integer(skMemberAccessExpression), Integer(Child(T.Root, 0).Kind));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.PostfixTrivia;
+var T: TSyntaxTree;
+begin
+  T := Parse(' Data {receiver} . (*member*) Items '#13#10+
+    '[ {index} A + 1, B ] {pointer} ^ . Name ', 1);
+  try
+    Assert.AreEqual(2, Count(T.Root, skMemberAccessExpression));
+    Assert.AreEqual(1, Count(T.Root, skIndexExpression));
+    Assert.AreEqual(1, Count(T.Root, skDereferenceExpression));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.IndexHierarchy;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('Data.Items[Index].Name', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skIndexExpression), Integer(N.Kind));
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(Integer(skIdentifierExpression), Integer(Child(N, 1).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+  T := Parse('Matrix[Row][Column]', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skIndexExpression), Integer(N.Kind));
+    Assert.AreEqual(Integer(skIndexExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(2, Count(N, skIndexExpression));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.MultipleAndComplexIndices;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('Matrix[Row + 1, Items[F(Column * 2)]]', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skIndexExpression), Integer(N.Kind));
+    Assert.AreEqual(Integer(skBinaryExpression), Integer(Child(N, 1).Kind));
+    Assert.AreEqual(Integer(skIndexExpression), Integer(Child(N, 2).Kind));
+    Assert.AreEqual(2, Count(N, skBinaryExpression));
+    Assert.AreEqual(1, Count(N, skCallExpression));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.AlternativeIndexBrackets;
+const Sources: array[0..5] of string = ('Items(.0.)',
+  'Matrix(.Row, Column.)', 'Items(.Indices[0].).Name', 'Matrix[Row](.Column.)',
+  'Items[0.)', 'Items(.0]');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Sources do
+  begin
+    T := Parse(S, 1);
+    try
+      Assert.IsTrue(Count(T.Root, skIndexExpression) > 0);
+      Assert.AreEqual(0, Count(T.Root, skCallExpression));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.DereferenceHierarchy;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('P^.Next^.Value', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skDereferenceExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    Assert.AreEqual(Integer(skDereferenceExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+  T := Parse('P^^', 1);
+  try
+    Assert.AreEqual(2, Count(T.Root, skDereferenceExpression));
+    Assert.AreEqual(Integer(skDereferenceExpression), Integer(Child(Child(T.Root, 0), 0).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.MixedPostfixChains;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('Factory.Create().Items[0]^.GetAddress().City', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skCallExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skDereferenceExpression), Integer(N.Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skIndexExpression), Integer(N.Kind));
+    Assert.AreEqual(2, Count(T.Root, skCallExpression));
+    Assert.AreEqual(4, Count(T.Root, skMemberAccessExpression));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.PostfixPrecedence;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('-A.Items[0] + B.Value * C[Index]', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skBinaryExpression), Integer(N.Kind));
+    Assert.AreEqual(Integer(skUnaryExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(Integer(skIndexExpression), Integer(Child(Child(N, 0), 0).Kind));
+    Assert.AreEqual(Integer(skBinaryExpression), Integer(Child(N, 1).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+  T := Parse('not Obj.Enabled and @P^.Field <> nil', 1);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Integer(skBinaryExpression), Integer(Child(N, 0).Kind));
+    N := Child(N, 0);
+    Assert.AreEqual(Integer(skUnaryExpression), Integer(Child(N, 0).Kind));
+    Assert.AreEqual(Integer(skMemberAccessExpression), Integer(Child(Child(N, 0), 0).Kind));
+    Assert.AreEqual(Integer(skUnaryExpression), Integer(Child(N, 1).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DesignatorAssignments;
+const Targets: array[0..10] of string = ('A', 'Customer.Name',
+  'Customer.Address.City', 'Items[Index]', 'Items[Index].Name',
+  'Matrix[Row, Column]', 'P^', 'P^.Field', 'Items[Index]^',
+  'GetObject().Property', 'Matrix(.Row, Column.)');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Targets do
+  begin
+    T := Parse(S+' := Value;', 2);
+    try
+      Assert.AreEqual(Integer(skAssignmentStatement), Integer(Child(T.Root, 0).Kind), S);
+      Assert.AreEqual(0, T.DiagnosticCount, S);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.InvalidAssignmentTargets;
+const Targets: array[0..3] of string = ('A + B', 'F()', 'A * B.Field', 'A = B');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Targets do
+  begin
+    T := Parse('begin '+S+' := 10; Good.Name := Value; end', 2);
+    try
+      Assert.AreEqual(Integer(skError), Integer(Child(Child(T.Root, 0), 0).Kind));
+      Assert.AreEqual(1, Count(T.Root, skAssignmentStatement));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.MemberCallStatements;
+const Sources: array[0..7] of string = ('DoSomething', 'DoSomething(Value)',
+  'Logger.WriteMessage(''Hello'')', 'Customer.Save', 'Items[Index].Update',
+  'Form1.Close', 'Customer.GetAddress().Save', 'Items[Index].SetValue(NewValue)');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Sources do
+  begin
+    T := Parse('if A then '+S+' else Form1.Close;', 2);
+    try
+      Assert.AreEqual(2, Count(T.Root, skCallStatement), S);
+      Assert.AreEqual(0, Count(T.Root, skOpaqueRegion), S);
+      Assert.AreEqual(0, T.DiagnosticCount, S);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.PostfixRecovery;
+const Sources: array[0..11] of string = ('Customer.', 'Items[', 'Matrix[A,',
+  'P^.', 'Customer.Name :=', 'Items[Index := Value', 'Items[]',
+  'Items[0,]', 'Items(.', 'Items(.A,.)', 'F(Items[)', 'Items[A + ]');
+var S: string; T: TSyntaxTree; I: Integer;
+begin
+  for S in Sources do
+  begin
+    T := Parse(S, 2);
+    try
+      Assert.IsTrue(T.DiagnosticCount > 0, S);
+      Assert.IsTrue(Count(T.Root, skMissingToken) > 0, S);
+      Assert.AreEqual('PAR001', T.GetDiagnostic(0).Code, S);
+      for I := 0 to T.DiagnosticCount - 1 do
+        Assert.IsTrue(T.GetDiagnostic(I).Span.EndOffset <= Length(S));
+    finally T.Free; end;
+    T := Parse('begin '+S+'; Next.Name := Value; end', 2);
+    try
+      Assert.IsTrue(T.DiagnosticCount > 0, S);
+      Assert.AreEqual(Integer(skAssignmentStatement),
+        Integer(Child(Child(T.Root, 0), 1).Kind), S);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.QualifiedGenericFallback;
+const Sources: array[0..5] of string = ('GenericMethod<T>(Value)',
+  'Obj.GenericMethod<T>(Value)', 'Factory.Create<T>().Property',
+  'F(Obj.Method<T,U>(Value), B)', 'Items[I].Method<T>(Value)',
+  'Obj.Method<TList<T>>(Value).Name');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Sources do
+  begin
+    T := Parse(S, 1);
+    try
+      Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0, S);
+      Assert.AreEqual(0, Count(T.Root, skBinaryExpression), S);
+      Assert.IsTrue(T.DiagnosticCount > 0, S);
+    finally T.Free; end;
+  end;
+  T := Parse('A.Value < B.Value', 1);
+  try
+    Assert.AreEqual(1, Count(T.Root, skBinaryExpression));
+    Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.PostfixDirectives;
+const Sources: array[0..2] of string = ('A.{$IFDEF X}B{$ENDIF}',
+  'A[{$I index.inc}I]', 'P^.'#13#10'{$R x.res}'#13#10'Field');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Sources do
+  begin
+    T := Parse('unit X; interface implementation procedure P; begin '+S+'; end; end.');
+    try
+      Assert.AreEqual(Integer(skOpaqueRegion), Integer(Child(T.Root, 0).Kind));
+      Assert.AreEqual(0, Count(T.Root, skRoutineDeclaration));
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.LongPostfixChains;
+var B: TStringBuilder; T: TSyntaxTree; N: TSyntaxNode; I: Integer;
+begin
+  B := TStringBuilder.Create;
+  try
+    B.Append('A');
+    for I := 1 to 512 do B.Append('.B[0]()^');
+    T := Parse(B.ToString+' := Value;', 2);
+    try
+      Assert.AreEqual(0, T.DiagnosticCount);
+      N := Child(Child(T.Root, 0), 0);
+      for I := 1 to 512 do
+      begin
+        Assert.AreEqual(Integer(skDereferenceExpression), Integer(N.Kind)); N := Child(N, 0);
+        Assert.AreEqual(Integer(skCallExpression), Integer(N.Kind)); N := Child(N, 0);
+        Assert.AreEqual(Integer(skIndexExpression), Integer(N.Kind)); N := Child(N, 0);
+        Assert.AreEqual(Integer(skMemberAccessExpression), Integer(N.Kind)); N := Child(N, 0);
+      end;
+      Assert.AreEqual(Integer(skIdentifierExpression), Integer(N.Kind));
+    finally T.Free; end;
+    B.Append('.');
+    T := Parse(B.ToString, 1);
+    try Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  finally B.Free; end;
+end;
+
+procedure TParserTests.PostfixDeterminism;
+const Parts: array[0..17] of string = ('A', '.', '^', '[', ']', '(.', '.)',
+  '(', ')', ',', ':=', ';', 'B', '+', '<', '>', '0', '{gap}');
+var Seed: UInt64; I,J,Mode: Integer; S: string; A,B: TSyntaxTree;
+begin
+  Seed := $4D322E33;
+  for I := 0 to 299 do
+  begin
+    S := 'A';
+    for J := 0 to I mod 45 do
+    begin
+      Seed := (Seed * UInt64(1664525) + UInt64(1013904223)) and UInt64($FFFFFFFF);
+      S := S + ' ' + Parts[Integer(Seed mod UInt64(Length(Parts)))];
+    end;
+    for Mode := 1 to 2 do
+    begin
+      A := Parse(S, Mode);
+      try
+        B := Parse(S, Mode);
+        try
+          Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+          Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+          for J := 0 to A.DiagnosticCount - 1 do
+          begin
+            Assert.AreEqual(A.GetDiagnostic(J).Code, B.GetDiagnostic(J).Code);
+            Assert.AreEqual(A.GetDiagnostic(J).Message, B.GetDiagnostic(J).Message);
+            Assert.AreEqual(A.GetDiagnostic(J).Span.StartOffset, B.GetDiagnostic(J).Span.StartOffset);
+            Assert.AreEqual(A.GetDiagnostic(J).Span.Length, B.GetDiagnostic(J).Span.Length);
+          end;
+        finally B.Free; end;
+      finally A.Free; end;
+    end;
+  end;
+end;
+
+procedure TParserTests.PostfixLifetimes;
+var I: Integer; T: TSyntaxTree;
+begin
+  for I := 1 to 200 do
+  begin
+    T := Parse('begin P^.Items[F(0)].Name := Value; P^.Save; end', 2);
+    try Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+    T := Parse('A.' + Char($D800) + '[I,].B^', 1);
+    try Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.CompiledPostfixCorpus;
+var T: TSyntaxTree;
+begin
+  T := Parse(TFile.ReadAllText('tests/Fixtures/PostfixCorpus.pas', TEncoding.UTF8));
+  try
+    Assert.AreEqual(5, Count(T.Root, skBlockStatement));
+    Assert.IsTrue(Count(T.Root, skMemberAccessExpression) >= 20);
+    Assert.IsTrue(Count(T.Root, skIndexExpression) >= 8);
+    Assert.IsTrue(Count(T.Root, skDereferenceExpression) >= 5);
+    Assert.IsTrue(Count(T.Root, skAssignmentStatement) >= 15);
+    Assert.AreEqual(1, Count(T.Root, skIfStatement));
+    // Only the intentionally unsupported type section is opaque.
+    Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, T.DiagnosticCount);
+    Assert.AreEqual('PAR003', T.GetDiagnostic(0).Code);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.SyntaxKindOrdinals;
+begin
+  Assert.AreEqual(15, Ord(skCallExpression));
+  Assert.AreEqual(30, Ord(skDirective));
+  Assert.AreEqual(31, Ord(skMemberAccessExpression));
+  Assert.AreEqual(32, Ord(skIndexExpression));
+  Assert.AreEqual(33, Ord(skDereferenceExpression));
 end;
 
 initialization

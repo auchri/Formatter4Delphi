@@ -11,7 +11,8 @@ type
     skError, skOpaqueRegion, skToken, skMissingToken,
     skConstSection, skConstDeclaration, skVarSection, skVarDeclaration,
     skTypeReference, skRoutineDeclaration, skRoutineHeader, skParameterList,
-    skParameterDeclaration, skReturnType, skDirective);
+    skParameterDeclaration, skReturnType, skDirective,
+    skMemberAccessExpression, skIndexExpression, skDereferenceExpression);
 
 implementation
 

@@ -130,3 +130,29 @@ only synchronizes opaque type sections after a top-level semicolon; procedural
 type aliases and class-method prefixes therefore cannot become global routines.
 No public lexer/reader/tree API or ownership contract changed. New syntax kinds
 are the only public API addition. Exact Delphi 12.3 validation remains open.
+
+## M2.3 postfix and syntactic designators (2026-10-26)
+
+Primary now folds `.`, brackets, calls and `^` iteratively in source order.
+The existing binary precedence table and Expression algorithm are unchanged.
+Only three appended syntax kinds are public additions; no Reader/lexer/tree
+API, ownership, token storage or per-production class changes were needed.
+Assignment classification walks the receiver spine iteratively, permitting
+calls inside a member/index/dereference designator but rejecting a bare call
+or binary-expression target. Parameterless member calls remain syntactically
+plausible CallStatements; type/writability resolution is deferred.
+
+Qualified generic candidates call the same lazy linear angle-opener index as
+unqualified names. No generic grammar or repeated suffix scan was introduced.
+Missing index closers preserve `:=`, semicolons and enclosing delimiters.
+
+The official Fundamental Syntactic Elements (Delphi) reference permits keyword
+spellings after qualification and equates `[`/`]` with `(.`/`.)`:
+https://docwiki.embarcadero.com/RADStudio/Athens/en/Fundamental_Syntactic_Elements_(Delphi)
+The parser accepts qualified keyword spellings per that reference and the
+requested `GetObject().Property` example. The available CE Update 1 compiler
+rejects `Customer.Property` with E2029, so the compiled corpus uses
+`Customer.&Property`; exact 12.3 behavior remains unverified. This older
+compiler observation does not establish a 12.3 language-rule deviation.
+Paired/mixed bracket spellings are also exercised by the corpus. Exact build
+evidence is in `M2_STATUS.md`.

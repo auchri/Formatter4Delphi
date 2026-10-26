@@ -1,4 +1,4 @@
-# Lossless CST and declarations parser — M2.2
+# Lossless CST parser - M2.3
 
 ## Public API and ownership
 
@@ -60,13 +60,15 @@ Repeated consumption after EOF is a no-op. Lookahead never consumes tokens.
 - Identifiers, numbers, strings and character codes; adjacent string/char-code
   components form one literal node. `nil` is a literal; `True` and `False` remain identifier expressions, independent of case. Resolving predefined constants belongs to semantic analysis.
 - Parentheses, prefix `+`, `-`, `not`, `@`, nested/simple calls with comma-separated
-  arguments, including zero arguments. No member/index/dereference/set syntax.
+  arguments, including zero arguments. Iterative postfix member `.`, index `[]`
+  (also `(.` / `.)`, including mixed spellings) and dereference `^` compose
+  in source order; each wraps its left expression. Set constructors remain unsupported.
 - Binary precedence climbing, equal precedence left-associative:
   high `* / div mod and shl shr as`, then `+ - or xor`, then
   low `= <> < > <= >= in is`. Prefix operators bind above binary operators;
-  calls bind above prefix operators. See the official
+  all postfix operators bind above prefix operators. See the official
   [Delphi expression reference](https://docwiki.embarcadero.com/RADStudio/Athens/en/Expressions_(Delphi)).
-- Simple identifier assignments, identifier/call statements, empty statements,
+- Syntactic designator assignments, identifier/member/index/dereference/call statements, empty statements,
   `begin/end`, nested `if/then/else`. Separating semicolons belong to the block
   (or isolated statement root), not to statements. `else` binds to the nearest
   unmatched `if`; a preceding semicolon prevents binding and is diagnosed.
@@ -86,13 +88,13 @@ retained first, followed by parser diagnostics in deterministic discovery order.
 Diagnostic spans identify the significant offending token; synthetic leaves
 anchor before its leading trivia. No original token is synthesized or duplicated.
 
-Expression boundaries include `; end else then ) , interface implementation`
+Expression boundaries include `; end else then ) ] .) := , interface implementation`
 and EOF. Missing operands/closers preserve these tokens for their caller.
 Unsupported statements scan to contextual boundaries, tracking nested blocks,
 parentheses and brackets. Blocks preserve unexpected boundary tokens in error
 nodes and continue. Unsupported unit sections scan to `implementation` or final
 `end.` / incomplete `end` at EOF, retaining inner class/routine `end;` tokens.
-Unsupported trailing input becomes an opaque root child. A name followed by an angle-bracket list and a call opener is ambiguous with generic specialization and is conservatively opaque, including nested call arguments. M2.1 does not resolve that ambiguity semantically.
+Unsupported trailing input becomes an opaque root child. A name followed by an angle-bracket list and a call opener is ambiguous with generic specialization and is conservatively opaque, including nested call arguments. M2.3 checks qualified member names with the same index and does not resolve that ambiguity semantically.
 
 Standalone, closed `{$R file.res}` / `(*$RESOURCE file.res*)` directives are
 accepted only as explicit `skDirective` nodes at unit-section boundaries.
@@ -182,6 +184,40 @@ Missing declaration/header punctuation, names, types and body delimiters use
 PAR001 and zero-width missing leaves. Routine blocks stop before a following
 procedure/function or unit terminator. Unsupported routine modifiers, nested
 routines, advanced statements, classes/records, generics, anonymous methods,
-arrays/pointers and richer expressions are outside structured coverage.
+array/pointer type declarations, set constructors and other richer expressions are outside structured coverage.
 Recovery is deliberately conservative on ambiguous malformed nesting; it can
 retain more than one unsupported declaration in one opaque region.
+
+## M2.3 postfix hierarchy and targets
+
+`skMemberAccessExpression`, `skIndexExpression` and `skDereferenceExpression`
+are appended to `TSyntaxKind`; previous ordinals remain unchanged. Member nodes
+contain their receiver, dot and member-name leaf. Regular/escaped identifiers
+and keyword spellings after qualification are accepted without name resolution.
+Index nodes contain their receiver, original brackets, ordered expression
+children and commas. Dereference nodes contain their receiver and caret.
+Calls continue to use `skCallExpression`. All trivia remains explicit leaves.
+
+For `Factory.Create().Items[0]^.Name`, the outer member wraps dereference,
+index, member, call, member and identifier nodes in that order. Postfix parsing
+is iterative; only nested arguments/indices and parentheses enter Expression
+recursively. Binary precedence and prefix `@`/`+`/`-`/`not` remain unchanged.
+
+`IsAssignableTarget` walks the receiver spine of identifier-based member,
+index and dereference designators (including calls/parentheses within the
+spine). Bare calls, binary/unary/literal roots and opaque/error receivers are
+not targets. Missing receiver-spine punctuation/names reject the target;
+malformed index expressions retain their own diagnostic/error children.
+`A + B := 10` is an error statement, preserving both sides and `:=`.
+Calls within receivers can return writable objects/pointers; no semantic
+writability, property read-only status or type/indexability check is performed.
+Parameterless plausible designators such as `Customer.Save` and
+`Items[Index].Update` use `skCallStatement` without semantic resolution.
+
+Missing names, indices and closers use PAR001 and missing leaves. Closing index
+brackets and `:=` are recovery boundaries, allowing a missing `]` before an
+assignment and preserving following statements at semicolons. Unsupported
+fragments retain the existing conservative opaque recovery and nesting guard.
+Full generics, type declarations, new statement kinds and preprocessing remain
+outside M2.3. `PostfixCorpus.pas` is compiled and parsed, with its type section
+intentionally opaque and routine bodies structured.

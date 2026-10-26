@@ -27,10 +27,11 @@ type
     procedure Identifier(Children: TList<TSyntaxElement>);
     function Boundary: Boolean;
     function Precedence: Integer;
-    function AmbiguousGenericCall: Boolean;
+    function AmbiguousGenericCall(MemberName: Boolean = False): Boolean;
     procedure IndexGenericCallOpeners;
     function Expression(MinPrecedence: Integer = 1): TSyntaxNode;
     function Primary: TSyntaxNode;
+    function IsAssignableTarget(Target: TSyntaxNode): Boolean;
     function Statement: TSyntaxNode;
     function Block: TSyntaxNode;
     function IfStatement: TSyntaxNode;
@@ -141,7 +142,8 @@ function TDelphiParser.Boundary: Boolean;
 begin
   Result := FReader.AtEOF or FReader.Matches(';') or FReader.Matches('end') or
     FReader.Matches('else') or FReader.Matches('then') or
-    FReader.Matches(')') or FReader.Matches(',') or
+    FReader.Matches(')') or FReader.Matches(']') or FReader.Matches('.)') or
+    FReader.Matches(':=') or FReader.Matches(',') or
     FReader.Matches('interface') or FReader.Matches('implementation');
   if FRoutineBody then
     Result := Result or FReader.Matches('procedure') or FReader.Matches('function');
@@ -238,10 +240,11 @@ begin
   end;
 end;
 
-function TDelphiParser.AmbiguousGenericCall: Boolean;
+function TDelphiParser.AmbiguousGenericCall(MemberName: Boolean): Boolean;
 begin
   Result := False;
-  if (FReader.PeekSignificant.Kind <> tkIdentifier) or
+  if not ((FReader.PeekSignificant.Kind = tkIdentifier) or
+    (MemberName and (FReader.PeekSignificant.Kind = tkReservedWord))) or
     not FReader.Matches('<', 1) then Exit;
   if Length(FGenericCallOpeners) = 0 then IndexGenericCallOpeners;
   Result := FGenericCallOpeners[FReader.SignificantIndex(1)];
@@ -252,6 +255,8 @@ var
   Children: TList<TSyntaxElement>;
   Kind: TSyntaxKind;
   Before: Integer;
+  Closer: string;
+  IsIndex: Boolean;
 begin
   // A name followed by <...>(...) may be a generic specialization rather
   // than relational operators. Do not claim to understand that grammar yet.
@@ -305,22 +310,58 @@ begin
       end;
     end;
     Result := Node(Kind, Children);
-    while FReader.Matches('(') do
+    // Left-fold postfix operators; chain length does not consume parser depth.
+    while True do
     begin
       Children.Clear;
       Children.Add(Result);
-      Take(Children);
-      if not FReader.Matches(')') and not FReader.AtEOF then
-        while True do
+      if FReader.Matches('.') then
+      begin
+        Take(Children);
+        // Qualified candidates reuse the existing linear angle-opener index.
+        if AmbiguousGenericCall(True) then
         begin
-          Before := FReader.Position;
-          Children.Add(Expression);
-          if not FReader.Matches(',') then Break;
-          Take(Children);
-          if FReader.Position <= Before then Break;
+          Report('PAR003', 'Ambiguous generic call preserved as opaque');
+          Children.Add(OpaqueStatement(True));
+          Exit(Node(skOpaqueRegion, Children));
         end;
-      Expect(Children, ')');
-      Result := Node(skCallExpression, Children);
+        // Delphi also permits keyword spellings after qualification.
+        if FReader.PeekSignificant.Kind in [tkIdentifier, tkReservedWord] then
+          Take(Children)
+        else Missing(Children, 'identifier');
+        Result := Node(skMemberAccessExpression, Children);
+      end
+      else if FReader.Matches('^') then
+      begin
+        Take(Children);
+        Result := Node(skDereferenceExpression, Children);
+      end
+      else if FReader.Matches('(') or FReader.Matches('[') or
+        FReader.Matches('(.') then
+      begin
+        IsIndex := not FReader.Matches('(');
+        if FReader.Matches('[') then Closer := ']'
+        else if FReader.Matches('(.') then Closer := '.)'
+        else Closer := ')';
+        Take(Children);
+        // Calls may be empty; an index list needs at least one expression.
+        if IsIndex or (not FReader.Matches(Closer) and not FReader.AtEOF) then
+          while True do
+          begin
+            Before := FReader.Position;
+            Children.Add(Expression);
+            if not FReader.Matches(',') then Break;
+            Take(Children);
+            if FReader.Position <= Before then Break;
+          end;
+        // Both spellings denote the same bracket token in Delphi.
+        if IsIndex and (FReader.Matches(']') or FReader.Matches('.)')) then
+          Take(Children)
+        else Expect(Children, Closer);
+        if IsIndex then Result := Node(skIndexExpression, Children)
+        else Result := Node(skCallExpression, Children);
+      end
+      else Break;
     end;
   finally
     Children.Free;
@@ -339,15 +380,42 @@ begin
     begin
       if (Nesting = 0) and Boundary then Break;
       if FReader.Matches('begin') or FReader.Matches('(') or
-        FReader.Matches('[') or (TrackAngles and FReader.Matches('<')) then Inc(Nesting)
+        FReader.Matches('[') or FReader.Matches('(.') or
+        (TrackAngles and FReader.Matches('<')) then Inc(Nesting)
       else if FReader.Matches('end') or FReader.Matches(')') or
-        FReader.Matches(']') or (TrackAngles and FReader.Matches('>')) then Dec(Nesting);
+        FReader.Matches(']') or FReader.Matches('.)') or
+        (TrackAngles and FReader.Matches('>')) then Dec(Nesting);
       Take(Children); // each continuing iteration consumes original tokens
     end;
     Result := Node(skOpaqueRegion, Children);
   finally
     Children.Free;
   end;
+end;
+
+function TDelphiParser.IsAssignableTarget(Target: TSyntaxNode): Boolean;
+var
+  I: Integer;
+  Receiver: TSyntaxNode;
+begin
+  // A bare call is not a target. Inside a designator, calls may return an
+  // object/pointer. Writability and name resolution belong to semantics.
+  Result := False;
+  if Target.Kind = skCallExpression then Exit;
+  while Target.Kind in [skMemberAccessExpression, skIndexExpression,
+    skDereferenceExpression, skCallExpression, skParenthesizedExpression] do
+  begin
+    Receiver := nil;
+    for I := 0 to Target.ChildCount - 1 do
+    begin
+      if Target.GetChild(I).Kind = skMissingToken then Exit;
+      if (Receiver = nil) and (Target.GetChild(I) is TSyntaxNode) then
+        Receiver := TSyntaxNode(Target.GetChild(I));
+    end;
+    if Receiver = nil then Exit;
+    Target := Receiver;
+  end;
+  Result := Target.Kind = skIdentifierExpression;
 end;
 
 function TDelphiParser.Statement: TSyntaxNode;
@@ -379,7 +447,7 @@ begin
       if FReader.Matches(':=') then
       begin
         Kind := skAssignmentStatement;
-        if Left.Kind <> skIdentifierExpression then
+        if not IsAssignableTarget(Left) then
         begin
           Kind := skError;
           Report('PAR002', 'Unsupported assignment target');
@@ -387,7 +455,7 @@ begin
         Take(Children);
         Children.Add(Expression);
       end
-      else if Left.Kind in [skIdentifierExpression, skCallExpression] then
+      else if (Left.Kind = skCallExpression) or IsAssignableTarget(Left) then
         Kind := skCallStatement
       else
       begin

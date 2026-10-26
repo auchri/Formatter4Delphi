@@ -40,11 +40,16 @@
 - Implemented: const/var sections, qualified type/routine names, parameter groups/defaults, local declarations and existing statement blocks.
 - Resource directives at safe section boundaries remain explicit; conditional/include directives retain complete-input fallback.
 - Nested unsupported types and procedural signatures remain opaque with contextual recovery.
-- Acceptance evidence: `M2_STATUS.md`. Stop after M2.2. Exact Delphi 12.3 validation remains open.
+- Acceptance evidence: `M2_STATUS.md`. Exact Delphi 12.3 validation remains open.
 
-### M2.3 — Proposed next small task (not authorized)
-- Add member/index expressions with focused assignment/call tests.
-- Keep classes, richer statements and directive evaluation outside that task.
+### M2.3 — Member/index/dereference expressions (completed)
+- Iterative mixed postfix chains, syntactic assignment targets and member call statements.
+- Lossless recovery, qualified generic fallback and compiled postfix corpus.
+- Evidence: `M2_STATUS.md`. Stop after M2.3; exact Delphi 12.3 validation remains open.
+
+### Next small task (proposal only, requires new authorization)
+- Validate the current parser and corpus on exact Delphi 12.3+.
+- Define a narrow M2.4 scope separately; classes, richer statements and directive evaluation remain deferred.
 
 ### M3 — Grammar completion and validation
 - Real-world projects and conditional compiler directives/inclusions handled conservatively.
