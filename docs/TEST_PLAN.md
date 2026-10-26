@@ -215,3 +215,30 @@ ClassRecordCorpus.pas is referenced by DPR/DPROJ, compiled into the runner,
 and parsed as UTF-8 with counts for type wrappers, aggregates, fields, methods
 and seven real implementation bodies. Require its fresh DCU as build evidence.
 Actual execution results and compiler identity are recorded in M2_STATUS.md.
+
+## M2.5 additions
+
+Seven focused methods bring the suite to 94 tests. PropertySpecifiers checks
+read-only/write-only, qualified/escaped names and trivia, storage clauses,
+negative defaults, index/implements and different syntactic clause orders.
+PropertyHierarchy asserts exact specifier spans, unary/literal nesting and both
+semicolons of a default-array property. PropertyArrays checks grouped/const and
+semicolon-separated parameters, complex opaque types and following properties
+and methods. PropertyRedeclarations checks absent types without synthetic colons.
+Historical complete-opaque expectations change only where M2.5 adds structure.
+
+PropertyRecovery checks missing names/colons/types/accessors/brackets/semicolons,
+unfinished default markers, unsupported generic/complex constants/call-shaped
+accessors and procedural parameter types. Class properties and directives remain
+protected. Following fields/methods/properties remain structured. Two parses
+compare shape and diagnostics. PropertyStress checks 2,048 consecutive properties,
+1,024 index parameter groups and 300 deterministic malformed property lifetimes
+with isolated UTF-16 surrogates. All use post-lexer-disposal exact token order,
+unique reachability, spans, missing leaves and leaf serialization assertions.
+
+PropertyCorpus.pas is referenced in DPR/DPROJ, compiled into the runner and read
+as UTF-8 to assert 13 properties, one index list and 26 specifiers. The corpus
+includes real accessor implementations, storage/default/nodefault/index clauses,
+a default array property and inherited redeclarations. Invalid recovery inputs
+are embedded tests, never part of this compilable unit. Require a fresh DCU.
+See M2_STATUS.md for actual execution evidence; CE Update 1 is not 12.3.

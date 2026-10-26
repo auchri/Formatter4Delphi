@@ -1,3 +1,105 @@
+# M2.5 status - 2026-10-26
+
+M2.5 is implemented on origin/main at f297942, branch
+`codex/m2.5-properties`. Stop after M2.5. The M2.4 evidence below is historical.
+
+## Implementation and supported syntax
+
+- TDelphiParser.PropertyDeclaration, PropertyIndexParameters, PropertySpecifier,
+  PropertySpecifierStart, PropertyType, PropertyName and PropertyFragment;
+  integrated through AggregateDeclaration. OpaqueTypeFragment retains the
+  complete class-property member/default marker fallback.
+- Three appended Syntax.Kinds ordinals 42–44: skPropertyDeclaration,
+  skPropertyIndexParameters, skPropertySpecifier. All prior ordinals preserved.
+  No lexer, Reader, node/tree ownership or public parser API changes.
+- Ordinary/read-only/write-only properties, qualified/escaped names and types,
+  read/write/stored/index/default/nodefault and simple qualified implements lists.
+  Accessors are names, never call expressions. Signed constants use unary nodes;
+  complex constant values are covered by opaque children.
+- Array parameters use skParameterDeclaration groups, including grouped names,
+  semicolon separators and const; complex types remain opaque. The trailing
+  `; default;` belongs to the array property and differs from `default value`.
+- Typeless inherited redeclarations have neither fabricated type nor colon.
+  Explicit visibility contains properties just like fields/methods. No semantic
+  accessor/type/interface/storage-order verification is performed.
+- Missing punctuation/names/types/accessors emit diagnostics and zero-width
+  leaves. Safe following member boundaries survive, including a field directly
+  after a missing accessor. Delimiter/angle scans and raw type-name lookahead
+  advance monotonically; no suffix rescans or extra token arrays.
+- Changed production units: Parser.Delphi and Syntax.Kinds. Tests.Parser.Basics,
+  parser DPR/DPROJ and new tests/Fixtures/PropertyCorpus.pas provide verification.
+  AGENTS/CODEX_START and architecture/CST/roadmap/test/decision/status docs updated.
+
+## Actual build and execution evidence
+
+Toolchain: **Delphi 12 Community Edition Update 1**, IDE file version
+**29.0.51961.7529**, installed under
+`C:\Program Files (x86)\Embarcadero\Studio\23.0`. This is **not Delphi 12.3**.
+No exact 12.3 language deviation or validation is claimed.
+
+Final IDE Project > Alle Projekte erzeugen (Build All Projects), Win64/Debug,
+started after **2026-10-26 09:27:13 UTC**. Success in 2.5 seconds, no compiler
+errors/warnings/hints shown. Rebuilt both test projects and lexer package.
+PropertyCorpus is compiled into the parser runner and produced a fresh DCU.
+It was added through project management so the loaded DPR included the corpus.
+The test editor was closed before the final rebuild to avoid stale buffers.
+IDE-generated deployment metadata was removed afterwards; DCC build properties
+are unchanged. Both project XML files remain valid.
+
+Executed from repository root after that build:
+
+```powershell
+& ./build/Win64/Debug/DelphiFormatter.Parser.Tests.exe
+& ./build/Win64/Debug/DelphiFormatter.Lexer.Tests.exe
+```
+
+- Parser: **94 found / 94 passed**, 0 ignored/leaked/failed/errored, exit 0.
+- Lexer: **40 found / 40 passed**, 0 ignored/leaked/failed/errored, exit 0.
+- Debug range/overflow checks and RTL shutdown leak reporting remain enabled.
+  No unexpected leak dialog observed; no separate heap profiler run claimed.
+- Seven new focused test methods, 2,048 consecutive properties, 1,024 index
+  parameter groups and 300 deterministic malformed UTF-16 allocation/free
+  lifetimes. Full leaf order/kind/span, unique reachability, hierarchy, property
+  and specifier boundaries, missing leaves and post-lexer-disposal reconstruction.
+  Existing lexer/parser suites remain passing. Historical opaque expectations
+  changed only for the new supported property grammar.
+- PropertyCorpus assertions: 13 properties, one property index list, 26 specifiers,
+  no diagnostics. The real unit contains valid accessors, storage/index/default
+  variants and inherited redeclarations. Invalid recovery inputs are separate
+  embedded tests. No corpus object methods are executed on fabricated values.
+- Ignored logs: build/Win64/Debug/M2.5.Parser.Tests.log and M2.5.Lexer.Tests.log.
+  Parser EXE is newer than every Pascal source under src/tests. All listed
+  artifacts are newer than the final build start. Git whitespace check passes.
+
+| Artifact under build/Win64/Debug | Bytes | Last write UTC |
+| --- | ---: | --- |
+| DelphiFormatter.Parser.Tests.exe | 4859904 | 2026-10-26 09:27:44 |
+| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-26 09:27:42 |
+| DelphiFormatter.Lexer.bpl | 98816 | 2026-10-26 09:27:42 |
+| DelphiFormatter.Lexer.dcp | 150746 | 2026-10-26 09:27:42 |
+| ParserTests/PropertyCorpus.dcu | 5977 | 2026-10-26 09:27:43 |
+
+Parser EXE SHA-256: A4343FA10B259897EF9046593B5BC02059A48439BC81DE6C8E5EA3FB1F730762
+
+Lexer EXE SHA-256: 639BD2E049FE65B533CFAFCD7B2F59792EFDC71A2A0D88B972DAF6447497D9B9
+
+## Limitations and next small task
+
+Class properties and unsafe anonymous/class-of/procedural property types may
+remain complete opaque members. Generic types, unsupported parameter types and
+complex constants retain opaque subregions; no full type grammar. Ambiguous
+unbalanced syntax may preserve a larger region. Directive-dependent input keeps
+the existing complete-input fallback. Interfaces/helpers, nested types, variant
+parts, new statements, preprocessing, AST, semantic analysis, formatter, config,
+CLI/IDE integration and incremental parsing remain outside M2.5.
+
+Locally ready for review/merge subject to these documented limits and review;
+no automatic merge. Exact Delphi 12.3+, Release and other platforms are untested.
+Next small task: run the same suites and compiled corpora on exact Delphi 12.3+.
+Any further grammar milestone requires separate authorization.
+
+---
+
 # M2.4 status - 2026-10-26
 
 M2.4 is implemented on merged M2.3, origin/main at c52fa5f, on

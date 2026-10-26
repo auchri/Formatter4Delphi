@@ -186,3 +186,19 @@ even unfinished recovery. Existing directive fallback remains unchanged.
 
 No Delphi 12.3 language-rule deviation was established. Execution uses the
 available Delphi 12 CE Update 1; see M2_STATUS.md for evidence.
+
+## M2.5 property syntax and conservative recovery (2026-10-26)
+
+The separately authorized M2.5 supersedes M2.4's property-only opaque boundary.
+Three appended node kinds suffice; nodes/arena/Reader/lexer APIs are unchanged.
+Accessors use qualified identifier structure, never general call expressions.
+Array indices are declarations. Both meanings of default use PropertySpecifier,
+with the trailing array marker owning its own semicolon inside the property.
+Redeclarations omit type structure entirely. Semantic restrictions documented
+in the official Properties (Delphi) reference are not resolved by this CST.
+
+Unsupported generic property types and complex constants retain opaque children;
+class properties and unsafe anonymous/class-of property types can stay entirely
+opaque. Hard member boundaries take priority over malformed delimiter nesting.
+No new grammar beyond M2.5, preprocessing or semantic validity checks are added.
+No Delphi 12.3 language deviation is established by the CE Update 1 build.

@@ -1,4 +1,4 @@
-# Lossless CST parser - M2.4
+# Lossless CST parser - M2.5
 
 ## Public API and ownership
 
@@ -244,10 +244,8 @@ as one opaque trailing child, including all directive semicolons. No directive
 semantics are inferred. Qualified constructor/destructor implementations use
 the existing routine-body parser; no new statements are added.
 
-Properties are a single opaque member through their balanced top-level
-semicolon, including a following default/nodefault marker. Nested parameter brackets and generic type arguments do not create
-fields/methods. An unterminated property may conservatively include later
-members. Class procedure/function/var and operator members remain opaque.
+M2.5 supersedes the former complete-property opaque fallback as described below.
+Class procedure/function/var and operator members remain opaque.
 Nested type sections and variant-record tails are opaque to the enclosing
 body end. Anonymous record fields retain opaque type children. Aliases, enums,
 arrays, sets, pointer/procedural/reference types, generic declarations, class-of,
@@ -258,4 +256,48 @@ boundaries. Missing punctuation/types/end produces PAR001 and zero-width leaves;
 unsupported regions use PAR003. A following name-equals declaration can recover
 a missing aggregate end. Ambiguous/unbalanced unsupported syntax may retain a
 larger opaque region. All token-order, span, lifetime and directive fallback
-contracts above are unchanged. Stop after M2.4.
+contracts above are unchanged. Stop after M2.5.
+
+## M2.5 property hierarchy and coverage
+
+Three appended kinds preserve all old ordinals: skPropertyDeclaration (42),
+skPropertyIndexParameters (43), skPropertySpecifier (44). A property owns its
+keyword/name, optional bracketed parameters, optional colon/type, ordered
+specifiers and terminating semicolon. Redeclarations such as `property Name;`
+or `property Name stored False;` do not synthesize a type or colon.
+
+PropertyIndexParameters owns brackets and semicolon-separated parameter groups;
+skParameterDeclaration groups comma-separated names, an optional const modifier
+and a TypeReference or opaque type. This is never an skIndexExpression.
+Simple/dotted types reuse skTypeReference; generic types and complex parameter
+types are protected by opaque children. Unsupported class-of/anonymous/procedural
+property types may preserve the complete property instead.
+
+Each skPropertySpecifier owns its keyword, value/name and explicit trivia.
+read/write/stored use qualified identifier expressions without parsing calls;
+True/False remain identifiers. index/default accept simple literal/constant names,
+qualified names and signed values (skUnaryExpression over the existing literal
+or identifier node). Complex constant values are covered by an opaque child.
+nodefault has no value. implements accepts simple/dotted names separated by
+commas as TypeReference children; unsupported suffixes remain opaque.
+
+`default 0` before the first semicolon is a storage clause. In
+`property Items[Index: Integer]: TObject read GetItem; default;`, the first
+semicolon remains a direct property leaf; the following skPropertySpecifier
+contains `default` and its second semicolon. The entire marker belongs to the
+array property. A following field named Default with a colon remains a field.
+No type/name resolution, accessor-existence/type compatibility, interface
+implementation or storage-order legality checks are performed. Syntax structure
+is not a claim that a declaration compiles or is semantically valid.
+
+Missing punctuation/names/types/accessors produce PAR001 and zero-width leaves.
+PropertyFragment preserves unsupported parts with PAR003, tracking delimiters
+and generic angles. Methods, properties, visibility and aggregate/unit ends are
+hard recovery boundaries; clear fields are retained after missing semicolons.
+Unbalanced ambiguous syntax can retain a larger opaque region. Class properties
+remain one opaque member, including a following default marker where present.
+Directives retain the complete-input opaque policy. No full type grammar,
+generics, preprocessing, semantic analysis or formatter is implemented.
+
+Language authority: [Embarcadero Properties (Delphi)](https://docwiki.embarcadero.com/RADStudio/Athens/en/Properties_(Delphi)).
+The available compiler is CE Update 1; this is not Delphi 12.3 verification.

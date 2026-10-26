@@ -56,6 +56,13 @@ type
     function MethodDirective: Boolean;
     function FieldDeclaration: TSyntaxNode;
     function MethodDeclaration: TSyntaxNode;
+    function PropertyDeclaration: TSyntaxNode;
+    function PropertyIndexParameters: TSyntaxNode;
+    function PropertySpecifier: TSyntaxNode;
+    function PropertySpecifierStart: Boolean;
+    function PropertyFragment(InParameters: Boolean = False): TSyntaxNode;
+    function PropertyType: TSyntaxNode;
+    procedure PropertyName(Children: TList<TSyntaxElement>);
     function OpaqueTypeFragment(IsMember: Boolean;
       ToBodyEnd: Boolean = False; IncludeSemicolon: Boolean = True): TSyntaxNode;
     function OpaqueDeclaration(StopAtSemicolon: Boolean = False): TSyntaxNode;
@@ -930,7 +937,8 @@ begin
     Angles := 0;
     First := True;
     WasOf := False;
-    IsProperty := IsMember and FReader.Matches('property');
+    IsProperty := IsMember and (FReader.Matches('property') or
+      (FReader.Matches('class') and FReader.Matches('property', 1)));
     IsClassMember := IsMember and FReader.Matches('class');
     while not FReader.AtEOF do
     begin
@@ -1099,6 +1107,14 @@ begin
         if FReader.Matches('strict') then Take(V);
         Take(V);
       end
+      else if FReader.Matches('property') then
+      begin
+        if FReader.Matches(':', 2) and
+          (FReader.Matches('class', 3) or FReader.Matches('record', 3) or
+           FReader.Matches('procedure', 3) or FReader.Matches('function', 3)) then
+          AddMember(OpaqueTypeFragment(True))
+        else AddMember(PropertyDeclaration);
+      end
       else if MethodStart then AddMember(MethodDeclaration)
       else if FieldStart then AddMember(FieldDeclaration)
       else if FReader.Matches('case') then
@@ -1149,6 +1165,208 @@ begin
     end;
     if D.Count > 0 then C.Add(Node(skOpaqueRegion, D));
     Result := Node(skMethodDeclaration, C);
+  finally D.Free; C.Free; end;
+end;
+
+function TDelphiParser.PropertySpecifierStart: Boolean;
+begin
+  Result := FReader.Matches('read') or FReader.Matches('write') or
+    FReader.Matches('stored') or FReader.Matches('default') or
+    FReader.Matches('nodefault') or FReader.Matches('index') or
+    FReader.Matches('implements');
+end;
+
+procedure TDelphiParser.PropertyName(Children: TList<TSyntaxElement>);
+begin
+  Identifier(Children);
+  while FReader.Matches('.') do
+  begin Take(Children); Identifier(Children); end;
+end;
+
+function TDelphiParser.PropertyFragment(InParameters: Boolean): TSyntaxNode;
+var C: TList<TSyntaxElement>; Parens, Brackets, Angles: Integer;
+  ProceduralType: Boolean;
+begin
+  C := TList<TSyntaxElement>.Create;
+  try
+    Report('PAR003', 'Unsupported property fragment preserved as opaque');
+    Parens := 0; Brackets := 0; Angles := 0;
+    ProceduralType := InParameters and MethodStart and FReader.Matches('(', 1);
+    while not FReader.AtEOF do
+    begin
+      // A procedural parameter type can start here, but a later method is recovery.
+      if MemberBoundary and not (ProceduralType and (C.Count = 0)) then Break;
+      if (Parens = 0) and (Brackets = 0) and (Angles = 0) then
+      begin
+        if FReader.Matches(';') or PropertySpecifierStart then Break;
+        if InParameters and (FReader.Matches(']') or FReader.Matches(':')) then Break;
+      end;
+      if FReader.Matches('(') then Inc(Parens)
+      else if FReader.Matches('[') or FReader.Matches('(.') then Inc(Brackets)
+      else if FReader.Matches(')') and (Parens > 0) then Dec(Parens)
+      else if (FReader.Matches(']') or FReader.Matches('.)')) and
+        (Brackets > 0) then Dec(Brackets)
+      else if FReader.Matches('<') then Inc(Angles)
+      else if (FReader.Matches('>') or FReader.Matches('>=')) and
+        (Angles > 0) then Dec(Angles);
+      Take(C);
+    end;
+    Result := Node(skOpaqueRegion, C);
+  finally C.Free; end;
+end;
+
+function TDelphiParser.PropertyType: TSyntaxNode;
+var C: TList<TSyntaxElement>; I: Integer; Token: TDelphiToken;
+begin
+  if MethodStart and FReader.Matches('(', 1) then Exit(PropertyFragment(True));
+  if PropertySpecifierStart or MemberBoundary or FReader.Matches(';') or
+    FReader.Matches(']') then
+  begin
+    C := TList<TSyntaxElement>.Create;
+    try Missing(C, 'type identifier'); Result := Node(skTypeReference, C);
+    finally C.Free; end;
+  end
+  else if (FReader.PeekSignificant.Kind = tkIdentifier) or
+    FReader.Matches('string') then
+  begin
+    // Monotone raw cursor; each qualified-name token and trivia gap is visited once.
+    I := SkipRawTrivia(FReader.SignificantIndex + 1);
+    Token := FLex.GetToken(I);
+    while (Token.Kind = tkSymbol) and (Token.Span.Length = 1) and
+      (FLex.Source[Token.Span.StartOffset + 1] = '.') do
+    begin
+      I := SkipRawTrivia(I + 1);
+      if FLex.GetToken(I).Kind <> tkIdentifier then Break;
+      I := SkipRawTrivia(I + 1);
+      Token := FLex.GetToken(I);
+    end;
+    Token := FLex.GetToken(I);
+    if (Token.Kind = tkSymbol) and (Token.Span.Length = 1) and
+      (FLex.Source[Token.Span.StartOffset + 1] = '<') then
+      Result := PropertyFragment(True)
+    else Result := TypeReference;
+  end
+  else Result := PropertyFragment(True);
+end;
+
+function TDelphiParser.PropertyIndexParameters: TSyntaxNode;
+var C, D: TList<TSyntaxElement>; Before: Integer;
+begin
+  C := TList<TSyntaxElement>.Create;
+  D := TList<TSyntaxElement>.Create;
+  try
+    Take(C);
+    while not FReader.AtEOF and not FReader.Matches(']') and
+      not MemberBoundary and not FReader.Matches(':') do
+    begin
+      Before := FReader.Position;
+      D.Clear;
+      if FReader.Matches('const') then Take(D);
+      Identifier(D);
+      while FReader.Matches(',') do
+      begin Take(D); Identifier(D); end;
+      Expect(D, ':');
+      D.Add(PropertyType);
+      if not FReader.Matches(';') and not FReader.Matches(']') and
+        not FReader.Matches(':') and not MemberBoundary and
+        not PropertySpecifierStart then D.Add(PropertyFragment(True));
+      C.Add(Node(skParameterDeclaration, D));
+      if not FReader.Matches(';') then Break;
+      if (FReader.PeekSignificant(1).Kind <> tkIdentifier) and
+        not FReader.Matches('const', 1) then Break;
+      Take(C);
+      if Before = FReader.Position then Break;
+    end;
+    Expect(C, ']');
+    Result := Node(skPropertyIndexParameters, C);
+  finally D.Free; C.Free; end;
+end;
+
+function TDelphiParser.PropertySpecifier: TSyntaxNode;
+var C, V, L: TList<TSyntaxElement>; NoValue, ConstantValue,
+  InterfaceName, Signed: Boolean;
+begin
+  C := TList<TSyntaxElement>.Create;
+  V := TList<TSyntaxElement>.Create;
+  L := TList<TSyntaxElement>.Create;
+  try
+    NoValue := FReader.Matches('nodefault');
+    ConstantValue := FReader.Matches('default') or FReader.Matches('index');
+    InterfaceName := FReader.Matches('implements');
+    Take(C);
+    if not NoValue then
+    begin
+      if PropertySpecifierStart or MemberBoundary or FieldStart or
+        FReader.Matches(';') then
+        Missing(C, 'property specifier value')
+      else if ConstantValue then
+      begin
+        Signed := FReader.Matches('+') or FReader.Matches('-');
+        if Signed then Take(V);
+        if FReader.PeekSignificant.Kind in [tkNumber, tkStringLiteral, tkCharCode] then
+        begin Take(L); V.Add(Node(skLiteralExpression, L)); end
+        else if FReader.PeekSignificant.Kind = tkIdentifier then
+        begin PropertyName(L); V.Add(Node(skIdentifierExpression, L)); end
+        else if Signed then Missing(V, 'constant')
+        else V.Add(PropertyFragment);
+        if Signed then
+        begin
+          L.Clear; L.Add(Node(skUnaryExpression, V));
+          V.Clear; V.Add(L.Last);
+        end;
+        if not PropertySpecifierStart and not MemberBoundary and not FieldStart and
+          not FReader.Matches(';') and not FReader.AtEOF then
+        begin
+          V.Add(PropertyFragment);
+          C.Add(Node(skOpaqueRegion, V));
+        end
+        else C.Add(V.Last);
+      end
+      else if InterfaceName then
+      begin
+        C.Add(PropertyType);
+        while FReader.Matches(',') do
+        begin Take(C); C.Add(PropertyType); end;
+      end
+      else if FReader.PeekSignificant.Kind = tkIdentifier then
+      begin PropertyName(V); C.Add(Node(skIdentifierExpression, V)); end
+      else C.Add(PropertyFragment);
+    end;
+    if not PropertySpecifierStart and not MemberBoundary and not FieldStart and
+      not FReader.Matches(';') and not FReader.AtEOF then C.Add(PropertyFragment);
+    Result := Node(skPropertySpecifier, C);
+  finally L.Free; V.Free; C.Free; end;
+end;
+
+function TDelphiParser.PropertyDeclaration: TSyntaxNode;
+var C, D: TList<TSyntaxElement>; HasParameters: Boolean; Before: Integer;
+begin
+  C := TList<TSyntaxElement>.Create;
+  D := TList<TSyntaxElement>.Create;
+  try
+    Take(C);
+    Identifier(C);
+    HasParameters := FReader.Matches('[');
+    if HasParameters then C.Add(PropertyIndexParameters);
+    if FReader.Matches(':') then
+    begin Take(C); C.Add(PropertyType); end
+    else if not PropertySpecifierStart and not MemberBoundary and
+      not FReader.Matches(';') and not FReader.AtEOF then
+    begin Missing(C, ':'); C.Add(PropertyType); end;
+    while not FReader.AtEOF and not MemberBoundary and not FReader.Matches(';') do
+    begin
+      Before := FReader.Position;
+      if PropertySpecifierStart then C.Add(PropertySpecifier)
+      else if FieldStart then Break
+      else C.Add(PropertyFragment);
+      if Before = FReader.Position then Break;
+    end;
+    Expect(C, ';');
+    if HasParameters and FReader.Matches('default') and not FieldStart then
+    begin
+      Take(D); Expect(D, ';'); C.Add(Node(skPropertySpecifier, D));
+    end;
+    Result := Node(skPropertyDeclaration, C);
   finally D.Free; C.Free; end;
 end;
 

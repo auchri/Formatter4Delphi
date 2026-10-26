@@ -93,6 +93,13 @@ type
     [Test] procedure AggregateMethods;
     [Test] procedure MethodDirectives;
     [Test] procedure OpaqueProperties;
+    [Test] procedure PropertySpecifiers;
+    [Test] procedure PropertyArrays;
+    [Test] procedure PropertyHierarchy;
+    [Test] procedure PropertyRedeclarations;
+    [Test] procedure PropertyRecovery;
+    [Test] procedure PropertyStress;
+    [Test] procedure CompiledPropertyCorpus;
     [Test] procedure UnsupportedAggregates;
     [Test] procedure AggregateRecovery;
     [Test] procedure AggregateDeterminism;
@@ -1592,11 +1599,12 @@ begin
     try
       A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
       O := Child(A, 0);
-      Assert.AreEqual(Integer(skOpaqueRegion), Integer(O.Kind));
+      Assert.AreEqual(Integer(skPropertyDeclaration), Integer(O.Kind));
       Assert.AreEqual(' '+P, Copy(T.Source, O.Span.StartOffset+1, O.Span.Length));
       Assert.AreEqual(1, Count(A, skMethodDeclaration));
       Assert.AreEqual(1, Count(A, skFieldDeclaration));
-      Assert.AreEqual(1, T.DiagnosticCount);
+      if Pos('TList', P) = 0 then Assert.AreEqual(0, T.DiagnosticCount)
+      else Assert.IsTrue(Count(O, skOpaqueRegion) > 0);
     finally T.Free; end;
   end;
 end;
@@ -1751,7 +1759,7 @@ begin
     Assert.AreEqual(7, Count(T.Root, skRoutineDeclaration));
     Assert.AreEqual(7, Count(T.Root, skBlockStatement));
     Assert.AreEqual(5, Count(T.Root, skFieldDeclaration));
-    Assert.AreEqual(3, T.DiagnosticCount); // alias, class reference, property
+    Assert.AreEqual(2, T.DiagnosticCount); // alias, class reference
   finally T.Free; end;
 end;
 
@@ -1926,6 +1934,214 @@ begin
       CheckDeterminism;
     finally T.Free; end;
   end;
+end;
+
+procedure TParserTests.PropertySpecifiers;
+const Cases: array[0..11] of string = (
+  'property Name: string read FName;',
+  'property Name: string write SetName;',
+  'property Name: string read FName write SetName stored True;',
+  'property Position: System.Types.TPoint read FPosition;',
+  'property &type: string read &read write &write;',
+  'property Index: Integer index 2 read GetValue write SetValue;',
+  'property Default: Boolean read FEnabled stored False default True;',
+  'property Count: Integer read FCount default -1;',
+  'property State: TState read FState nodefault;',
+  'property Controller: TController read FController implements A.IController;',
+  'property Value: Integer stored ShouldStore read FValue;',
+  'property {name} Name: {type} string read {accessor} FName;');
+var S: string; T: TSyntaxTree; A, P: TSyntaxNode;
+begin
+  Assert.AreEqual(42, Ord(skPropertyDeclaration));
+  Assert.AreEqual(43, Ord(skPropertyIndexParameters));
+  Assert.AreEqual(44, Ord(skPropertySpecifier));
+  for S in Cases do
+  begin
+    T := Parse('unit X; interface type A=class public '+S+
+      ' procedure Save; F: Integer; end; implementation end.');
+    try
+      A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+      P := Child(Child(A, 0), 0);
+      Assert.AreEqual(Integer(skPropertyDeclaration), Integer(P.Kind), S);
+      Assert.AreEqual(' '+S, Copy(T.Source, P.Span.StartOffset+1, P.Span.Length));
+      if Pos('implements', S) > 0 then Assert.AreEqual(2, Count(P, skTypeReference))
+      else Assert.AreEqual(1, Count(P, skTypeReference));
+      Assert.IsTrue(Count(P, skPropertySpecifier) > 0);
+      Assert.AreEqual(0, Count(P, skCallExpression));
+      Assert.AreEqual(0, T.DiagnosticCount, S);
+      Assert.AreEqual(1, Count(A, skMethodDeclaration));
+      Assert.AreEqual(1, Count(A, skFieldDeclaration));
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.PropertyHierarchy;
+var T: TSyntaxTree; A, P, S, V: TSyntaxNode;
+begin
+  T := Parse('unit X; interface type A=class '+
+    'property Count: Integer read FCount default -1; '+
+    'property Items[Index: Integer]: TObject read GetItem; default; '+
+    'F: Integer; end; implementation end.');
+  try
+    A := Child(Child(Child(Child(T.Root, 0), 0), 0), 0);
+    P := Child(A, 0);
+    S := Child(P, 2);
+    Assert.AreEqual(Integer(skPropertySpecifier), Integer(S.Kind));
+    Assert.AreEqual(' default -1', Copy(T.Source, S.Span.StartOffset+1, S.Span.Length));
+    V := Child(S, 0);
+    Assert.AreEqual(Integer(skUnaryExpression), Integer(V.Kind));
+    Assert.AreEqual(Integer(skLiteralExpression), Integer(Child(V, 0).Kind));
+    P := Child(A, 1);
+    Assert.AreEqual(Integer(skPropertyIndexParameters), Integer(Child(P, 0).Kind));
+    S := Child(P, 3);
+    Assert.AreEqual(Integer(skPropertySpecifier), Integer(S.Kind));
+    Assert.AreEqual(' default;', Copy(T.Source, S.Span.StartOffset+1, S.Span.Length));
+    Assert.AreEqual(';', Copy(T.Source, P.Span.EndOffset, 1));
+    Assert.AreEqual(1, Count(A, skFieldDeclaration));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.PropertyArrays;
+const Cases: array[0..4] of string = (
+  'property Items[Index: Integer]: TObject read GetItem write SetItem;',
+  'property Pixels[X, Y: Integer]: TColor read GetPixel write SetPixel;',
+  'property Values[const Name: string]: string read GetValue write SetValue;',
+  'property Items[X: Integer; const Name: string]: TObject read GetItem; default;',
+  'property Items[Index: array of TList<Integer>]: TObject read GetItem;');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Cases do
+  begin
+    T := Parse('unit X; interface type A=class '+S+
+      ' property Next: Integer read FNext; procedure Save; end; implementation end.');
+    try
+      Assert.AreEqual(2, Count(T.Root, skPropertyDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skPropertyIndexParameters));
+      Assert.IsTrue(Count(T.Root, skParameterDeclaration) > 0);
+      Assert.AreEqual(0, Count(T.Root, skIndexExpression));
+      Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+      if Pos('array of', S) = 0 then Assert.AreEqual(0, T.DiagnosticCount)
+      else Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.PropertyRedeclarations;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface type A=class public property Name; '+
+    'property Name read GetName; property Name write SetName; '+
+    'property Caption stored False; property Color default clBlue; '+
+    'property State nodefault; end; implementation end.');
+  try
+    Assert.AreEqual(6, Count(T.Root, skPropertyDeclaration));
+    Assert.AreEqual(5, Count(T.Root, skPropertySpecifier));
+    Assert.AreEqual(0, Count(T.Root, skTypeReference));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.PropertyRecovery;
+const Cases: array[0..12] of string = (
+  'property : string read FName;',
+  'property Name string read FName;',
+  'property Name: read FName;',
+  'property Name: string read;',
+  'property Name: string write;',
+  'property Items[Index: Integer: TObject read GetItem;',
+  'property Items[Index: Integer]: TObject read GetItem',
+  'property Items[Index: Integer]: TObject read GetItem; default',
+  'property Items: TList<string> read GetItem;',
+  'property Name: Integer read FName default [One, Two];',
+  'property Name: string read GetName();',
+  'property Name: string read',
+  'property Items[Index: procedure(X: Integer) of object]: TObject read GetItem;');
+var S, Input: string; T, U: TSyntaxTree; I: Integer;
+begin
+  for S in Cases do
+  begin
+    Input := 'unit X; interface type A=class '+S+
+      ' procedure Save; F: Integer; property Next: Integer read F; end; implementation end.';
+    T := Parse(Input); U := Parse(Input);
+    try
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skFieldDeclaration));
+      Assert.AreEqual(2, Count(T.Root, skPropertyDeclaration));
+      Assert.AreEqual(Shape(T.Root), Shape(U.Root));
+      Assert.AreEqual(T.DiagnosticCount, U.DiagnosticCount);
+      for I := 0 to T.DiagnosticCount-1 do
+      begin
+        Assert.AreEqual(T.GetDiagnostic(I).Code, U.GetDiagnostic(I).Code);
+        Assert.AreEqual(T.GetDiagnostic(I).Message, U.GetDiagnostic(I).Message);
+        Assert.AreEqual(T.GetDiagnostic(I).Span.StartOffset, U.GetDiagnostic(I).Span.StartOffset);
+      end;
+    finally U.Free; T.Free; end;
+  end;
+  T := Parse('unit X; interface type A=class property P: Integer read '+
+    'F: Integer; procedure Save; end; implementation end.');
+  try
+    Assert.AreEqual(1, Count(T.Root, skPropertyDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skFieldDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+    Assert.IsTrue(T.DiagnosticCount > 0);
+  finally T.Free; end;
+  T := Parse('unit X; interface type A=class class property P: Integer read F; '+
+    'procedure Save; end; implementation end.');
+  try
+    Assert.AreEqual(0, Count(T.Root, skPropertyDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+  finally T.Free; end;
+  T := Parse('unit X; interface type A=class property P: Integer {$IFDEF X} read F; '+
+    '{$ENDIF} end; implementation end.');
+  try Assert.AreEqual(0, Count(T.Root, skPropertyDeclaration));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.PropertyStress;
+var B: TStringBuilder; I: Integer; T, U: TSyntaxTree; S: string;
+begin
+  B := TStringBuilder.Create;
+  try
+    B.Append('unit X; interface type A=class ');
+    for I := 1 to 2048 do
+      B.Append('property P').Append(I).Append(': Integer { trivia } read F; ');
+    B.Append('property Items[');
+    for I := 1 to 1024 do
+    begin
+      if I > 1 then B.Append('; ');
+      B.Append('N').Append(I).Append(': Integer');
+    end;
+    B.Append(']: Integer read GetItem; default; end; implementation end.');
+    T := Parse(B.ToString);
+    try
+      Assert.AreEqual(2049, Count(T.Root, skPropertyDeclaration));
+      Assert.AreEqual(1024, Count(T.Root, skParameterDeclaration));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  finally B.Free; end;
+  for I := 0 to 299 do
+  begin
+    S := 'unit X; interface type A=class property P'+IntToStr(I)+
+      '[N: Integer]: string read F '+Copy('default -1; write; stored False;', 1, I mod 31)+
+      ' {'+Char($D800)+' '+Char($DC00 + I)+'} end; implementation end.';
+    T := Parse(S); U := Parse(S);
+    try Assert.AreEqual(Shape(T.Root), Shape(U.Root));
+    finally U.Free; T.Free; end;
+  end;
+end;
+
+procedure TParserTests.CompiledPropertyCorpus;
+var T: TSyntaxTree;
+begin
+  T := Parse(TFile.ReadAllText('tests/Fixtures/PropertyCorpus.pas', TEncoding.UTF8));
+  try
+    Assert.AreEqual(13, Count(T.Root, skPropertyDeclaration));
+    Assert.AreEqual(1, Count(T.Root, skPropertyIndexParameters));
+    Assert.AreEqual(26, Count(T.Root, skPropertySpecifier));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
 end;
 
 initialization
