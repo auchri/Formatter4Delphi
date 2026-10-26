@@ -8,7 +8,10 @@ type
     skAssignmentStatement, skCallStatement, skEmptyStatement,
     skIdentifierExpression, skLiteralExpression, skParenthesizedExpression,
     skUnaryExpression, skBinaryExpression, skCallExpression,
-    skError, skOpaqueRegion, skToken, skMissingToken);
+    skError, skOpaqueRegion, skToken, skMissingToken,
+    skConstSection, skConstDeclaration, skVarSection, skVarDeclaration,
+    skTypeReference, skRoutineDeclaration, skRoutineHeader, skParameterList,
+    skParameterDeclaration, skReturnType, skDirective);
 
 implementation
 

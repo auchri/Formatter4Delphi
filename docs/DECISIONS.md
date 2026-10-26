@@ -116,3 +116,17 @@ Exactly Delphi 12.3 remains a separate validation gate.
 - The complete-body opaque fallback for any compiler directive is unchanged.
   Resource, include and conditional directives are tested in every entry mode;
   differentiated directive handling remains a later parser milestone.
+
+## M2.2 directive and recovery boundaries (2026-10-26)
+
+Only closed resource directives alone on a line at supported unit-section
+boundaries gain explicit structure. No general preprocessor or directive trivia
+policy was added. If one interrupts a header/declaration/body, construction is
+discarded and the complete original stream is rebuilt as opaque leaves; lexical
+diagnostics survive. Conditional/include/unknown directives retain M2.1 fallback.
+
+Routine bodies reuse Block/Statement. Declaration recovery tracks nesting and
+only synchronizes opaque type sections after a top-level semicolon; procedural
+type aliases and class-method prefixes therefore cannot become global routines.
+No public lexer/reader/tree API or ownership contract changed. New syntax kinds
+are the only public API addition. Exact Delphi 12.3 validation remains open.

@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**Current milestone: M2.1 lossless CST foundation and basic parser.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
+**Current milestone: M2.2 declarations and routine bodies.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -167,9 +167,9 @@ ownership and recursive destruction of long binary chains. Lexer APIs and
 recognition are unchanged. Original token references use value records plus
 original indices, so trees do not retain a disposable lexer result.
 
-The significant-token view excludes ordinary trivia only. Directive-bearing
+The significant-token view excludes ordinary trivia only. Except for standalone resource directives at safe section boundaries, directive-bearing
 input is conservatively one opaque body; other unsupported regions are opaque
 at statement, unit-section or root-tail boundaries. Supported grammar has
 explicit hierarchical expression/statement/unit nodes. Recursive nesting has a
-128-entry guard; serialization uses an explicit stack. M2.1 deliberately omits
-all declarations and methods, as well as AST, formatter and preprocessing.
+128-entry guard; serialization uses an explicit stack. M2.2 adds simple declarations and routine headers/bodies through generic nodes;
+complex declarations remain opaque. AST, formatter and preprocessing remain deferred.

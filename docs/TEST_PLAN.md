@@ -135,3 +135,28 @@ chains with substantial trivia and a missing final operand, Boolean identifier
 classification/casing within operator trees, and resource/include/conditional
 directives in all entry modes. Long-input tests assert coverage and structure;
 complexity follows the single-pass index rather than a flaky wall-time limit.
+
+## M2.2 additions
+
+The parser suite now has 48 tests. The original 32 remain, with the historical
+opaque-unit-section expectation updated to expect a structured routine body.
+New tests cover const/var sections, qualified types, initializers, modifiers,
+defaults, empty/qualified routines, interface versus implementation hierarchy,
+local declarations and nested supported statements. Recovery cases include
+missing names/colons/types/separators/parameter closers/return types/body markers,
+truncated routines and following valid routines. Opaque nested classes, forward
+classes, variant records, procedural aliases and anonymous/procedural parameter
+types must not produce fabricated global routines.
+
+Resource directives are tested in both comment spellings at section boundaries;
+inline resources and resources interrupting parameters/bodies force fallback.
+Existing conditional/include and all-entry-mode directive tests remain.
+All additions use the common exact-leaf/span/reconstruction helper after lexer
+disposal. A further 300 seeded malformed declaration sequences compare trees
+and diagnostics, and 100 declaration lifetimes include malformed UTF-16.
+
+`DeclarationCorpus.pas` is compiled into the parser runner and read as UTF-8 for
+CST checks. Run both EXEs from the repository root (the fixture path is explicit).
+`DeclarationCorpus.res` is a checked-in 32-byte empty Windows resource header,
+so its real standalone resource directive compiles without generated inputs.
+See `M2_STATUS.md` for actual build/test evidence and toolchain limitations.
