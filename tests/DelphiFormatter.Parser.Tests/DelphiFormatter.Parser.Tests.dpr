@@ -21,7 +21,8 @@ uses
   DelphiFormatter.Parser.Delphi,
   PostfixCorpus in '..\Fixtures\PostfixCorpus.pas',
   ClassRecordCorpus in '..\Fixtures\ClassRecordCorpus.pas',
-  PropertyCorpus in '..\Fixtures\PropertyCorpus.pas';
+  PropertyCorpus in '..\Fixtures\PropertyCorpus.pas',
+  ControlFlowCorpus in '..\Fixtures\ControlFlowCorpus.pas';
 
 var
   Runner: ITestRunner;

@@ -242,3 +242,62 @@ includes real accessor implementations, storage/default/nodefault/index clauses,
 a default array property and inherited redeclarations. Invalid recovery inputs
 are embedded tests, never part of this compilable unit. Require a fresh DCU.
 See M2_STATUS.md for actual execution evidence; CE Update 1 is not 12.3.
+
+## M2.6 additions
+
+Fifteen methods extend the parser fixture from 97 to 112 tests. ControlLoops,
+ControlHierarchy, ControlCases, ControlExceptions and ControlElseBinding assert
+actual nested expression/statement/list/branch/handler nodes, existing enum
+ordinals, case label groups/ranges/signs, loop variants, qualified exception
+types and nearest-if else ownership. ControlSeparatorsAndTrivia counts direct
+semicolon leaves, empty statements, CRLF/comments and exact statement end spans.
+
+ControlRecovery compares shape and complete diagnostic code/message/spans over
+repeated malformed parses. ControlRoutineRecovery checks following routines
+after incomplete try/case/repeat/while. ControlHandlerRecovery checks a valid
+handler following missing variable/colon/type and unsupported generic headers.
+ControlDirectives checks whole-input protection. ControlOpaqueFallback checks
+with, inline for variables, raise-at and complex labels before valid branches.
+
+ControlStress asserts 1,024 case branches and 2,048 consecutive while statements.
+ControlDepth exercises 150 nested while/for/try/case constructs beyond the guard.
+ControlMalformedLifetimes parses 300 deterministic malformed fragments with
+isolated UTF-16 surrogates twice, comparing shape and diagnostic counts. Every
+parse invokes Coverage after freeing the lexer: exact leaf indices/kinds/spans,
+unique reachability, ordered spans, missing leaves, root extent and leaf-based
+serialization. No input files are reformatted.
+
+ControlFlowCorpus.pas is referenced by DPR/DPROJ, compiled into the runner and
+parsed from UTF-8 with explicit node counts, no diagnostics or opaque regions.
+It covers all new statements, nested loops/cases/try, qualified handlers with
+and without variables, handler else, catch-all except and both raise forms.
+Require its fresh DCU alongside all existing corpus DCUs. Actual build evidence
+and version limitations: M2_STATUS.md. The 40 lexer tests are unchanged.
+
+## M2.6 review: unsupported statement recovery
+
+Eight tests extend the fixture from 112 to 120. Before any parser change, the
+first seven were built against f5e5356: 113/119 passed, six failed. With/if stopped
+before then; even simple inline for var stopped before :=. Exact opaque extent,
+outer hierarchy and absence of leaked inner nodes exposed the defect despite
+unchanged lossless reconstruction. See M2_STATUS.md for execution evidence.
+
+OpaqueWithBodies and OpaqueInlineForBodies check exact opaque spans for single
+calls, assignments, if/else, do-loop chains, begin/end, case/else, try/finally,
+try/except, repeat and nested with. CheckOpaqueBody also verifies both direct
+outer-block semicolon leaves, one following ContinueWork, no structured inner
+nodes/missing leaves, and exactly the expected PAR003 warning.
+OpaqueElseOwnership asserts actual outer if condition/opaque-then/call-else
+children, two supported nested ifs, and nearest-inner else entirely opaque.
+OpaqueKeywordTrivia covers comments, CRLF, strings, escaped names, qualified
+keyword members and a qualified Procedure name inside a real routine.
+
+OpaqueMalformedStatements covers missing do/end, incomplete branches, EOF and
+following routines. OpaqueUnsupportedDirectives verifies complete-input fallback
+for conditional/include/resource directives. OpaqueUnsupportedStress uses 256
+opaque with statements with 32 nested if/else envelopes each, followed by three
+supported calls. OpaqueUnsupportedDepthAndLifetimes tests 150 nested envelopes,
+PAR004 without further recursion, and 200 repeated invalid-UTF-16 lifetimes.
+There are no timing assertions. Repeated parses compare complete diagnostic
+code/message/severity/spans and shape where applicable. Every parse uses the
+existing post-lexer-free exact token/span/reachability/reconstruction checks.

@@ -15,7 +15,10 @@ type
     skMemberAccessExpression, skIndexExpression, skDereferenceExpression,
     skTypeSection, skTypeDeclaration, skClassDeclaration, skRecordDeclaration,
     skVisibilitySection, skFieldDeclaration, skMethodDeclaration, skAncestorList,
-    skPropertyDeclaration, skPropertyIndexParameters, skPropertySpecifier);
+    skPropertyDeclaration, skPropertyIndexParameters, skPropertySpecifier,
+    skForStatement, skForInStatement, skWhileStatement, skRepeatStatement,
+    skCaseStatement, skCaseBranch, skTryFinallyStatement, skTryExceptStatement,
+    skExceptionHandler, skRaiseStatement, skStatementList);
 
 implementation
 

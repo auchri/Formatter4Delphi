@@ -15,6 +15,8 @@ type
     function Child(Node: TSyntaxNode; Index: Integer): TSyntaxNode;
     function Count(Element: TSyntaxElement; Kind: TSyntaxKind): Integer;
     function Shape(Element: TSyntaxElement): string;
+    procedure CheckOpaqueBody(const Body: string);
+    procedure SameDiagnostics(A, B: TSyntaxTree);
   public
     [Test] procedure MultiplicationBelowAddition;
     [Test] procedure LeftAssociativity;
@@ -113,6 +115,29 @@ type
     [Test] procedure LongFieldLookahead;
     [Test] procedure LongAncestorLookahead;
     [Test] procedure TypeLookaheadRecovery;
+    [Test] procedure ControlLoops;
+    [Test] procedure ControlHierarchy;
+    [Test] procedure ControlCases;
+    [Test] procedure ControlExceptions;
+    [Test] procedure ControlElseBinding;
+    [Test] procedure ControlRecovery;
+    [Test] procedure ControlRoutineRecovery;
+    [Test] procedure ControlDirectives;
+    [Test] procedure ControlStress;
+    [Test] procedure ControlDepth;
+    [Test] procedure ControlMalformedLifetimes;
+    [Test] procedure CompiledControlFlowCorpus;
+    [Test] procedure ControlHandlerRecovery;
+    [Test] procedure ControlSeparatorsAndTrivia;
+    [Test] procedure ControlOpaqueFallback;
+    [Test] procedure OpaqueWithBodies;
+    [Test] procedure OpaqueInlineForBodies;
+    [Test] procedure OpaqueElseOwnership;
+    [Test] procedure OpaqueMalformedStatements;
+    [Test] procedure OpaqueKeywordTrivia;
+    [Test] procedure OpaqueUnsupportedStress;
+    [Test] procedure OpaqueUnsupportedDirectives;
+    [Test] procedure OpaqueUnsupportedDepthAndLifetimes;
 
 
   end;
@@ -480,8 +505,9 @@ begin
   finally T.Free; end;
   T := Parse('begin while A do begin F; G end; H; end', 2);
   try
-    Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
-    Assert.AreEqual(1, Count(T.Root, skCallStatement));
+    Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(T.Root, skWhileStatement));
+    Assert.AreEqual(3, Count(T.Root, skCallStatement));
   finally T.Free; end;
 end;
 
@@ -2275,6 +2301,615 @@ begin
     Assert.AreEqual(26, Count(T.Root, skPropertySpecifier));
     Assert.AreEqual(0, T.DiagnosticCount);
   finally T.Free; end;
+end;
+
+procedure TParserTests.ControlLoops;
+const
+  Sources: array[0..8] of string = (
+    'for I := 0 to 10 do Process(I)',
+    'for I := 10 downto 0 do begin Process(I); end',
+    'for Item in Items[Index + 1].Children do Process(Item)',
+    'for I := First(1 + 2) to Last * 2 do while Active do Process',
+    'while Index < Count do begin Items[Index].Update; Index := Index + 1; end',
+    'while Active do if Ready then for Item in Items do Save(Item)',
+    'repeat Inc(Index); Process(Index); until Index >= Count',
+    'repeat until Done',
+    'repeat repeat Process; until A; until B');
+  Kinds: array[0..8] of TSyntaxKind = (skForStatement, skForStatement,
+    skForInStatement, skForStatement, skWhileStatement, skWhileStatement,
+    skRepeatStatement, skRepeatStatement, skRepeatStatement);
+var T: TSyntaxTree; I: Integer;
+begin
+  for I := Low(Sources) to High(Sources) do
+  begin
+    T := Parse(Sources[I], 2);
+    try
+      Assert.AreEqual(Ord(Kinds[I]), Ord(Child(T.Root, 0).Kind), Sources[I]);
+      Assert.AreEqual(0, T.DiagnosticCount, Sources[I]);
+      Assert.AreEqual(0, Count(T.Root, skOpaqueRegion), Sources[I]);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlHierarchy;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('for I := 1 + 2 to Limit * 3 do repeat X := X + 1; until X > 10;', 2);
+  try
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Ord(skIdentifierExpression), Ord(Child(N, 0).Kind));
+    Assert.AreEqual(Ord(skBinaryExpression), Ord(Child(N, 1).Kind));
+    Assert.AreEqual(Ord(skBinaryExpression), Ord(Child(N, 2).Kind));
+    N := Child(N, 3);
+    Assert.AreEqual(Ord(skRepeatStatement), Ord(N.Kind));
+    Assert.AreEqual(Ord(skStatementList), Ord(Child(N, 0).Kind));
+    Assert.AreEqual(Ord(skAssignmentStatement), Ord(Child(Child(N, 0), 0).Kind));
+    Assert.AreEqual(Ord(skBinaryExpression), Ord(Child(N, 1).Kind));
+    Assert.AreEqual(Length(T.Source) - 1, Child(T.Root, 0).Span.EndOffset);
+    Assert.AreEqual(0, T.DiagnosticCount);
+    Assert.AreEqual(44, Ord(skPropertySpecifier));
+    Assert.AreEqual(45, Ord(skForStatement));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ControlCases;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('case Value of 0, 1, 2: Small; 3..10: Medium; -1: Invalid; ' +
+    'State.Ready: case Other of 0: Save; end; else Other; Last; end;', 2);
+  try
+    Assert.AreEqual(0, T.DiagnosticCount);
+    Assert.AreEqual(2, Count(T.Root, skCaseStatement));
+    Assert.AreEqual(5, Count(T.Root, skCaseBranch));
+    N := Child(T.Root, 0);
+    Assert.AreEqual(Ord(skIdentifierExpression), Ord(Child(N, 0).Kind));
+    Assert.AreEqual(Ord(skCaseBranch), Ord(Child(N, 1).Kind));
+    Assert.AreEqual(3, Count(Child(N, 1), skLiteralExpression));
+    Assert.AreEqual(Ord(skUnaryExpression), Ord(Child(Child(N, 3), 0).Kind));
+    Assert.AreEqual(Ord(skStatementList), Ord(Child(N, 5).Kind));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ControlExceptions;
+const Sources: array[0..4] of string = (
+  'try Work; finally Cleanup; More; end',
+  'try Work; except Handle; raise; end',
+  'try Work; except on E: Exception do Handle(E); on EArgumentException do raise; end',
+  'try Work; except on E: System.SysUtils.Exception do begin Handle(E); end; else Other; More; end',
+  'try try while Active do Process; finally Cleanup; end; except on Exception do raise Exception.Create(''Error''); end');
+var T: TSyntaxTree; I: Integer;
+begin
+  for I := Low(Sources) to High(Sources) do
+  begin
+    T := Parse(Sources[I], 2);
+    try
+      Assert.AreEqual(0, T.DiagnosticCount, Sources[I]);
+      Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(Ord(skStatementList), Ord(Child(Child(T.Root, 0), 0).Kind));
+      if I >= 2 then Assert.IsTrue(Count(T.Root, skExceptionHandler) > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlElseBinding;
+var T: TSyntaxTree; N: TSyntaxNode;
+begin
+  T := Parse('case A of 1: if A then if B then X else Y; else Z; end', 2);
+  try
+    Assert.AreEqual(0, T.DiagnosticCount);
+    N := Child(Child(Child(T.Root, 0), 1), 1);
+    Assert.AreEqual(Ord(skIfStatement), Ord(N.Kind));
+    Assert.AreEqual(2, Count(N, skIfStatement));
+    Assert.AreEqual(Ord(skIfStatement), Ord(Child(N, 1).Kind));
+    Assert.AreEqual(Ord(skCallStatement), Ord(Child(Child(N, 1), 2).Kind));
+    Assert.AreEqual(2, Count(N, skCallStatement));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ControlRecovery;
+const Sources: array[0..18] of string = (
+  'for I := 0 to do Process;', 'for I := 0 10 do Process;',
+  'for I 0 to 10 do Process;', 'for I := 0 to 10 Process;',
+  'while Active Process;', 'while Active do',
+  'repeat Process; end;', 'repeat Process; until ;',
+  'case Value of 1 Process; 2: ProcessOther; end;',
+  'case Value 1: Process; end;', 'case A of : Process; end;',
+  'case A of 1 + 2: Process; end;',
+  'try Process; finally Cleanup;', 'try Process; end;',
+  'try Process; except on E: do Handle; on Exception do Other; end;',
+  'try Process; except on E Exception do Handle; end;',
+  'try Process; except on : Exception do Handle; end;',
+  'while do ;', 'case A of 1: try Work; finally Cleanup; end');
+var A, B: TSyntaxTree; I, J: Integer;
+begin
+  for I := Low(Sources) to High(Sources) do
+  begin
+    A := Parse(Sources[I], 2);
+    try
+      Assert.IsTrue(A.DiagnosticCount > 0, Sources[I]);
+      B := Parse(Sources[I], 2);
+      try
+        Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+        Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+        for J := 0 to A.DiagnosticCount - 1 do
+        begin
+          Assert.AreEqual(A.GetDiagnostic(J).Code, B.GetDiagnostic(J).Code);
+          Assert.AreEqual(A.GetDiagnostic(J).Message, B.GetDiagnostic(J).Message);
+          Assert.AreEqual(A.GetDiagnostic(J).Span.StartOffset, B.GetDiagnostic(J).Span.StartOffset);
+          Assert.AreEqual(A.GetDiagnostic(J).Span.Length, B.GetDiagnostic(J).Span.Length);
+        end;
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlRoutineRecovery;
+const Fragments: array[0..4] of string = (
+  'try Work; finally Cleanup;', 'case X of 1: Work;',
+  'repeat Work;', 'while X do', 'try case X of 1: Work;');
+var T: TSyntaxTree; S: string;
+begin
+  for S in Fragments do
+  begin
+    T := Parse('unit U; interface implementation procedure A; begin ' + S +
+      ' procedure B; begin Save; end; end.');
+    try
+      Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration), S);
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      Assert.IsTrue(Count(T.Root, skCallStatement) >= 1);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlDirectives;
+const Sources: array[0..2] of string = (
+  'while X do {$IFDEF X} Work {$ENDIF}',
+  'try Work; {$I x.inc} finally Cleanup; end',
+  'case X of 1: {$R x.res} Work; end');
+var T: TSyntaxTree; S: string;
+begin
+  for S in Sources do
+  begin
+    T := Parse(S, 2);
+    try
+      Assert.AreEqual(0, Count(T.Root, skWhileStatement));
+      Assert.AreEqual(0, Count(T.Root, skTryFinallyStatement));
+      Assert.AreEqual(0, Count(T.Root, skCaseStatement));
+      Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlStress;
+var T: TSyntaxTree; B: TStringBuilder; I: Integer;
+begin
+  B := TStringBuilder.Create;
+  try
+    B.Append('begin case X of ');
+    for I := 0 to 1023 do B.Append(IntToStr(I) + ': Process; ');
+    B.Append('end; repeat ');
+    for I := 0 to 2047 do B.Append('while Active do Process; ');
+    B.Append('until Done; end');
+    T := Parse(B.ToString, 2);
+    try
+      Assert.AreEqual(1024, Count(T.Root, skCaseBranch));
+      Assert.AreEqual(2048, Count(T.Root, skWhileStatement));
+      Assert.AreEqual(0, T.DiagnosticCount);
+    finally T.Free; end;
+  finally B.Free; end;
+end;
+
+procedure TParserTests.ControlDepth;
+const Openers: array[0..3] of string = ('while X do ', 'for I := 0 to 1 do ',
+  'try ', 'case X of 1: ');
+var T: TSyntaxTree; S, Opener: string; I: Integer;
+begin
+  for Opener in Openers do
+  begin
+    S := 'Process';
+    for I := 1 to 150 do
+    begin
+      if Opener = 'try ' then S := Opener + S + '; finally Cleanup; end'
+      else if Opener = 'case X of 1: ' then S := Opener + S + '; end'
+      else S := Opener + S;
+    end;
+    T := Parse(S, 2);
+    try
+      Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0, Opener);
+      Assert.IsTrue(T.DiagnosticCount > 0, Opener);
+      Assert.AreEqual('PAR004', T.GetDiagnostic(0).Code);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlMalformedLifetimes;
+const Parts: array[0..10] of string = ('for I := ', 'while ', 'repeat ',
+  'until ', 'case X of ', '1: ', 'try ', 'except on E: ', 'finally ', 'do ', '; end; ');
+var A, B: TSyntaxTree; S: string; I, J: Integer;
+begin
+  for I := 0 to 299 do
+  begin
+    S := 'begin ';
+    for J := 0 to 8 + I mod 30 do
+      S := S + Parts[(I * 7 + J * 3 + J * J) mod Length(Parts)];
+    S := S + Char($D800) + ' end';
+    A := Parse(S, 2);
+    try
+      B := Parse(S, 2);
+      try
+        Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+        Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.CompiledControlFlowCorpus;
+var T: TSyntaxTree;
+begin
+  T := Parse(TFile.ReadAllText('tests/Fixtures/ControlFlowCorpus.pas', TEncoding.UTF8));
+  try
+    Assert.AreEqual(0, T.DiagnosticCount);
+    Assert.AreEqual(3, Count(T.Root, skForStatement));
+    Assert.AreEqual(1, Count(T.Root, skForInStatement));
+    Assert.AreEqual(2, Count(T.Root, skRepeatStatement));
+    Assert.AreEqual(2, Count(T.Root, skCaseStatement));
+    Assert.AreEqual(2, Count(T.Root, skTryExceptStatement));
+    Assert.AreEqual(1, Count(T.Root, skTryFinallyStatement));
+    Assert.AreEqual(2, Count(T.Root, skExceptionHandler));
+    Assert.AreEqual(2, Count(T.Root, skRaiseStatement));
+    Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ControlHandlerRecovery;
+const Headers: array[0..3] of string = ('E: Exception<T>', ': Exception',
+  'E Exception', 'E:');
+var T: TSyntaxTree; Header: string; N: TSyntaxNode;
+begin
+  for Header in Headers do
+  begin
+    T := Parse('try Work; except on ' + Header + ' do Handle; ' +
+      'on System.SysUtils.Exception do Recover; else Other; end', 2);
+    try
+      Assert.IsTrue(T.DiagnosticCount > 0, Header);
+      Assert.AreEqual(2, Count(T.Root, skExceptionHandler), Header);
+      N := Child(Child(T.Root, 0), 2);
+      Assert.AreEqual(Ord(skExceptionHandler), Ord(N.Kind));
+      Assert.AreEqual(1, Count(N, skTypeReference));
+      Assert.AreEqual(1, Count(N, skCallStatement));
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.ControlSeparatorsAndTrivia;
+var T: TSyntaxTree; N, L: TSyntaxNode; I, Separators: Integer;
+begin
+  T := Parse('repeat {body}'#13#10'; Work; ; until {test} Done;', 2);
+  try
+    Assert.AreEqual(0, T.DiagnosticCount);
+    N := Child(T.Root, 0);
+    L := Child(N, 0);
+    Assert.AreEqual(2, Count(L, skEmptyStatement));
+    Separators := 0;
+    for I := 0 to L.ChildCount - 1 do
+      if L.GetChild(I) is TSyntaxToken then
+        if not TSyntaxToken(L.GetChild(I)).IsMissing and
+          (Copy(T.Source, L.GetChild(I).Span.StartOffset + 1,
+            L.GetChild(I).Span.Length) = ';') then Inc(Separators);
+    Assert.AreEqual(3, Separators);
+    Assert.AreEqual(Length(T.Source) - 1, N.Span.EndOffset);
+    Assert.AreEqual(Ord(skIdentifierExpression), Ord(Child(N, 1).Kind));
+  finally T.Free; end;
+  T := Parse('try Work; finally begin Cleanup; end', 2);
+  try
+    Assert.IsTrue(Count(T.Root, skMissingToken) > 0);
+    Assert.AreEqual(1, Count(T.Root, skBlockStatement));
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ControlOpaqueFallback;
+var T: TSyntaxTree;
+begin
+  T := Parse('begin with Obj do begin Work; More; end; AfterWork; end', 2);
+  try
+    Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(T.Root, skCallStatement));
+  finally T.Free; end;
+  T := Parse('begin for var I := 0 to 10 do begin Work; end; AfterWork; end', 2);
+  try
+    Assert.AreEqual(0, Count(T.Root, skForStatement));
+    Assert.AreEqual(1, Count(T.Root, skCallStatement));
+    Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
+  finally T.Free; end;
+  T := Parse('begin raise E at Address; AfterWork; end', 2);
+  try
+    Assert.AreEqual(0, Count(T.Root, skRaiseStatement));
+    Assert.AreEqual(1, Count(T.Root, skCallStatement));
+    Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
+  finally T.Free; end;
+  T := Parse('case X of (1 + 2): Work; 3: Other; end', 2);
+  try
+    Assert.AreEqual(2, Count(T.Root, skCaseBranch));
+    Assert.AreEqual(2, Count(T.Root, skCallStatement));
+    Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.SameDiagnostics(A, B: TSyntaxTree);
+var I: Integer;
+begin
+  Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+  for I := 0 to A.DiagnosticCount - 1 do
+  begin
+    Assert.AreEqual(A.GetDiagnostic(I).Code, B.GetDiagnostic(I).Code);
+    Assert.AreEqual(A.GetDiagnostic(I).Message, B.GetDiagnostic(I).Message);
+    Assert.AreEqual(Ord(A.GetDiagnostic(I).Severity), Ord(B.GetDiagnostic(I).Severity));
+    Assert.AreEqual(A.GetDiagnostic(I).Span.StartOffset, B.GetDiagnostic(I).Span.StartOffset);
+    Assert.AreEqual(A.GetDiagnostic(I).Span.Length, B.GetDiagnostic(I).Span.Length);
+  end;
+end;
+
+procedure TParserTests.CheckOpaqueBody(const Body: string);
+var A, B: TSyntaxTree; BlockNode, OpaqueNode: TSyntaxNode; I, Separators: Integer;
+begin
+  A := Parse('begin ' + Body + '; ContinueWork; end', 2);
+  try
+    BlockNode := Child(A.Root, 0);
+    Assert.AreEqual(Ord(skBlockStatement), Ord(BlockNode.Kind), Body);
+    OpaqueNode := Child(BlockNode, 0);
+    Assert.AreEqual(Ord(skOpaqueRegion), Ord(OpaqueNode.Kind), Body);
+    Assert.AreEqual(Body, Trim(Copy(A.Source, OpaqueNode.Span.StartOffset + 1,
+      OpaqueNode.Span.Length)), 'Complete opaque extent: ' + Body);
+    Assert.AreEqual(Ord(skCallStatement), Ord(Child(BlockNode, 1).Kind));
+    Assert.AreEqual('ContinueWork', Trim(Copy(A.Source,
+      Child(BlockNode, 1).Span.StartOffset + 1, Child(BlockNode, 1).Span.Length)));
+    Assert.AreEqual(1, Count(A.Root, skOpaqueRegion));
+    Assert.AreEqual(1, Count(A.Root, skBlockStatement));
+    Assert.AreEqual(1, Count(A.Root, skCallStatement));
+    Assert.AreEqual(0, Count(A.Root, skIfStatement));
+    Assert.AreEqual(0, Count(A.Root, skForStatement));
+    Assert.AreEqual(0, Count(A.Root, skMissingToken));
+    Separators := 0;
+    for I := 0 to BlockNode.ChildCount - 1 do
+      if BlockNode.GetChild(I) is TSyntaxToken then
+        if Copy(A.Source, BlockNode.GetChild(I).Span.StartOffset + 1,
+          BlockNode.GetChild(I).Span.Length) = ';' then Inc(Separators);
+    Assert.AreEqual(2, Separators, 'Both separators belong to the outer block');
+    Assert.AreEqual(1, A.DiagnosticCount, Body);
+    Assert.AreEqual('PAR003', A.GetDiagnostic(0).Code);
+    B := Parse(A.Source, 2);
+    try
+      Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+      SameDiagnostics(A, B);
+    finally B.Free; end;
+  finally A.Free; end;
+end;
+
+procedure TParserTests.OpaqueWithBodies;
+const Bodies: array[0..10] of string = (
+  'if Active then Save else Reset',
+  'begin Save; Reset; end',
+  'case State of 0: Save; 1: if Active then Save else Reset; else Reset; end',
+  'try Save; finally Reset; end',
+  'try Save; except on E: Exception do if Active then Save else Reset; else Reset; end',
+  'repeat Save; if Active then Reset; until Done',
+  'begin begin Save; end; Reset; end',
+  'while Active do if Ready then Save else Reset',
+  'with Other do if Active then Save else Reset',
+  'Value := Other.Value + 1',
+  'for I := 0 to 10 do if Ready then Save else Reset');
+var Body: string;
+begin
+  for Body in Bodies do CheckOpaqueBody('with Customer do ' + Body);
+end;
+
+procedure TParserTests.OpaqueInlineForBodies;
+const Bodies: array[0..3] of string = ('Process(I)',
+  'if I > 5 then Process(I) else Skip(I)',
+  'begin Process(I); Skip(I); end',
+  'repeat Process(I); until Done');
+var Body: string;
+begin
+  for Body in Bodies do CheckOpaqueBody('for var I := 0 to 10 do ' + Body);
+end;
+
+procedure TParserTests.OpaqueElseOwnership;
+const Bodies: array[0..4] of string = (
+  'with Customer do Save',
+  'with Customer do if B then Save else Reset',
+  'with Customer do if B then if C then Save else Reset else Other',
+  'for var I := 0 to 10 do if B then Save else Reset',
+  'with Customer do begin if B then Save else Reset; end');
+var Body: string; A, B: TSyntaxTree; N, O: TSyntaxNode;
+begin
+  for Body in Bodies do
+  begin
+    A := Parse('if Active then ' + Body + ' else HandleInactive', 2);
+    try
+      N := Child(A.Root, 0);
+      Assert.AreEqual(Ord(skIfStatement), Ord(N.Kind));
+      Assert.AreEqual(Ord(skIdentifierExpression), Ord(Child(N, 0).Kind));
+      O := Child(N, 1);
+      Assert.AreEqual(Ord(skOpaqueRegion), Ord(O.Kind));
+      Assert.AreEqual(Body, Trim(Copy(A.Source, O.Span.StartOffset + 1, O.Span.Length)));
+      Assert.AreEqual(Ord(skCallStatement), Ord(Child(N, 2).Kind));
+      Assert.AreEqual('HandleInactive', Trim(Copy(A.Source,
+        Child(N, 2).Span.StartOffset + 1, Child(N, 2).Span.Length)));
+      Assert.AreEqual(1, Count(A.Root, skIfStatement));
+      Assert.AreEqual(1, Count(A.Root, skCallStatement));
+      Assert.AreEqual(1, A.DiagnosticCount);
+      Assert.AreEqual('PAR003', A.GetDiagnostic(0).Code);
+      B := Parse(A.Source, 2);
+      try
+        Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+        SameDiagnostics(A, B);
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
+  A := Parse('if Active then with Customer do if B then Save else Reset', 2);
+  try
+    N := Child(A.Root, 0);
+    O := Child(N, 1);
+    Assert.AreEqual(Ord(skOpaqueRegion), Ord(O.Kind));
+    Assert.AreEqual('with Customer do if B then Save else Reset',
+      Trim(Copy(A.Source, O.Span.StartOffset + 1, O.Span.Length)));
+    Assert.AreEqual(1, Count(A.Root, skIfStatement));
+    Assert.AreEqual(0, Count(A.Root, skCallStatement));
+    Assert.AreEqual(1, A.DiagnosticCount);
+    B := Parse(A.Source, 2);
+    try SameDiagnostics(A, B); finally B.Free; end;
+  finally A.Free; end;
+  A := Parse('if A then if B then with Customer do Save else Reset', 2);
+  try
+    N := Child(Child(A.Root, 0), 1);
+    Assert.AreEqual(Ord(skIfStatement), Ord(N.Kind));
+    Assert.AreEqual(Ord(skOpaqueRegion), Ord(Child(N, 1).Kind));
+    Assert.AreEqual(Ord(skCallStatement), Ord(Child(N, 2).Kind));
+    Assert.AreEqual(2, Count(A.Root, skIfStatement));
+    Assert.AreEqual(1, Count(A.Root, skCallStatement));
+    Assert.AreEqual(1, A.DiagnosticCount);
+    B := Parse(A.Source, 2);
+    try SameDiagnostics(A, B); finally B.Free; end;
+  finally A.Free; end;
+end;
+
+procedure TParserTests.OpaqueMalformedStatements;
+const Fragments: array[0..5] of string = ('with Customer do',
+  'with Customer do if Active then Save else', 'with Customer begin Save;',
+  'with Customer do begin Save;', 'for var I := 0 to 10 do begin Save;',
+  'with Customer do try Save; finally Reset;');
+var S: string; A, B: TSyntaxTree;
+begin
+  CheckOpaqueBody('with Customer Save'); // missing do: conservative complete fragment
+  CheckOpaqueBody('with Customer do Obj.'); // a broken member never hides a separator
+  for S in Fragments do
+  begin
+    A := Parse(S, 2);
+    try
+      Assert.AreEqual(1, Count(A.Root, skOpaqueRegion), S);
+      Assert.AreEqual(0, Count(A.Root, skIfStatement));
+      Assert.AreEqual(0, Count(A.Root, skCallStatement));
+      B := Parse(S, 2);
+      try SameDiagnostics(A, B); finally B.Free; end;
+    finally A.Free; end;
+    A := Parse('unit U; interface implementation procedure A; begin ' + S +
+      ' procedure B; begin ContinueWork; end; end.');
+    try
+      Assert.AreEqual(2, Count(A.Root, skRoutineDeclaration), S);
+      Assert.AreEqual(1, Count(A.Root, skCallStatement), S);
+      B := Parse(A.Source);
+      try SameDiagnostics(A, B); finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.OpaqueKeywordTrivia;
+var A, B: TSyntaxTree;
+begin
+  CheckOpaqueBody('with Customer do if {then else begin} Active then ' +
+    'Save(''if then else case try repeat end'', ''else'') else Reset');
+  CheckOpaqueBody('with Customer do Save(''then'', ''else'', ''end'')');
+  CheckOpaqueBody('with Customer do Obj.&if(''else'')');
+  CheckOpaqueBody('with Customer do Obj.If(''else'')');
+  CheckOpaqueBody('with Customer do begin Obj.End; Obj.Try; Obj.Repeat; end');
+  CheckOpaqueBody('for var I := 0 to 10 do if Active then'#13#10 +
+    '// else then end'#13#10' Save else Reset');
+  A := Parse('unit U; interface implementation procedure Exercise; begin ' +
+    'with Customer do Obj.Procedure; ContinueWork; end; end.');
+  try
+    Assert.AreEqual(1, Count(A.Root, skRoutineDeclaration));
+    Assert.AreEqual(1, Count(A.Root, skCallStatement));
+    Assert.AreEqual(1, Count(A.Root, skOpaqueRegion));
+    Assert.AreEqual(1, A.DiagnosticCount);
+    B := Parse(A.Source);
+    try SameDiagnostics(A, B); finally B.Free; end;
+  finally A.Free; end;
+end;
+
+procedure TParserTests.OpaqueUnsupportedStress;
+var Builder: TStringBuilder; A, B: TSyntaxTree; I, J: Integer; S: string;
+begin
+  Builder := TStringBuilder.Create;
+  try
+    Builder.Append('begin ');
+    for I := 1 to 256 do
+    begin
+      Builder.Append('with Customer do ');
+      for J := 1 to 32 do Builder.Append('if A then ');
+      Builder.Append('begin Save; Reset; end');
+      for J := 1 to 32 do Builder.Append(' else Other');
+      Builder.Append('; ');
+    end;
+    Builder.Append('ContinueWork; MoreWork; LastWork; end');
+    S := Builder.ToString;
+  finally Builder.Free; end;
+  A := Parse(S, 2);
+  try
+    Assert.AreEqual(256, Count(A.Root, skOpaqueRegion));
+    Assert.AreEqual(3, Count(A.Root, skCallStatement));
+    Assert.AreEqual(0, Count(A.Root, skIfStatement));
+    B := Parse(S, 2);
+    try SameDiagnostics(A, B); finally B.Free; end;
+  finally A.Free; end;
+end;
+
+procedure TParserTests.OpaqueUnsupportedDirectives;
+const Directives: array[0..2] of string = ('{$IFDEF X}', '{$I x.inc}', '{$R x.res}');
+var D: string; A, B: TSyntaxTree;
+begin
+  for D in Directives do
+  begin
+    A := Parse('begin with Customer do if Active then ' + D +
+      ' Save else Reset; ContinueWork; end', 2);
+    try
+      Assert.AreEqual(0, Count(A.Root, skBlockStatement));
+      Assert.AreEqual(0, Count(A.Root, skCallStatement));
+      Assert.AreEqual(1, Count(A.Root, skOpaqueRegion));
+      B := Parse(A.Source, 2);
+      try SameDiagnostics(A, B); finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.OpaqueUnsupportedDepthAndLifetimes;
+var A, B: TSyntaxTree; Builder: TStringBuilder; S: string; I: Integer;
+begin
+  Builder := TStringBuilder.Create;
+  try
+    Builder.Append('begin with Customer do ');
+    for I := 1 to 150 do Builder.Append('if Active then ');
+    Builder.Append('Save');
+    for I := 1 to 150 do Builder.Append(' else Reset');
+    Builder.Append('; ContinueWork; end');
+    S := Builder.ToString;
+  finally Builder.Free; end;
+  A := Parse(S, 2);
+  try
+    Assert.AreEqual(1, Count(A.Root, skOpaqueRegion));
+    Assert.AreEqual(0, Count(A.Root, skIfStatement));
+    Assert.AreEqual(1, Count(A.Root, skCallStatement));
+    Assert.AreEqual(2, A.DiagnosticCount);
+    Assert.AreEqual('PAR004', A.GetDiagnostic(1).Code);
+    B := Parse(S, 2);
+    try SameDiagnostics(A, B); finally B.Free; end;
+  finally A.Free; end;
+  for I := 0 to 199 do
+  begin
+    S := 'begin with Customer do if Active then Save(''' +
+      Char($D800 + I mod 1024) + ''') else Reset; ContinueWork; end';
+    A := Parse(S, 2);
+    try
+      Assert.AreEqual(1, Count(A.Root, skOpaqueRegion));
+      Assert.AreEqual(1, Count(A.Root, skCallStatement));
+      Assert.AreEqual(2, A.DiagnosticCount);
+      B := Parse(S, 2);
+      try
+        Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+        SameDiagnostics(A, B);
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
 end;
 
 initialization
