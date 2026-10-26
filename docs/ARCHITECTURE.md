@@ -227,3 +227,14 @@ opaque recovery at the nesting limit. OpaqueStatement tracks control openers
 iteratively. No new lexer/Reader/tree API, full token-array copies, backtracking,
 parent links or per-production node classes are introduced. Eleven appended
 SyntaxKind values extend the public API. See CST_SPEC.md for scope and limits.
+
+### M2.6 review: whole-statement opaque recovery
+
+OpaqueUnsupportedStatement is a private envelope scanner called only for with
+and inline for var fallbacks. Statement and ControlStatement select it; the
+existing OpaqueStatement and its expression/generic/suffix callers are unchanged.
+Local SkipOne binds if/else and do-body envelopes without building grammar nodes;
+SkipHeader and SkipBalanced consume tokens monotonically. Compound nesting is
+iterative; recursive envelopes use the existing depth budget and conservative
+PAR004 fallback. Only Take creates leaves, preserving directive detection and
+arena ownership. No Reader reset, public API change or full unsupported grammar.

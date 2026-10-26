@@ -78,6 +78,7 @@ type
     function ResourceDirective(Index: Integer): Boolean;
     function UnitDeclaration: TSyntaxNode;
     function OpaqueStatement(TrackAngles: Boolean = False): TSyntaxNode;
+    function OpaqueUnsupportedStatement: TSyntaxNode;
     procedure UnitSection(Children: TList<TSyntaxElement>; IsInterface: Boolean);
     function Execute(RootKind: TSyntaxKind): TSyntaxTree;
   public
@@ -434,6 +435,175 @@ begin
   end;
 end;
 
+function TDelphiParser.OpaqueUnsupportedStatement: TSyntaxNode;
+const
+  END_BLOCK = 1;
+  TRY_BLOCK = 2;
+  REPEAT_BLOCK = 3;
+var
+  Children: TList<TSyntaxElement>;
+  Qualified: Boolean;
+
+  procedure Consume;
+  begin
+    // Only significant keyword tokens drive the envelope. A keyword after a
+    // dot is a member name; comments, strings and escaped names are inert.
+    Qualified := FReader.Matches('.') and
+      (FReader.PeekSignificant(1).Kind in [tkIdentifier, tkReservedWord]);
+    Take(Children);
+  end;
+
+  function AtHardEnd: Boolean;
+  begin
+    Result := FReader.AtEOF or (not Qualified and HardStatementEnd);
+  end;
+
+  function AtStatementEnd: Boolean;
+  begin
+    Result := AtHardEnd or (not Qualified and (FReader.Matches(';') or
+      FReader.Matches('end') or FReader.Matches('until') or
+      FReader.Matches('finally') or FReader.Matches('except') or
+      FReader.Matches('else') or FReader.Matches('on')));
+  end;
+
+  procedure SkipBalanced(Compound, PreserveElse: Boolean);
+  var
+    Openers: TList<Integer>;
+    Parens, TryCount, Opener: Integer;
+  begin
+    Openers := TList<Integer>.Create;
+    try
+      Parens := 0;
+      TryCount := 0;
+      while not AtHardEnd do
+      begin
+        if (Parens = 0) and not Qualified then
+        begin
+          if (Openers.Count = 0) and
+            (FReader.Matches(';') or FReader.Matches('end') or
+             FReader.Matches('until') or FReader.Matches('finally') or
+             FReader.Matches('except') or FReader.Matches('on') or
+             (PreserveElse and FReader.Matches('else'))) then Break;
+          // Keep outer exception/repeat terminators when this opaque body is
+          // incomplete. An absent end's intended owner otherwise stays ambiguous.
+          if (TryCount = 0) and (FReader.Matches('finally') or
+            FReader.Matches('except')) then Break;
+          Opener := 0;
+          if FReader.Matches('begin') or FReader.Matches('case') then Opener := END_BLOCK
+          else if FReader.Matches('try') then Opener := TRY_BLOCK
+          else if FReader.Matches('repeat') then Opener := REPEAT_BLOCK;
+          if Opener <> 0 then
+          begin
+            Openers.Add(Opener);
+            if Opener = TRY_BLOCK then Inc(TryCount);
+          end
+          else if FReader.Matches('end') or FReader.Matches('until') then
+          begin
+            if Openers.Count = 0 then Break;
+            if (Openers.Last = REPEAT_BLOCK) <> FReader.Matches('until') then Break;
+            if Openers.Last = TRY_BLOCK then Dec(TryCount);
+            Openers.Delete(Openers.Count - 1);
+            Consume;
+            if Compound and (Openers.Count = 0) then Break;
+            Continue;
+          end;
+        end;
+        if FReader.Matches('(') or FReader.Matches('[') or
+          FReader.Matches('(.') then Inc(Parens)
+        else if FReader.Matches(')') or FReader.Matches(']') or
+          FReader.Matches('.)') then
+        begin
+          if Parens = 0 then Break;
+          Dec(Parens);
+        end;
+        Consume; // every continuing iteration consumes an original token
+      end;
+    finally Openers.Free; end;
+  end;
+
+  procedure SkipHeader(const Delimiter: string);
+  var
+    Parens: Integer;
+  begin
+    Parens := 0;
+    while not AtHardEnd do
+    begin
+      if (Parens = 0) and not Qualified then
+      begin
+        if FReader.Matches(Delimiter) or AtStatementEnd then Break;
+        // A clear body opener after a missing do/then remains opaque with its
+        // prefix, rather than leaking its internal statements into the CST.
+        if FReader.Matches('begin') or FReader.Matches('if') or
+          FReader.Matches('case') or FReader.Matches('try') or
+          FReader.Matches('repeat') or FReader.Matches('with') or
+          FReader.Matches('while') or FReader.Matches('for') then Break;
+      end;
+      if FReader.Matches('(') or FReader.Matches('[') or
+        FReader.Matches('(.') then Inc(Parens)
+      else if FReader.Matches(')') or FReader.Matches(']') or
+        FReader.Matches('.)') then
+      begin
+        if Parens = 0 then Break;
+        Dec(Parens);
+      end;
+      Consume;
+    end;
+  end;
+
+  procedure SkipOne(Depth: Integer);
+  var
+    IsRepeat: Boolean;
+  begin
+    if AtStatementEnd then Exit;
+    if Depth > 128 then
+    begin
+      Report('PAR004', 'Parser nesting limit reached');
+      // At the guard, retain a larger fragment through the next safe separator;
+      // do not recurse or invent nested structure for the remaining source.
+      SkipBalanced(False, False);
+      Exit;
+    end;
+    if FReader.Matches('if') then
+    begin
+      Consume;
+      SkipHeader('then');
+      if FReader.Matches('then') then Consume;
+      SkipOne(Depth + 1);
+      // Exactly this skipped if may own one else. Returning through with/for
+      // envelopes leaves any further else for the supported outer IfStatement.
+      if FReader.Matches('else') then
+      begin
+        Consume;
+        SkipOne(Depth + 1);
+      end;
+    end
+    else if FReader.Matches('with') or FReader.Matches('for') or
+      FReader.Matches('while') then
+    begin
+      Consume;
+      SkipHeader('do');
+      if FReader.Matches('do') then Consume;
+      SkipOne(Depth + 1);
+    end
+    else if FReader.Matches('begin') or FReader.Matches('case') or
+      FReader.Matches('try') or FReader.Matches('repeat') then
+    begin
+      IsRepeat := FReader.Matches('repeat');
+      SkipBalanced(True, True);
+      if IsRepeat then SkipBalanced(False, True); // until condition
+    end
+    else SkipBalanced(False, True);
+  end;
+
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    Qualified := False;
+    SkipOne(FDepth);
+    Result := Node(skOpaqueRegion, Children);
+  finally Children.Free; end;
+end;
+
 function TDelphiParser.IsAssignableTarget(Target: TSyntaxNode): Boolean;
 var
   I: Integer;
@@ -486,6 +656,7 @@ begin
       if FReader.PeekSignificant.Kind <> tkIdentifier then
       begin
         Report('PAR003', 'Unsupported statement preserved as opaque');
+        if FReader.Matches('with') then Exit(OpaqueUnsupportedStatement);
         Exit(OpaqueStatement);
       end;
       Left := Expression;
@@ -664,7 +835,7 @@ begin
       if FReader.Matches('var', 1) then
       begin
         Report('PAR003', 'Inline loop variable preserved as opaque');
-        Exit(OpaqueStatement);
+        Exit(OpaqueUnsupportedStatement);
       end;
       Take(Children);
       VariableName := TList<TSyntaxElement>.Create;

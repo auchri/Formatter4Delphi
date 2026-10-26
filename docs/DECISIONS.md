@@ -221,3 +221,16 @@ Directive policy is unchanged. Rules were checked against the official Athens
 Declarations and Statements and Exceptions references linked in CST_SPEC.md.
 The compiled corpus validates these forms with Delphi 12 CE Update 1; this is
 not exact Delphi 12.3 validation and establishes no 12.3 language deviation.
+
+## M2.6 review: keep fragment and statement recovery separate
+
+The pre-fix compiler-run regressions reproduced truncated opaque with/if bodies
+and inline-for headers. Adding then/else/:= to a global exception list would
+consume supported outer else clauses and risk expression/generic callers.
+Keep OpaqueStatement unchanged and introduce a private envelope-only scanner for
+with and inline for var. It follows nested if ownership, do bodies and balanced
+compound delimiters, emitting only original leaves into one opaque node.
+Recursive envelopes retain the 128-depth guard; hard routine/unit boundaries
+and directive fallback remain in force. This is protected recovery, not support
+for with, inline declarations or another grammar milestone. No public APIs or
+SyntaxKind ordinals change.

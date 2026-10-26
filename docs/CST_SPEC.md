@@ -357,3 +357,30 @@ preprocessor, AST or formatter is added.
 Language authorities: [Declarations and Statements](https://docwiki.embarcadero.com/RADStudio/Athens/en/Declarations_and_Statements_(Delphi))
 and [Exceptions](https://docwiki.embarcadero.com/RADStudio/Athens/en/Exceptions_(Delphi)).
 Actual compiler/test evidence: M2_STATUS.md.
+
+## M2.6 review: unsupported statement envelopes
+
+OpaqueStatement remains fragment recovery for expressions, generics, suffixes
+and existing unsupported starts. Its expression Boundary is not a complete
+statement boundary: then/else and := may occur inside a with or inline-for.
+Statement therefore routes with, and ControlStatement routes for var, to the
+private OpaqueUnsupportedStatement scanner. No public API or kind changes.
+
+The scanner creates exactly one opaque node containing original leaves. It
+recognizes envelopes only: if/then plus at most one matching else, do-prefixes,
+and balanced begin/case/try/repeat regions. Each nested if claims its own else;
+returning through a with/for prefix leaves any remaining else for the supported
+outer IfStatement. The enclosing statement separator is never consumed. Other
+than the existing PAR003 unsupported warning, valid envelopes add no fabricated
+missing-token or syntax-error diagnostics. This does not add with/inline-variable
+grammar or semantic validity checks.
+
+Headers and compound regions scan forward without Reader rollback or suffix
+rescans. Compound delimiters use an iterative stack. Recursive envelope skipping
+shares the existing 128-depth budget; PAR004 falls back to a larger opaque
+fragment through a safe separator instead of recursing further. Hard following
+routine/unit/EOF boundaries remain protected, including incomplete envelopes.
+Keywords in strings/comments/escaped names and member names after a dot do not
+affect nesting. Compiler directives retain the existing complete-input policy.
+Missing delimiters may still require a larger opaque region; no intended owner
+is inferred for an absent end. These regions remain protected from later edits.
