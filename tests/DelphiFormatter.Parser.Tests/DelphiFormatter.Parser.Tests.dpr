@@ -20,7 +20,8 @@ uses
   DelphiFormatter.Parser.Reader,
   DelphiFormatter.Parser.Delphi,
   PostfixCorpus in '..\Fixtures\PostfixCorpus.pas',
-  ClassRecordCorpus in '..\Fixtures\ClassRecordCorpus.pas';
+  ClassRecordCorpus in '..\Fixtures\ClassRecordCorpus.pas',
+  PropertyCorpus in '..\Fixtures\PropertyCorpus.pas';
 
 var
   Runner: ITestRunner;

@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**Current milestone: M2.4 class and record declarations.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
+**Current stopping point: M2.5 lossless property declarations.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -194,3 +194,15 @@ prefixes and of-object signatures from block openers, and retains hard unit
 boundaries. Nested type sections and variant tails remain opaque through the
 aggregate boundary. No lexer, Reader, node/tree ownership or public parser API
 changes; only eight appended syntax kinds. See CST_SPEC.md for coverage.
+
+## M2.5 property declarations
+
+AggregateDeclaration dispatches ordinary properties to PropertyDeclaration.
+PropertyIndexParameters builds parameter declaration groups using the existing
+generic nodes and TypeReference. PropertySpecifier keeps each clause together;
+accessor names are conservative qualified names, never call expressions.
+PropertyType performs a monotone raw-token name lookahead with SkipRawTrivia;
+generic types stay opaque. PropertyFragment tracks parentheses, brackets and
+angles iteratively and stops at hard member boundaries even on malformed input.
+The inherited directive policy, Reader, lexer and ownership remain unchanged.
+Only three SyntaxKind values are appended. No public parser API changes.

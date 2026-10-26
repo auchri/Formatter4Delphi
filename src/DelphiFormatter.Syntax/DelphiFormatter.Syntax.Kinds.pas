@@ -14,7 +14,8 @@ type
     skParameterDeclaration, skReturnType, skDirective,
     skMemberAccessExpression, skIndexExpression, skDereferenceExpression,
     skTypeSection, skTypeDeclaration, skClassDeclaration, skRecordDeclaration,
-    skVisibilitySection, skFieldDeclaration, skMethodDeclaration, skAncestorList);
+    skVisibilitySection, skFieldDeclaration, skMethodDeclaration, skAncestorList,
+    skPropertyDeclaration, skPropertyIndexParameters, skPropertySpecifier);
 
 implementation
 

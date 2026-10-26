@@ -54,9 +54,17 @@
   types and variant tails retain opaque protection. No new statement grammar.
 - Actual build/test evidence and remaining toolchain limitation: M2_STATUS.md.
 
+### M2.5 — Lossless property declarations (current stopping point)
+- Ordinary/read-only/write-only properties; read/write/stored/index/default/
+  nodefault and simple implements clauses; typeless redeclarations.
+- Array property parameters and the distinct trailing `; default;` marker.
+- Conservative opaque type/constant fragments and class-property fallback;
+  contextual recovery, exact leaf/span/lifetime invariants and compiled corpus.
+- Actual validation and toolchain limits: M2_STATUS.md. Stop after M2.5.
+
 ### Next small task (proposal only, requires new authorization)
-- Validate this suite and all compiled corpora on exact Delphi 12.3+.
-- A later narrow milestone may add property grammar; it is not part of M2.4.
+- Validate the suite and all compiled corpora on exact Delphi 12.3+.
+- A subsequent narrow grammar milestone must be authorized separately.
 
 ### M3 â€” Grammar completion and validation
 - Real-world projects and conditional compiler directives/inclusions handled conservatively.
