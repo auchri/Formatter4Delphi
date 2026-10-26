@@ -100,6 +100,9 @@ type
     [Test] procedure CompiledClassRecordCorpus;
     [Test] procedure OpaqueMemberTypeKeywords;
     [Test] procedure NestedOpaqueTypeBoundaries;
+    [Test] procedure LongFieldLookahead;
+    [Test] procedure LongAncestorLookahead;
+    [Test] procedure TypeLookaheadRecovery;
 
 
   end;
@@ -1750,6 +1753,179 @@ begin
     Assert.AreEqual(5, Count(T.Root, skFieldDeclaration));
     Assert.AreEqual(3, T.DiagnosticCount); // alias, class reference, property
   finally T.Free; end;
+end;
+
+procedure TParserTests.LongFieldLookahead;
+const NameCount = 2048;
+var Builder: TStringBuilder; Mode, I, Names, Commas, Colons: Integer;
+  T: TSyntaxTree; F: TSyntaxNode; Leaf: TSyntaxToken; Fields, Gap: string;
+begin
+  for Mode := 0 to 1 do
+  begin
+    if Mode = 0 then Gap := ''
+    else Gap := ' { , : < end ) are comment text } '#9#13#10' (* gap *) ';
+    Builder := TStringBuilder.Create;
+    try
+      for I := 1 to NameCount do
+      begin
+        if I > 1 then Builder.Append(Gap + ',' + Gap);
+        if I mod 7 = 0 then Builder.Append('&');
+        Builder.Append('F').Append(I);
+      end;
+      Builder.Append(Gap + ': Integer;');
+      Fields := Builder.ToString;
+    finally Builder.Free; end;
+    T := Parse('unit X; interface type A=class ' + Fields +
+      ' procedure Following; end; implementation end.');
+    try
+      Assert.AreEqual(0, T.DiagnosticCount);
+      Assert.AreEqual(1, Count(T.Root, skFieldDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skMethodDeclaration));
+      F := Child(Child(Child(Child(Child(T.Root, 0), 0), 0), 0), 0);
+      Assert.AreEqual(Integer(skFieldDeclaration), Integer(F.Kind));
+      Assert.AreEqual(' ' + Fields, Copy(T.Source, F.Span.StartOffset + 1, F.Span.Length));
+      Names := 0; Commas := 0; Colons := 0;
+      for I := 0 to F.ChildCount - 1 do
+        if F.GetChild(I) is TSyntaxToken then
+        begin
+          Leaf := TSyntaxToken(F.GetChild(I));
+          if Leaf.OriginalToken.Kind = tkIdentifier then Inc(Names);
+          if Leaf.OriginalToken.Kind = tkSymbol then
+          begin
+            if T.Source[Leaf.Span.StartOffset + 1] = ',' then Inc(Commas);
+            if T.Source[Leaf.Span.StartOffset + 1] = ':' then Inc(Colons);
+          end;
+        end;
+      Assert.AreEqual(NameCount, Names);
+      Assert.AreEqual(NameCount - 1, Commas);
+      Assert.AreEqual(1, Colons);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.LongAncestorLookahead;
+const AncestorCount = 2048;
+var Builder: TStringBuilder; Mode, I: Integer; T, Again: TSyntaxTree;
+  S: string; A: TSyntaxNode;
+begin
+  for Mode := 0 to 1 do
+  begin
+    Builder := TStringBuilder.Create;
+    try
+      Builder.Append('unit X; interface type A=class(');
+      for I := 1 to AncestorCount do
+      begin
+        if I > 1 then Builder.Append(' { < ; end ) } , '#13#10#9);
+        Builder.Append('System.Example.I').Append(I);
+      end;
+      Builder.Append(', &end');
+      if Mode = 1 then Builder.Append(', TBase { comment } <TList<Integer>>');
+      Builder.Append(') end; B=record X: Integer; end; implementation end.');
+      S := Builder.ToString;
+    finally Builder.Free; end;
+    T := Parse(S);
+    try
+      Assert.AreEqual(2, Count(T.Root, skTypeDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skRecordDeclaration));
+      if Mode = 0 then
+      begin
+        Assert.AreEqual(1, Count(T.Root, skClassDeclaration));
+        Assert.AreEqual(1, Count(T.Root, skAncestorList));
+        A := Child(Child(Child(Child(Child(T.Root, 0), 0), 0), 0), 0);
+        Assert.AreEqual(Integer(skAncestorList), Integer(A.Kind));
+        Assert.AreEqual(AncestorCount + 1, Count(A, skTypeReference));
+        Assert.AreEqual(0, T.DiagnosticCount);
+      end
+      else
+      begin
+        Assert.AreEqual(0, Count(T.Root, skClassDeclaration));
+        Assert.AreEqual(0, Count(T.Root, skAncestorList));
+        Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+        Assert.AreEqual(1, T.DiagnosticCount);
+        Assert.AreEqual('PAR003', T.GetDiagnostic(0).Code);
+      end;
+      Again := Parse(S);
+      try
+        Assert.AreEqual(Shape(T.Root), Shape(Again.Root));
+        Assert.AreEqual(T.DiagnosticCount, Again.DiagnosticCount);
+      finally Again.Free; end;
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.TypeLookaheadRecovery;
+const Fragments: array[0..8] of string = (
+  'A=class F1 {gap}, &F2 Integer; end;',
+  'A=class F1, {gap} : Integer; end;',
+  'A=class(TObject {gap} public procedure Save; end;',
+  'A=class(TObject, {gap} ); end;',
+  'A=class(TBase {gap} <TList<Integer>>) end;',
+  'A=class(TObject; F: TList<Integer>; end;',
+  'A=class(TObject end; C=TList<Integer>;',
+  'A=class(''end'', ''<'', TObject) end;',
+  'A=class F1, F2 {gap} ; procedure Save; end;');
+  Directives: array[0..3] of string = (
+  'A=class F1, {$IFDEF X} F2 {$ENDIF}: Integer; end;',
+  'A=class(TObject, {$IFDEF X} ITest {$ENDIF}) end;',
+  'A=class F1, '#13#10'{$R missing.res}'#13#10' F2: Integer; end;',
+  'A=class(TObject, '#13#10'{$R missing.res}'#13#10' ITest) end;');
+var S: string; T, Again: TSyntaxTree; I: Integer;
+  procedure CheckDeterminism;
+  var J: Integer;
+  begin
+    Again := Parse(S);
+    try
+      Assert.AreEqual(Shape(T.Root), Shape(Again.Root));
+      Assert.AreEqual(T.DiagnosticCount, Again.DiagnosticCount);
+      for J := 0 to T.DiagnosticCount - 1 do
+      begin
+        Assert.AreEqual(T.GetDiagnostic(J).Code, Again.GetDiagnostic(J).Code);
+        Assert.AreEqual(T.GetDiagnostic(J).Message, Again.GetDiagnostic(J).Message);
+        Assert.AreEqual(Integer(T.GetDiagnostic(J).Severity), Integer(Again.GetDiagnostic(J).Severity));
+        Assert.AreEqual(T.GetDiagnostic(J).Span.StartOffset, Again.GetDiagnostic(J).Span.StartOffset);
+        Assert.AreEqual(T.GetDiagnostic(J).Span.Length, Again.GetDiagnostic(J).Span.Length);
+      end;
+    finally Again.Free; end;
+  end;
+begin
+  for I := Low(Fragments) to High(Fragments) do
+  begin
+    S := 'unit X; interface type ' + Fragments[I] +
+      ' B=record X: Integer; end; implementation end.';
+    T := Parse(S);
+    try
+      Assert.AreEqual(1, Count(T.Root, skRecordDeclaration), Fragments[I]);
+      Assert.AreEqual(1, Count(T.Root, skClassDeclaration) + Ord(I = 4));
+      Assert.IsTrue(T.DiagnosticCount > 0, Fragments[I]);
+      CheckDeterminism;
+    finally T.Free; end;
+  end;
+  for I := 0 to 1 do
+  begin
+    S := 'unit X; interface type A=class(TObject, { EOF }';
+    if I = 1 then S := S + ' ITest { EOF }';
+    T := Parse(S);
+    try
+      Assert.AreEqual(1, Count(T.Root, skAncestorList));
+      Assert.IsTrue(Count(T.Root, skMissingToken) > 0);
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      CheckDeterminism;
+    finally T.Free; end;
+  end;
+  for I := Low(Directives) to High(Directives) do
+  begin
+    S := 'unit X; interface type ' + Directives[I] +
+      ' B=record X: Integer; end; implementation end.';
+    T := Parse(S);
+    try
+      Assert.AreEqual(1, Count(T.Root, skOpaqueRegion));
+      Assert.AreEqual(0, Count(T.Root, skClassDeclaration));
+      Assert.AreEqual(0, Count(T.Root, skFieldDeclaration));
+      Assert.AreEqual(0, Count(T.Root, skRecordDeclaration));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      CheckDeterminism;
+    finally T.Free; end;
+  end;
 end;
 
 initialization

@@ -52,6 +52,7 @@ type
     function MethodStart: Boolean;
     function MemberBoundary: Boolean;
     function FieldStart: Boolean;
+    function SkipRawTrivia(Index: Integer): Integer;
     function MethodDirective: Boolean;
     function FieldDeclaration: TSyntaxNode;
     function MethodDeclaration: TSyntaxNode;
@@ -869,18 +870,35 @@ begin
 end;
 
 function TDelphiParser.FieldStart: Boolean;
-var I: Integer;
+var I: Integer; Token: TDelphiToken;
 begin
   Result := False;
-  if FReader.PeekSignificant.Kind <> tkIdentifier then Exit;
-  I := 1;
-  while FReader.Matches(',', I) do
+  I := SkipRawTrivia(FReader.Position);
+  if FLex.GetToken(I).Kind <> tkIdentifier then Exit;
+  while True do
   begin
-    Inc(I);
-    if FReader.PeekSignificant(I).Kind <> tkIdentifier then Exit;
-    Inc(I);
+    I := SkipRawTrivia(I + 1);
+    Token := FLex.GetToken(I);
+    if (Token.Kind <> tkSymbol) or (Token.Span.Length <> 1) then Exit;
+    case FLex.Source[Token.Span.StartOffset + 1] of
+      ':': Exit(True);
+      ',':
+        begin
+          I := SkipRawTrivia(I + 1);
+          if FLex.GetToken(I).Kind <> tkIdentifier then Exit;
+        end;
+    else Exit;
+    end;
   end;
-  Result := FReader.Matches(':', I);
+end;
+
+function TDelphiParser.SkipRawTrivia(Index: Integer): Integer;
+begin
+  // Local raw cursor only; EOF is the sentinel and directives stay significant.
+  Result := Index;
+  if Result >= FLex.TokenCount then Exit(FLex.TokenCount - 1);
+  while (Result < FLex.TokenCount - 1) and
+    TTokenReader.IsTrivia(FLex.GetToken(Result).Kind) do Inc(Result);
 end;
 
 function TDelphiParser.MethodDirective: Boolean;
@@ -988,6 +1006,7 @@ end;
 
 function TDelphiParser.TypeDeclaration: TSyntaxNode;
 var C: TList<TSyntaxElement>; I: Integer; Supported: Boolean;
+  Token: TDelphiToken;
 begin
   C := TList<TSyntaxElement>.Create;
   try
@@ -1004,14 +1023,20 @@ begin
         (FReader.Matches('record') and not FReader.Matches('helper', 1));
       if Supported and FReader.Matches('(', 1) then
       begin
-        I := 2;
-        while (FReader.PeekSignificant(I).Kind <> tkEOF) and
-          not FReader.Matches(')', I) and not FReader.Matches(';', I) and
-          not FReader.Matches('end', I) do
+        I := FReader.SignificantIndex(2);
+        while I < FLex.TokenCount do
         begin
-          if FReader.Matches('<', I) then
-          begin Supported := False; Break; end;
-          Inc(I);
+          Token := FLex.GetToken(I);
+          if Token.Kind = tkEOF then Break;
+          if (Token.Kind = tkSymbol) and (Token.Span.Length = 1) then
+            case FLex.Source[Token.Span.StartOffset + 1] of
+              ')', ';': Break;
+              '<': begin Supported := False; Break; end;
+            end;
+          if (Token.Kind in [tkIdentifier, tkReservedWord]) and
+            (Token.Span.Length = 3) and SameText(FLex.TokenText(I), 'end') then
+            Break;
+          I := SkipRawTrivia(I + 1);
         end;
       end;
       if Supported then

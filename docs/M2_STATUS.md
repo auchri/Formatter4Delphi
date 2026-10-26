@@ -32,6 +32,9 @@ M2.4 is implemented on merged M2.3, origin/main at c52fa5f, on
 
 ## Actual build and execution evidence
 
+The original M2.4 evidence below is retained; the PR #6 review validation at the
+end of this document supersedes its test count, artifact timestamps and hashes.
+
 Toolchain: **Delphi 12 Community Edition Update 1**, IDE version
 **29.0.51961.7529**, C:\Program Files (x86)\Embarcadero\Studio\23.0.
 This is **not Delphi 12.3**; exact 12.3+ validation remains open.
@@ -96,3 +99,71 @@ parsing. Release and other platforms are untested.
 Next small task: validate the suite and corpora on exact Delphi 12.3+.
 A later property-grammar milestone needs separate authorization. Historical
 M2.1–M2.3 implementation/build evidence remains in Git history.
+
+## PR #6 review: linear lookahead (2026-10-26)
+
+Only Parser.Delphi, Tests.Parser.Basics and this status document changed.
+FieldStart now advances a local raw-token cursor through identifier/comma pairs
+to the colon, including escaped identifiers. TypeDeclaration's generic-ancestor
+preflight similarly advances through raw tokens, retaining the existing stops
+at `)`, `;`, `end`, EOF and the opaque decision at `<`. Token-kind/length checks
+prevent comment/string contents or escaped keyword names from acting as syntax.
+The shared private SkipRawTrivia uses TTokenReader.IsTrivia; compiler directives
+stay significant. Neither scan changes Reader.Position or consumes any token.
+
+Each cursor advances monotonically; the trivia helper scans only the next gap,
+never restarts from the reader position. Each examined token is read a bounded
+number of times: O(n) time and O(1) auxiliary storage per lookahead, without
+token arrays/caches or field-name text copies. Ancestor keyword comparison only
+extracts a bounded three-code-unit candidate. Existing callers of FieldStart
+also benefit; no broader parser complexity guarantee or grammar change is made.
+Lexer/Reader public APIs, CST ownership and SyntaxKind ordinals are unchanged.
+
+Three additional tests:
+
+- LongFieldLookahead: 2,048 names, plain and heavily commented/whitespace forms,
+  escaped names, one field node, exact field span/text, identifier/comma/colon
+  counts, following method and no diagnostics.
+- LongAncestorLookahead: 2,048 qualified names plus escaped `&end`, comments
+  containing fake delimiters, and a variant with a final nested generic ancestor.
+  Checks structured ancestors versus opaque RHS, following record, diagnostics
+  and deterministic shape. The unsupported variant has no fabricated class.
+- TypeLookaheadRecovery: missing colon/name/closer, EOF inside ancestors, nested
+  generics, all preflight barriers, quoted fake delimiters, and conditional or
+  standalone resource directives in both fields/ancestors. Checks subsequent
+  record recovery or complete-input directive fallback and deterministic shape
+  plus full diagnostic code/message/severity/span data.
+
+All cases use the existing exact-token-order/span, unique-reachability and leaf
+serialization helper after freeing the lexer. No fixed timing thresholds.
+
+Actual validation: **Delphi 12 CE Update 1**, IDE **29.0.51961.7529**, Win64/Debug;
+**not Delphi 12.3**. IDE Build All Projects started after **08:41:12 UTC** on
+2026-10-26, rebuilt both test projects and the lexer package, and reported
+success in 2.4 seconds with no compiler errors/warnings/hints shown.
+
+Executed both fresh EXEs from the repository root: **87/87 parser**, **40/40
+lexer**, both exit 0; 0 ignored/leaked/failed/errored. Range/overflow checks and
+RTL shutdown leak reporting remain enabled; no unexpected leak dialog observed,
+no separate heap profiler claimed. Ignored logs are
+`build/Win64/Debug/M2.4.Lookahead.Parser.Tests.log` and
+`M2.4.Lookahead.Lexer.Tests.log`. Whitespace checks pass; no project files changed.
+The parser EXE is newer than every Pascal source in src/tests.
+
+| Fresh artifact under build/Win64/Debug | Bytes | Last write UTC |
+| --- | ---: | --- |
+| DelphiFormatter.Parser.Tests.exe | 4835328 | 2026-10-26 08:41:23.0511473 |
+| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-26 08:41:21.7107632 |
+| DelphiFormatter.Lexer.bpl | 98816 | 2026-10-26 08:41:21.9351664 |
+| DelphiFormatter.Lexer.dcp | 150746 | 2026-10-26 08:41:21.9366962 |
+| ParserTests/ClassRecordCorpus.dcu | 5901 | 2026-10-26 08:41:22.9814227 |
+| ParserTests/DeclarationCorpus.dcu | 1983 | 2026-10-26 08:41:22.8376559 |
+| ParserTests/PostfixCorpus.dcu | 5705 | 2026-10-26 08:41:22.9800726 |
+
+Parser EXE SHA-256: 4615B453CFF8AAF458A556428E838C91CBF107F3C674D6ABCD680481A346E2E1
+
+Lexer EXE SHA-256: 223F034532B146D19B58C6BE692511641A2ADE92F937B8066553A9C58E0E6CEB
+
+Remaining limits are unchanged: exact Delphi 12.3+, Release and other platforms
+remain unvalidated; unsupported/unbalanced syntax keeps conservative opaque
+recovery. These changes address the two reviewed lookaheads only. No M2.5 work.
