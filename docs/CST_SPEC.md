@@ -1,4 +1,4 @@
-# Lossless CST parser - M2.5
+# Lossless CST parser - M2.6
 
 ## Public API and ownership
 
@@ -301,3 +301,59 @@ generics, preprocessing, semantic analysis or formatter is implemented.
 
 Language authority: [Embarcadero Properties (Delphi)](https://docwiki.embarcadero.com/RADStudio/Athens/en/Properties_(Delphi)).
 The available compiler is CE Update 1; this is not Delphi 12.3 verification.
+
+## M2.6 control-flow statements
+
+Appended ordinals 45-55 (0-44 unchanged): skForStatement, skForInStatement,
+skWhileStatement, skRepeatStatement, skCaseStatement, skCaseBranch,
+skTryFinallyStatement, skTryExceptStatement, skExceptionHandler,
+skRaiseStatement, skStatementList. All use existing immutable arena nodes.
+
+For contains counter IdentifierExpression, :=, start Expression, to/downto,
+limit Expression, do and one body Statement. ForIn reads the counter before
+recognizing in, without Reader rollback or consuming it as a binary operator;
+the collection uses Expression. While contains condition Expression and one
+Statement. Explicit empty semicolon bodies are permitted; absent bodies and
+punctuation receive PAR001 and zero-width missing leaves.
+
+Repeat contains repeat, StatementList, until and condition Expression. Its
+list owns separators and empty statements; the final condition's semicolon
+belongs to the enclosing list/root. Case contains selector Expression, of,
+ordered CaseBranch nodes, optional else plus StatementList, and end. Each
+branch contains comma-separated labels, optional .. endpoints, colon and one
+Statement. Branch separators belong to Case. Labels accept literals, signs
+and simple/dotted names; complex suffixes are opaque children. No changes to
+the binary-expression grammar or precedence table are made.
+
+TryFinally contains the protected StatementList, finally, another StatementList
+and end. TryExcept contains its protected list, except, and either a catch-all
+StatementList or ExceptionHandler nodes with optional else plus StatementList.
+Handler separators belong to TryExcept. Each handler contains on, optional
+variable/colon, simple/dotted TypeReference, do and one Statement. Unsupported
+header suffixes remain opaque; missing parts use missing leaves, and following
+handlers can resume at on. Raise contains raise and an optional Expression,
+never its semicolon. Inline for var and extended raise-at remain opaque.
+
+Recursive IfStatement first binds an unseparated else to the nearest unmatched
+if. Case/handler dispatch consumes only the else left by the completed body.
+Semicolons before these section keywords are permitted. Block retains its
+existing orphaned '; else' diagnostic and direct-child hierarchy.
+
+StatementList takes explicit terminators and preserves enclosing end, until,
+finally, except, else, hard routine starts and unit boundaries without consuming
+them. Block also preserves outer exception/repeat terminators. OpaqueStatement
+tracks begin/case/try/repeat and delimiters iteratively and respects hard
+routine/unit boundaries even during unfinished nesting. Every list loop consumes
+or stops; genuine nesting keeps the 128-entry Statement/Expression guard PAR004.
+Missing ends are ambiguous and may associate an available end with an inner
+construct; the parser cannot infer omitted delimiters' intended owners.
+Malformed nodes, missing leaves and opaque descendants do not establish
+formatting safety for the enclosing subtree.
+
+Expression recovery additionally preserves do, to, downto, of, until, except,
+finally and on. Directive policy, lexer/Reader APIs, ownership and serialization
+are unchanged. No with/goto/assembler, new type grammar, semantic analysis,
+preprocessor, AST or formatter is added.
+Language authorities: [Declarations and Statements](https://docwiki.embarcadero.com/RADStudio/Athens/en/Declarations_and_Statements_(Delphi))
+and [Exceptions](https://docwiki.embarcadero.com/RADStudio/Athens/en/Exceptions_(Delphi)).
+Actual compiler/test evidence: M2_STATUS.md.

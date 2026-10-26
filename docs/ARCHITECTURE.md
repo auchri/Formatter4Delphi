@@ -4,7 +4,7 @@
 
 Build a reusable Delphi parsing toolkit that supports a Delphi 12.3+ source formatter with **original Delphi `.config` behavior**, and separately configured editor settings (tabs, tab stops, indentation, line endings, encoding, exclusions). Later optional consumers: AST lowering, linter, refactorings, VS Code extension/Language Server, Delphi IDE integration.
 
-**Current stopping point: M2.5 lossless property declarations.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
+**Current stopping point: M2.6 control-flow statements.** Core/lexer remain stable; AST, formatting and integrations are future work. See `CST_SPEC.md` for the implemented API and ownership contract.
 
 ## Data flow and dependencies
 
@@ -206,3 +206,24 @@ generic types stay opaque. PropertyFragment tracks parentheses, brackets and
 angles iteratively and stops at hard member boundaries even on malformed input.
 The inherited directive policy, Reader, lexer and ownership remain unchanged.
 Only three SyntaxKind values are appended. No public parser API changes.
+
+## M2.6 control flow
+
+Statement dispatches loops/repeat/raise to ControlStatement and case/try to
+CaseStatement/TryStatement. CaseLabel is deliberately smaller than Expression;
+ExceptionHandler reuses TypeReference without declaration parsing. For reads
+its counter before distinguishing := and in, avoiding Reader rollback.
+
+StatementList is an iterative separator-owning helper for repeat, try regions
+and case/exception else sections. Explicit terminators and enclosing delimiters
+stop before consumption. Block retains its established direct-child shape and
+orphan-else diagnostic; sharing its entire method would unnecessarily change
+existing CST hierarchy. StatementBody diagnoses absent bodies and permits empty
+statements. Recursive Statement/IfStatement binds dangling else before case or
+exception section dispatch sees the token.
+
+HardStatementEnd protects subsequent routines and unit terminators even in
+opaque recovery at the nesting limit. OpaqueStatement tracks control openers
+iteratively. No new lexer/Reader/tree API, full token-array copies, backtracking,
+parent links or per-production node classes are introduced. Eleven appended
+SyntaxKind values extend the public API. See CST_SPEC.md for scope and limits.

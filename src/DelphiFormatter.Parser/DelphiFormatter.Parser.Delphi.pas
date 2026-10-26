@@ -36,6 +36,15 @@ type
     function Statement: TSyntaxNode;
     function Block: TSyntaxNode;
     function IfStatement: TSyntaxNode;
+    function ControlStatement: TSyntaxNode;
+    function StatementList(const Stops: array of string): TSyntaxNode;
+    function ListEnd(const Stops: array of string): Boolean;
+    function HardStatementEnd: Boolean;
+    function CaseStatement: TSyntaxNode;
+    function CaseLabel: TSyntaxNode;
+    function TryStatement: TSyntaxNode;
+    function ExceptionHandler: TSyntaxNode;
+    procedure StatementBody(Children: TList<TSyntaxElement>);
     function UsesClause: TSyntaxNode;
     function SectionEnd: Boolean;
     function DeclarationStart: Boolean;
@@ -167,6 +176,10 @@ begin
     FReader.Matches('else') or FReader.Matches('then') or
     FReader.Matches(')') or FReader.Matches(']') or FReader.Matches('.)') or
     FReader.Matches(':=') or FReader.Matches(',') or
+    FReader.Matches('do') or FReader.Matches('to') or
+    FReader.Matches('downto') or FReader.Matches('of') or
+    FReader.Matches('until') or FReader.Matches('except') or
+    FReader.Matches('finally') or FReader.Matches('on') or
     FReader.Matches('interface') or FReader.Matches('implementation');
   if FRoutineBody then
     Result := Result or MethodStart;
@@ -401,11 +414,16 @@ begin
     Nesting := 0;
     while not FReader.AtEOF do
     begin
-      if (Nesting = 0) and Boundary then Break;
+      if HardStatementEnd then Break;
+      if (Nesting = 0) and Boundary and not (FReader.Matches('do') or
+        FReader.Matches('to') or FReader.Matches('downto') or
+        FReader.Matches('of')) then Break;
       if FReader.Matches('begin') or FReader.Matches('(') or
+        FReader.Matches('case') or FReader.Matches('try') or
+        FReader.Matches('repeat') or
         FReader.Matches('[') or FReader.Matches('(.') or
         (TrackAngles and FReader.Matches('<')) then Inc(Nesting)
-      else if FReader.Matches('end') or FReader.Matches(')') or
+      else if FReader.Matches('end') or FReader.Matches('until') or FReader.Matches(')') or
         FReader.Matches(']') or FReader.Matches('.)') or
         (TrackAngles and FReader.Matches('>')) then Dec(Nesting);
       Take(Children); // each continuing iteration consumes original tokens
@@ -456,6 +474,11 @@ begin
     end;
     if FReader.Matches('begin') then Exit(Block);
     if FReader.Matches('if') then Exit(IfStatement);
+    if FReader.Matches('for') or FReader.Matches('while') or
+      FReader.Matches('repeat') or FReader.Matches('raise') then
+      Exit(ControlStatement);
+    if FReader.Matches('case') then Exit(CaseStatement);
+    if FReader.Matches('try') then Exit(TryStatement);
     Children := TList<TSyntaxElement>.Create;
     try
       if Boundary then
@@ -509,7 +532,8 @@ begin
   try
     Expect(Children, 'begin');
     while not FReader.AtEOF and not FReader.Matches('end') and
-      not FReader.Matches('implementation') do
+      not FReader.Matches('implementation') and not FReader.Matches('until') and
+      not FReader.Matches('finally') and not FReader.Matches('except') do
     begin
       if FRoutineBody and (MethodStart or
         (FReader.Matches('end') and FReader.Matches('.', 1))) then Break;
@@ -570,6 +594,312 @@ begin
   finally
     Children.Free;
   end;
+end;
+
+function TDelphiParser.HardStatementEnd: Boolean;
+begin
+  Result := FReader.AtEOF or FReader.Matches('implementation') or
+    FReader.Matches('interface') or
+    (FRoutineBody and (MethodStart or
+      (FReader.Matches('end') and FReader.Matches('.', 1))));
+end;
+
+function TDelphiParser.ListEnd(const Stops: array of string): Boolean;
+var
+  Text: string;
+begin
+  Result := True;
+  if HardStatementEnd then Exit;
+  for Text in Stops do
+    if FReader.Matches(Text) then Exit;
+  // Preserve delimiters belonging to an enclosing, incomplete construct.
+  Result := FReader.Matches('end') or FReader.Matches('until') or
+    FReader.Matches('finally') or FReader.Matches('except') or
+    FReader.Matches('else');
+end;
+
+function TDelphiParser.StatementList(const Stops: array of string): TSyntaxNode;
+var
+  Children, Unexpected: TList<TSyntaxElement>;
+  Before: Integer;
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    while not ListEnd(Stops) do
+    begin
+      Before := FReader.Position;
+      Children.Add(Statement);
+      if FReader.Matches(';') then Take(Children)
+      else if not ListEnd(Stops) then Missing(Children, ';');
+      if Before = FReader.Position then
+      begin
+        Report('PAR002', 'Unexpected token in statement list');
+        Unexpected := TList<TSyntaxElement>.Create;
+        try
+          Take(Unexpected);
+          Children.Add(Node(skError, Unexpected));
+        finally Unexpected.Free; end;
+      end;
+    end;
+    Result := Node(skStatementList, Children);
+  finally Children.Free; end;
+end;
+
+procedure TDelphiParser.StatementBody(Children: TList<TSyntaxElement>);
+begin
+  if HardStatementEnd or (Boundary and not FReader.Matches(';')) then
+    Missing(Children, 'statement')
+  else Children.Add(Statement);
+end;
+
+function TDelphiParser.ControlStatement: TSyntaxNode;
+var
+  Children, VariableName: TList<TSyntaxElement>;
+  Kind: TSyntaxKind;
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    if FReader.Matches('for') then
+    begin
+      if FReader.Matches('var', 1) then
+      begin
+        Report('PAR003', 'Inline loop variable preserved as opaque');
+        Exit(OpaqueStatement);
+      end;
+      Take(Children);
+      VariableName := TList<TSyntaxElement>.Create;
+      try
+        Identifier(VariableName);
+        Children.Add(Node(skIdentifierExpression, VariableName));
+      finally VariableName.Free; end;
+      if FReader.Matches('in') then
+      begin
+        Kind := skForInStatement;
+        Take(Children);
+        Children.Add(Expression);
+      end
+      else
+      begin
+        Kind := skForStatement;
+        Expect(Children, ':=');
+        Children.Add(Expression);
+        if FReader.Matches('downto') then Take(Children)
+        else Expect(Children, 'to');
+        Children.Add(Expression);
+      end;
+      Expect(Children, 'do');
+      StatementBody(Children);
+    end
+    else if FReader.Matches('while') then
+    begin
+      Kind := skWhileStatement;
+      Take(Children);
+      Children.Add(Expression);
+      Expect(Children, 'do');
+      StatementBody(Children);
+    end
+    else if FReader.Matches('repeat') then
+    begin
+      Kind := skRepeatStatement;
+      Take(Children);
+      Children.Add(StatementList(['until']));
+      Expect(Children, 'until');
+      Children.Add(Expression);
+    end
+    else
+    begin
+      Kind := skRaiseStatement;
+      Take(Children);
+      if not Boundary then Children.Add(Expression);
+      if not Boundary then
+      begin
+        Report('PAR003', 'Extended raise preserved as opaque');
+        Children.Add(OpaqueStatement);
+        Kind := skOpaqueRegion;
+      end;
+    end;
+    Result := Node(Kind, Children);
+  finally Children.Free; end;
+end;
+
+function TDelphiParser.CaseLabel: TSyntaxNode;
+var
+  Children: TList<TSyntaxElement>;
+  Kind: TSyntaxKind;
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    Kind := skLiteralExpression;
+    if FReader.Matches('+') or FReader.Matches('-') then
+    begin
+      Take(Children);
+      if FReader.Matches('+') or FReader.Matches('-') then
+        Missing(Children, 'case label')
+      else Children.Add(CaseLabel);
+      Kind := skUnaryExpression;
+    end
+    else if FReader.PeekSignificant.Kind = tkIdentifier then
+    begin
+      Kind := skIdentifierExpression;
+      Take(Children);
+      while FReader.Matches('.') do
+      begin
+        Take(Children);
+        Identifier(Children);
+      end;
+    end
+    else if FReader.PeekSignificant.Kind in [tkNumber, tkStringLiteral, tkCharCode] then
+      Take(Children)
+    else Missing(Children, 'case label');
+    Result := Node(Kind, Children);
+  finally Children.Free; end;
+end;
+
+function TDelphiParser.CaseStatement: TSyntaxNode;
+var
+  Children, Branch, Fragment: TList<TSyntaxElement>;
+  Before, Delimiters: Integer;
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    Take(Children);
+    Children.Add(Expression);
+    Expect(Children, 'of');
+    while not ListEnd(['else', 'end']) do
+    begin
+      Before := FReader.Position;
+      Branch := TList<TSyntaxElement>.Create;
+      try
+        repeat
+          Branch.Add(CaseLabel);
+          if FReader.Matches('..') then
+          begin
+            Take(Branch);
+            Branch.Add(CaseLabel);
+          end;
+          if not FReader.Matches(',') then Break;
+          Take(Branch);
+        until HardStatementEnd;
+        if not FReader.Matches(':') and not Boundary and
+          (FReader.PeekSignificant.Kind <> tkIdentifier) then
+        begin
+          Report('PAR003', 'Complex case label preserved as opaque');
+          Fragment := TList<TSyntaxElement>.Create;
+          try
+            Delimiters := 0;
+            while not HardStatementEnd and not FReader.Matches(';') and
+              not ListEnd(['else', 'end']) do
+            begin
+              if (Delimiters = 0) and (FReader.Matches(':') or
+                FReader.Matches(',')) then Break;
+              if FReader.Matches('(') or FReader.Matches('[') then
+                Inc(Delimiters)
+              else if FReader.Matches(')') or FReader.Matches(']') then
+              begin
+                if Delimiters = 0 then Break;
+                Dec(Delimiters);
+              end;
+              Take(Fragment);
+            end;
+            Branch.Add(Node(skOpaqueRegion, Fragment));
+          finally Fragment.Free; end;
+        end;
+        Expect(Branch, ':');
+        StatementBody(Branch);
+        Children.Add(Node(skCaseBranch, Branch));
+      finally Branch.Free; end;
+      if FReader.Matches(';') then Take(Children)
+      else if not ListEnd(['else', 'end']) then Missing(Children, ';');
+      if Before = FReader.Position then Break;
+    end;
+    if FReader.Matches('else') then
+    begin
+      Take(Children);
+      Children.Add(StatementList(['end']));
+    end;
+    if HardStatementEnd then Missing(Children, 'end')
+    else Expect(Children, 'end');
+    Result := Node(skCaseStatement, Children);
+  finally Children.Free; end;
+end;
+
+function TDelphiParser.ExceptionHandler: TSyntaxNode;
+var
+  Children, Fragment: TList<TSyntaxElement>;
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    Take(Children); // on
+    if FReader.Matches(':', 1) then
+    begin
+      Identifier(Children);
+      Take(Children);
+    end
+    else if (FReader.PeekSignificant.Kind = tkIdentifier) and
+      (FReader.PeekSignificant(1).Kind = tkIdentifier) and
+      not FReader.Matches('do', 1) then
+    begin
+      Identifier(Children);
+      Missing(Children, ':');
+    end;
+    Children.Add(TypeReference);
+    if not FReader.Matches('do') and not Boundary and
+      (FReader.PeekSignificant.Kind <> tkIdentifier) and
+      not FReader.Matches('begin') then
+    begin
+      Report('PAR003', 'Unsupported exception handler header preserved as opaque');
+      Fragment := TList<TSyntaxElement>.Create;
+      try
+        while not Boundary and not HardStatementEnd do Take(Fragment);
+        Children.Add(Node(skOpaqueRegion, Fragment));
+      finally Fragment.Free; end;
+    end;
+    Expect(Children, 'do');
+    StatementBody(Children);
+    Result := Node(skExceptionHandler, Children);
+  finally Children.Free; end;
+end;
+
+function TDelphiParser.TryStatement: TSyntaxNode;
+var
+  Children: TList<TSyntaxElement>;
+  Kind: TSyntaxKind;
+begin
+  Children := TList<TSyntaxElement>.Create;
+  try
+    Take(Children);
+    Children.Add(StatementList(['finally', 'except']));
+    Kind := skTryFinallyStatement;
+    if FReader.Matches('finally') then
+    begin
+      Take(Children);
+      Children.Add(StatementList(['end']));
+    end
+    else if FReader.Matches('except') then
+    begin
+      Kind := skTryExceptStatement;
+      Take(Children);
+      if FReader.Matches('on') then
+      begin
+        while FReader.Matches('on') do
+        begin
+          Children.Add(ExceptionHandler);
+          if FReader.Matches(';') then Take(Children)
+          else if FReader.Matches('on') then Missing(Children, ';');
+        end;
+        if FReader.Matches('else') then
+        begin
+          Take(Children);
+          Children.Add(StatementList(['end']));
+        end;
+      end
+      else Children.Add(StatementList(['end']));
+    end
+    else Missing(Children, 'finally or except');
+    if HardStatementEnd then Missing(Children, 'end')
+    else Expect(Children, 'end');
+    Result := Node(Kind, Children);
+  finally Children.Free; end;
 end;
 
 function TDelphiParser.UsesClause: TSyntaxNode;

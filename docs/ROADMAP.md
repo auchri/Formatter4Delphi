@@ -47,20 +47,28 @@
 - Lossless recovery, qualified generic fallback and compiled postfix corpus.
 - Evidence: `M2_STATUS.md`. Exact Delphi 12.3 validation remains open.
 
-### M2.4 — Class and record declarations (current stopping point)
+### M2.4 — Class and record declarations (completed)
 - Type sections and individual type wrappers; classical classes/records, simple
   ancestors, visibility sections, fields and body-free method declarations.
 - Properties, richer types, generics, interfaces/helpers, class members, nested
   types and variant tails retain opaque protection. No new statement grammar.
 - Actual build/test evidence and remaining toolchain limitation: M2_STATUS.md.
 
-### M2.5 � Lossless property declarations (current stopping point)
+### M2.5 — Lossless property declarations (completed)
 - Ordinary/read-only/write-only properties; read/write/stored/index/default/
   nodefault and simple implements clauses; typeless redeclarations.
 - Array property parameters and the distinct trailing `; default;` marker.
 - Conservative opaque type/constant fragments and class-property fallback;
   contextual recovery, exact leaf/span/lifetime invariants and compiled corpus.
-- Actual validation and toolchain limits: M2_STATUS.md. Stop after M2.5.
+- Actual validation and toolchain limits: M2_STATUS.md. M2.6 was authorized separately.
+
+### M2.6 — Control-flow statements (current stopping point)
+- For/to/downto, for-in, while, repeat/until, case labels/ranges/else,
+  try/finally, catch-all except, on handlers with optional else, simple raise.
+- Contextual lists, separator/else ownership, hard routine/unit boundaries,
+  unchanged nesting guard and opaque protection for unsupported fragments.
+- Compiled ControlFlowCorpus and hierarchy/recovery/stress/lifetime tests.
+- Actual validation and version limitations: M2_STATUS.md. Stop after M2.6.
 
 ### Next small task (proposal only, requires new authorization)
 - Validate the suite and all compiled corpora on exact Delphi 12.3+.

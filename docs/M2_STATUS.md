@@ -1,4 +1,11 @@
-# M2.5 status - 2026-10-26
+# M2.6 status - 2026-10-26
+
+M2.6 is implemented on `codex/m2.6-control-flow`: control-flow statements,
+112/112 parser and 40/40 lexer tests passing on Delphi 12 CE Update 1,
+Win64/Debug. Exact 12.3 remains unvalidated. Stop after M2.6.
+See the M2.6 section below for scope, recovery limits and fresh build evidence.
+
+## Historical M2.5 status
 
 M2.5 is implemented on origin/main at f297942, branch
 `codex/m2.5-properties`. Stop after M2.5. The M2.4 evidence below is historical.
@@ -9,7 +16,7 @@ M2.5 is implemented on origin/main at f297942, branch
   PropertySpecifierStart, PropertyType, PropertyName and PropertyFragment;
   integrated through AggregateDeclaration. OpaqueTypeFragment retains the
   complete class-property member/default marker fallback.
-- Three appended Syntax.Kinds ordinals 42–44: skPropertyDeclaration,
+- Three appended Syntax.Kinds ordinals 42-44: skPropertyDeclaration,
   skPropertyIndexParameters, skPropertySpecifier. All prior ordinals preserved.
   No lexer, Reader, node/tree ownership or public parser API changes.
 - Ordinary/read-only/write-only properties, qualified/escaped names and types,
@@ -338,3 +345,79 @@ M2.5.Review.Parser.Tests.log and M2.5.Review.Lexer.Tests.log under build/Win64/D
 Existing limitations remain: ambiguous unbalanced syntax can preserve larger
 opaque regions; exact Delphi 12.3+, Release and other platforms are unvalidated.
 Stop after this review fix; no automatic merge or subsequent milestone.
+
+## M2.6 control-flow statements â€” 2026-10-26
+
+Branch codex/m2.6-control-flow starts at current origin/main 00a7263, including
+merged M2.5. Work stops after M2.6; no automatic merge or further grammar.
+
+Changed core: TDelphiParser.Statement, Boundary, Block and OpaqueStatement;
+new private ControlStatement, CaseStatement, CaseLabel, TryStatement,
+ExceptionHandler, StatementList, ListEnd, HardStatementEnd and StatementBody.
+Expression/Precedence, lexer/Reader/tree APIs and arena ownership are unchanged.
+Syntax.Kinds appends eleven ordinals 45-55 after existing ordinal 44.
+No new production-specific classes are introduced.
+
+Supported: classic for/to/downto, for-in, while, repeat/until, case with multiple
+simple/signed/qualified labels and ranges, case else, try/finally, catch-all
+try/except, on handlers with optional variable and qualified TypeReference,
+exception else, raise with/without simple Expression. Bodies use Statement;
+repeat/try/else regions use iterative StatementList. Lists own semicolons;
+case/handler separators belong to their enclosing statement. Recursive if
+consumes its nearest unseparated else before case/exception section dispatch.
+Block keeps its established hierarchy and orphaned-semicolon/else diagnostic.
+
+Recovery adds zero-width missing leaves and deterministic diagnostics, leaves
+enclosing control terminators untouched and protects hard following routines
+and unit termination even in unfinished opaque nesting. Complex labels/header
+suffixes stay opaque; inline for variables and raise-at remain opaque. Nesting
+keeps the existing 128-entry Statement/Expression guard. Missing ends can be
+ambiguous; available ends may bind to the inner construct. No semantic checks,
+new type grammar, preprocessing, with/goto/assembler, AST or formatter.
+
+Fifteen new DUnitX methods cover hierarchy, operator/list/semicolon ownership,
+else binding, malformed punctuation/bodies/ends, following routines/handlers,
+opaque/directive policy, 1,024 case alternatives, 2,048 sequential while loops,
+150-deep control nesting, 300 deterministic malformed UTF-16 parse/free cycles
+and the compiled corpus. Every Parse runs exact token-order/kind/span,
+reachability, missing-leaf and reconstruction checks after freeing the lexer.
+One historical unsupported-while expectation now asserts structured loops.
+ControlFlowCorpus.pas is referenced by DPR/DPROJ and compiled into the runner;
+its parser test asserts all new kinds, hierarchy via the shared focused tests,
+zero diagnostics and zero opaque nodes. All earlier compiled corpora still pass.
+
+Final validation: **Delphi 12 Community Edition Update 1**, IDE/compiler files
+**29.0.51961.7529**, **not Delphi 12.3**. IDE Project > Alle Projekte erzeugen
+(Build All Projects), **Win64/Debug**, after **2026-10-26 10:27:44 UTC**,
+succeeded in **2.4 seconds** with no compiler errors/warnings/hints shown.
+An initial corpus build warned about using loop variables after loop completion
+and unused overwritten totals; the corpus was corrected and rebuilt cleanly.
+
+Executed both fresh EXEs from the repository root with --exitbehavior:Continue:
+**112/112 parser**, **40/40 lexer**, both exit **0**, zero ignored/leaked/failed/
+errored tests. RTL ReportMemoryLeaksOnShutdown remains enabled, as do existing
+Debug range/overflow checks. No unexpected RTL leak dialog was observed; no
+separate heap-profiler result is claimed. Parser EXE is newer than every Pascal
+source under src/tests (latest source 10:23:54 UTC). Fresh artifacts:
+
+| Under build/Win64/Debug | Bytes | Last write UTC |
+| --- | ---: | --- |
+| DelphiFormatter.Parser.Tests.exe | 4899328 | 2026-10-26 10:27:55.509 |
+| DelphiFormatter.Lexer.Tests.exe | 4667904 | 2026-10-26 10:27:54.159 |
+| DelphiFormatter.Lexer.bpl | 98816 | 2026-10-26 10:27:54.377 |
+| DelphiFormatter.Lexer.dcp | 150745 | 2026-10-26 10:27:54.378 |
+| ParserTests/DeclarationCorpus.dcu | 1983 | 2026-10-26 10:27:55.288 |
+| ParserTests/PostfixCorpus.dcu | 5705 | 2026-10-26 10:27:55.445 |
+| ParserTests/ClassRecordCorpus.dcu | 5901 | 2026-10-26 10:27:55.447 |
+| ParserTests/PropertyCorpus.dcu | 5977 | 2026-10-26 10:27:55.447 |
+| ParserTests/ControlFlowCorpus.dcu | 3013 | 2026-10-26 10:27:55.451 |
+
+Parser EXE SHA-256: 21AF31455A07EE02F04E6600ED50E488394B59FBF41B9E7C49CCD594CAAECC09
+
+Lexer EXE SHA-256: 3AF7857E6ADB0DA1D88640B415CD51282083A6C00457156867740DB1D15E97EC
+
+Ignored execution logs: build/Win64/Debug/M2.6.Parser.Tests.log and
+M2.6.Lexer.Tests.log. Git whitespace validation passes. Exact Delphi 12.3+,
+Release and other platforms remain unvalidated. Recommended next small task:
+validate all suites/corpora on exact Delphi 12.3+ before another authorized
+narrow grammar milestone. Stop implementation here.

@@ -60,6 +60,7 @@
         <DCCReference Include="..\Fixtures\PostfixCorpus.pas"/>
         <DCCReference Include="..\Fixtures\ClassRecordCorpus.pas"/>
         <DCCReference Include="..\Fixtures\PropertyCorpus.pas"/>
+        <DCCReference Include="..\Fixtures\ControlFlowCorpus.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -242,3 +242,34 @@ includes real accessor implementations, storage/default/nodefault/index clauses,
 a default array property and inherited redeclarations. Invalid recovery inputs
 are embedded tests, never part of this compilable unit. Require a fresh DCU.
 See M2_STATUS.md for actual execution evidence; CE Update 1 is not 12.3.
+
+## M2.6 additions
+
+Fifteen methods extend the parser fixture from 97 to 112 tests. ControlLoops,
+ControlHierarchy, ControlCases, ControlExceptions and ControlElseBinding assert
+actual nested expression/statement/list/branch/handler nodes, existing enum
+ordinals, case label groups/ranges/signs, loop variants, qualified exception
+types and nearest-if else ownership. ControlSeparatorsAndTrivia counts direct
+semicolon leaves, empty statements, CRLF/comments and exact statement end spans.
+
+ControlRecovery compares shape and complete diagnostic code/message/spans over
+repeated malformed parses. ControlRoutineRecovery checks following routines
+after incomplete try/case/repeat/while. ControlHandlerRecovery checks a valid
+handler following missing variable/colon/type and unsupported generic headers.
+ControlDirectives checks whole-input protection. ControlOpaqueFallback checks
+with, inline for variables, raise-at and complex labels before valid branches.
+
+ControlStress asserts 1,024 case branches and 2,048 consecutive while statements.
+ControlDepth exercises 150 nested while/for/try/case constructs beyond the guard.
+ControlMalformedLifetimes parses 300 deterministic malformed fragments with
+isolated UTF-16 surrogates twice, comparing shape and diagnostic counts. Every
+parse invokes Coverage after freeing the lexer: exact leaf indices/kinds/spans,
+unique reachability, ordered spans, missing leaves, root extent and leaf-based
+serialization. No input files are reformatted.
+
+ControlFlowCorpus.pas is referenced by DPR/DPROJ, compiled into the runner and
+parsed from UTF-8 with explicit node counts, no diagnostics or opaque regions.
+It covers all new statements, nested loops/cases/try, qualified handlers with
+and without variables, handler else, catch-all except and both raise forms.
+Require its fresh DCU alongside all existing corpus DCUs. Actual build evidence
+and version limitations: M2_STATUS.md. The 40 lexer tests are unchanged.
