@@ -1,5 +1,31 @@
 # Test plan — DUnitX from day one
 
+## M2.7 independent analyzer tests
+
+`DelphiFormatter.Coverage.Tests` is a separate DUnitX Win64/Debug project.
+Seventeen focused methods verify manually counted 33 code units and four trivia
+units in a minimal unit, partial opacity, full directive fallback including
+trailing CRLF, missing leaves, nested opaque overlap, error priority, mixed line
+endings, malformed/supplementary UTF-16, empty denominators, BOMs/invalid bytes/
+explicit CP1252, missing files, deterministic JSON/CSV escaping, weighted 33/99
+aggregation (not averaging file percentages), invalid trees, repeated files,
+resource-string context versus keyword-in-comment false positives and complete
+original-token category runs including EOF, plus local reports without manifest
+metadata and repeated writer calls producing identical JSON/CSV.
+The source helper frees the parser's lexer before an independent token oracle
+and leaf serialization. No timing assertions.
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/TestCoverageCorpus.ps1`
+checks an exact three-file selection over artificial size/directive strata.
+`-CheckPinnedFiles` additionally reconstructs the selected external paths,
+categories, sizes and hashes and verifies commits and internal fixture hashes.
+Reports are checked against `tests/CoverageCorpus/coverage.schema.json` and
+independently recomputed aggregate partitions with
+`pwsh -File scripts/ValidateCoverageReport.ps1`. `TestCoverageCli.ps1` checks
+single-file/directory modes, include/exclude selection, new output directories
+and file/configuration failure exit codes. See `PARSER_COVERAGE.md` and
+`M2_STATUS.md` for actual execution and toolchain limitations.
+
 ## Important
 
 A trivial 'roundtrip is equal' test is necessary, but **not sufficient**: a broken lexer returning the entire source as `tkUnknown` would pass it. Assert precise kinds, spans and diagnostics. All lexer calls work on `string` input. Focused cases are embedded; the realistic corpus is loaded explicitly as UTF-8 by test code and also compiled into the runner.

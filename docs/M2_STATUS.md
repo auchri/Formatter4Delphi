@@ -1,4 +1,147 @@
-# M2.6 status - 2026-10-26
+# M2.7 status - 2026-10-26
+
+M2.7 is implemented on `codex/m2.7-corpus-analysis`, based on main
+`a0c55c6f6e56eb984634b5d99a96f74a6389df54`. It adds analysis infrastructure,
+not grammar: all production core/lexer/parser/CST units and existing tests and
+source fixtures are unchanged. Stop after M2.7. Exact Delphi 12.3 remains open.
+
+## M2.7 implementation
+
+- Independent `DelphiFormatter.Coverage` console project: `Coverage.Analysis`
+  (decode, measurement, iterative verification/classification), `Coverage.Runner`
+  (manifest/local modes, per-file isolation), `Coverage.Reports` (JSON/CSV/Markdown,
+  weighted aggregates and opaque rankings). `ECoverageInvariant` marks failures.
+- Independent `DelphiFormatter.Coverage.Tests`, `TCoverageTests`: 17 DUnitX methods.
+- `FetchCoverageCorpus.ps1`, `TestCoverageCorpus.ps1`, `TestCoverageCli.ps1` and
+  optional PowerShell 7 `ValidateCoverageReport.ps1`. Group targets include both
+  new projects. No new dependency in core or the analyzer executable.
+- Pinned manifest/schema in `tests/CoverageCorpus`; generated reports and fresh
+  binary/source hash evidence in `reports/m2_7/verification.json`. Full method,
+  decoding policy, reproduction, heuristic/measurement limits: `PARSER_COVERAGE.md`.
+
+## Actual corpus results
+
+All four public repositories were downloaded, and the ordinary pinned fetch
+was rerun successfully with commit and selected-file SHA-256 checks. Exactly
+40 files per external project plus seven internal Git-archived fixtures were
+attempted. No exclusions based on coverage or timing were applied.
+
+| Project | Pinned commit | Attempted / decoded | Structured code % | Without directives % | With directives % | Complete opaque |
+|---|---|---:|---:|---:|---:|---:|
+| DUnitX | `0bc0bcb538ad2bb9c2c2f59f625ab5aac665b5a0` | 40 / 40 | 1.50 | 41.20 (4 files) | 0.00 (36) | 36 |
+| Indy | `bd38a62c0089e5e40eeb00569a09b8a8410b8d7d` | 40 / 35 | 12.29 | 65.48 (9) | 0.00 (26) | 26 |
+| DelphiMVCFramework | `8fed954c457a3e43f9fc3ddd43b0b1e979a14dd8` | 40 / 39 | 4.53 | 64.14 (8) | 0.00 (31) | 31 |
+| mORMot2 | `fc4c033da5520d25221025efb78fcc4ea55a55a0` | 40 / 40 | 0.00 | n/a (0) | 0.00 (40) | 40 |
+| External aggregate | same manifest | 160 / 154 | **3.60** | **63.45 (21)** | **0.00 (133)** | **133** |
+| Internal fixtures | `a0c55c6f6e56eb984634b5d99a96f74a6389df54` | 7 / 7 | 83.87 | 97.39 (5) | 37.32 (2) | 1 |
+
+All-input coverage (external + internal) is **3.71818% structured**, 95.93644%
+opaque, 0.34539% error. The external denominator is 3,927,296 code units:
+141,235 structured, 3,772,476 opaque, 13,585 error. These are UTF-16 code units
+excluding trivia/directives, not file bytes or averages of file percentages.
+
+Six BOMless files are `encoding_ambiguous` under strict UTF-8: Indy's
+`IdContext`, `IdCustomTCPServer`, `IdCustomHTTPServer`, `IdDNSServer`,
+`IdFTPCommon`, and MVC's `MVCFramework.BloomFilter`. All remain in the manifest
+and failure rows; none silently uses an ANSI fallback. Exact paths are in the
+report. They are excluded from coverage denominators and directive grouping.
+Corpus exit code is therefore **1**, not a claim of a fully decoded corpus.
+
+The other **161 files passed all lossless checks and determinism comparison
+over three repetitions**, after freeing each original lexer result. Statuses:
+144 opaque, 12 with parser error diagnostics, 5 structured, 6 encoding ambiguous.
+No parser exception, invariant violation or nondeterministic result was found.
+No observed critical parser bug requires a reproducer/fix PR from this run.
+
+## Gaps and interpretation
+
+The dominant limitation is the existing directive policy: 133/154 decoded
+external files are complete opaque fallbacks. mORMot2's 0% does not show that
+its inner grammar was attempted and failed. Generics/interfaces/attributes
+cannot be ranked individually inside these fallbacks without guessing.
+
+Across both baselines, outermost opaque extents rank as follows (includes trivia,
+so these values are deliberately distinct from main code-coverage counts):
+
+| Heuristic | UTF-16 extent | Files | Regions |
+|---|---:|---:|---:|
+| Directive fallback | 7,046,860 | 134 | 134 |
+| Resource-string sections | 51,438 | 4 | 4 |
+| Unknown | 25,948 | 12 | 150 |
+| Unsupported types | 8,318 | 12 | 43 |
+| Unsupported statements | 4,042 | 11 | 80 |
+| Method directives | 1,075 | 14 | 98 |
+
+Largest opaque regions: `mormot.core.base.pas` 479,023 units,
+`mormot.core.data.pas` 388,743, `mormot.core.buffers.pas` 372,192;
+all are directive fallbacks. The largest non-directive region is Indy's
+`IdResourceStringsProtocols.pas` resource-string section, 41,825 units; DUnitX's
+`DUnitX.ResStrs.pas` contributes 8,265. Recognizing a section start is evidence
+for a heuristic category, not proof that implementing that section recovers its
+entire extent. Unknown fragments stay unknown. See the report for diagnostics,
+line/column/parent and bounded snippets for every opaque node.
+
+## Actual build, tests and performance
+
+Final IDE **Build All Projects**, **Win64/Debug**, started after
+**2026-10-26 13:43:47 UTC** and succeeded in **4.3 seconds**. An equivalent
+temporary group under ignored `build/M2.7.AllProjects.groupproj` was used to
+avoid cached IDE group state; all five projects were visibly included. Toolchain:
+**Delphi 12 Community Edition Update 1, 29.0.51961.7529**, **not Delphi 12.3**.
+The new analyzer and its test project emit W1002 for the platform-specific RTL
+heap observation; core remains unchanged. Compiler hints are recorded by the
+IDE (inline expansion and an initial assignment); zero build errors.
+
+All fresh runners were executed from the repository root with
+`--exitbehavior:Continue`: **120/120 parser**, **40/40 lexer**, **17/17 analyzer**,
+each exit **0**, no ignored/failed/errored/leaked tests. The parser and lexer
+corpus assertions passed. Fresh `LexicalCorpus.dcu` and all five parser corpus
+DCUs were checked alongside executable timestamps/hashes. No unexpected RTL
+shutdown leak dialog was observed; this is not a heap-profiler claim.
+
+| Artifact | Bytes | Modified UTC (2026-10-26) |
+|---|---:|---|
+| DelphiFormatter.Lexer.Tests.exe | 4,667,904 | 13:44:09 |
+| DelphiFormatter.Parser.Tests.exe | 4,921,856 | 13:44:11 |
+| DelphiFormatter.Coverage.exe | 2,340,864 | 13:44:11 |
+| DelphiFormatter.Coverage.Tests.exe | 5,121,536 | 13:44:13 |
+
+Pinned fetch/reselection, CLI integration (file/directory/include/exclude and
+failure exits), JSON Schema validation, CSV row/order matching and independent
+token/source partition and weighted-aggregate checks all passed. Ignored logs:
+`build/m2_7-{parser,lexer,analyzer}-tests.log` and `build/m2_7-coverage.log`.
+`verification.json` records complete artifact/source/log hashes and UTC timestamps.
+
+Three-run Debug medians: largest parser time **12.5676 ms** on
+`mormot.core.base.pas` (479,027 bytes), lexer **9.7380 ms**, analysis including
+verification **76.2828 ms**. `MVCFramework.Swagger.Commons.pas` takes
+**12.0943 ms** parsing for 82,473 bytes and is a candidate for future profiling;
+no complexity defect is inferred from this measurement alone. Sum of per-file
+lexer medians is 136.4996 ms; parser medians 191.8280 ms. Sum of successful-file
+total times including all three parses and validation is **3,301.6414 ms**;
+this is not end-to-end process time or a Release benchmark.
+
+Maximum observed retained-tree RTL heap delta is **8,600,960 bytes** for
+`mormot.core.base.pas`; it excludes transient parse/validation allocations and
+is not peak memory. No broad parser optimization was performed. Exact 12.3,
+Release, non-Windows platforms, upstream project builds and full memory profiling
+remain unvalidated. The stratified sample and compatibility flags do not certify
+Delphi-12.3 acceptance or formatter safety.
+
+## Prioritized next tasks (recommendations, not implemented)
+
+1. **M2.8: directive-aware lossless representation/design and a narrow pilot**,
+   preserving both branches/includes conservatively, with repeated corpus
+   measurements. This removes the largest measurement barrier; it must be a new
+   task with explicit boundaries, not an unrequested preprocessor in M2.7.
+2. **M2.9: resource-string sections**, then remeasure and choose the next narrow
+   declaration/type gap from observed extents. This is a concrete lower-effort
+   candidate; generic/interface/attribute rankings are still masked by directives.
+3. Begin formatter-oracle infrastructure in a separately authorized task after
+   these coverage gates. No critical invariant defect was found to prioritize
+   over coverage work, and current CST percentages do not establish edit safety.
+
+## Historical M2.6 status
 
 M2.6 is implemented on `codex/m2.6-control-flow`: control-flow statements,
 120/120 parser and 40/40 lexer tests passing on Delphi 12 CE Update 1,

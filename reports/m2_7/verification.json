@@ -1,0 +1,154 @@
+{
+  "dateUtc": "2026-10-26T13:45:35.5652847Z",
+  "baseCommit": "a0c55c6f6e56eb984634b5d99a96f74a6389df54",
+  "toolchain": "Delphi 12 Community Edition Update 1, 29.0.51961.7529; NOT Delphi 12.3",
+  "build": "IDE Build All Projects; Win64/Debug; equivalent group build/M2.7.AllProjects.groupproj; 4.3 seconds",
+  "buildWarnings": "W1002 GetMemoryManagerState is platform-specific, in analyzer and analyzer tests; core unchanged",
+  "tests": [
+    {
+      "suite": "parser",
+      "found": 120,
+      "passed": 120,
+      "failed": 0,
+      "errored": 0,
+      "leaked": 0,
+      "logSha256": "c98e9ef89e7664de274e628a773859eefb0d4620245625e5ccdd45e1ed18b9cb"
+    },
+    {
+      "suite": "lexer",
+      "found": 40,
+      "passed": 40,
+      "failed": 0,
+      "errored": 0,
+      "leaked": 0,
+      "logSha256": "788f38532a0c36863cb6cacb52141d176af8f2e5b3ac2161080a36c692d1c4c0"
+    },
+    {
+      "suite": "analyzer",
+      "found": 17,
+      "passed": 17,
+      "failed": 0,
+      "errored": 0,
+      "leaked": 0,
+      "logSha256": "c5d644569c43516ceff9a9fb9f2e13daf6f0e347023e5240aacf8a254e2deedb"
+    }
+  ],
+  "checks": [
+    "FetchCoverageCorpus.ps1 pinned repeat succeeded",
+    "TestCoverageCorpus.ps1 -CheckPinnedFiles passed",
+    "TestCoverageCli.ps1 passed",
+    "PowerShell 7 ValidateCoverageReport.ps1 schema and aggregate validation passed"
+  ],
+  "corpusExitCode": 1,
+  "corpusExitReason": "6 encoding_ambiguous files excluded; no parser exceptions or invariant failures",
+  "manifestSha256": "f519f830947dc4a39311d44993719fb16632c2ca932d0f153f464ccb94d0514e",
+  "analyzerSources": [
+    {
+      "path": "tests/DelphiFormatter.Coverage/Coverage.Analysis.pas",
+      "sha256": "9b83ca6bd3567f65f5040a2a4e7d86b62a1811d71b33e70e83f56791804942d3"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage/Coverage.Reports.pas",
+      "sha256": "0879734aa39c4b90b1b0e94f151132b6f3ebab1e7345e29fb9a35f7c167497ca"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage/Coverage.Runner.pas",
+      "sha256": "ff9eec50b3c339abe2fe14424bb61416786b9510a59588e1be6bd8d8376799d3"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage/DelphiFormatter.Coverage.dpr",
+      "sha256": "d6662eabfd886d70088e247c8c8fb5aab487429d236c4d9eb6557d9731d0d7ea"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage/DelphiFormatter.Coverage.dproj",
+      "sha256": "c341a57f5dc675c2714a95b760265c8a768fab0ef2d16b9c67243b4371c3235b"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage.Tests/DelphiFormatter.Coverage.Tests.dpr",
+      "sha256": "313ab69723c314f25e50e4ab1c8f53d9816c9bb200c68988cf774e8e1a859d3c"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage.Tests/DelphiFormatter.Coverage.Tests.dproj",
+      "sha256": "de065b5c54142cd47d5024643cbbdb62077ee87550b733eae3cd6fc2d21ef337"
+    },
+    {
+      "path": "tests/DelphiFormatter.Coverage.Tests/Tests.Coverage.pas",
+      "sha256": "705fb29d9a504fb6e4fc4f19d1fb3e03aa73df0a0fd7484ff0d50cc2eabe4161"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "build/Win64/Debug/DelphiFormatter.Coverage.exe",
+      "bytes": 2340864,
+      "modifiedUtc": "2026-10-26T13:44:11.9259991Z",
+      "sha256": "3d4c71939cb988959e03b704adb494c25cda0d7ce6fd27698392b641f11037b8"
+    },
+    {
+      "path": "build/Win64/Debug/DelphiFormatter.Coverage.Tests.exe",
+      "bytes": 5121536,
+      "modifiedUtc": "2026-10-26T13:44:13.1646718Z",
+      "sha256": "b410fd39fb16cc9a789b40adce69e5fc8a2acc06fc6c075461b9635a087c0d40"
+    },
+    {
+      "path": "build/Win64/Debug/DelphiFormatter.Parser.Tests.exe",
+      "bytes": 4921856,
+      "modifiedUtc": "2026-10-26T13:44:11.4339453Z",
+      "sha256": "c0821a1a79ec1ecf20b9990d7f36aa90a7fda7247a603a0f18d539f3bf10832f"
+    },
+    {
+      "path": "build/Win64/Debug/DelphiFormatter.Lexer.Tests.exe",
+      "bytes": 4667904,
+      "modifiedUtc": "2026-10-26T13:44:09.9838471Z",
+      "sha256": "c737a922f8f665f3f9f1a5821af55809da327aa502ab946829c1086ed2b04746"
+    },
+    {
+      "path": "build/Win64/Debug/DelphiFormatter.Lexer.bpl",
+      "bytes": 98816,
+      "modifiedUtc": "2026-10-26T13:44:10.2607205Z",
+      "sha256": "f46c9ad39bd59ea7a33088bdfc28231f0cc47ed6e82f22705861ec35015b2d93"
+    },
+    {
+      "path": "build/Win64/Debug/DelphiFormatter.Lexer.dcp",
+      "bytes": 150746,
+      "modifiedUtc": "2026-10-26T13:44:10.2617303Z",
+      "sha256": "ed61597280fbfb4f5e17392d235c529d0c429b7b3ff5d1bb2afd45ecc5731298"
+    },
+    {
+      "path": "build/Win64/Debug/Tests/LexicalCorpus.dcu",
+      "bytes": 18130,
+      "modifiedUtc": "2026-10-26T13:44:09.1216832Z",
+      "sha256": "1aa78f54e09484c0bb5233c57e5ebe25b04e825524d58af5a26fc450704d09cb"
+    },
+    {
+      "path": "build/Win64/Debug/ParserTests/ClassRecordCorpus.dcu",
+      "bytes": 5901,
+      "modifiedUtc": "2026-10-26T13:44:11.3568981Z",
+      "sha256": "c369b092c8e2876136632f09af69b38b23228ea286360385e8cb2ede0e8a79e2"
+    },
+    {
+      "path": "build/Win64/Debug/ParserTests/ControlFlowCorpus.dcu",
+      "bytes": 3013,
+      "modifiedUtc": "2026-10-26T13:44:11.3610281Z",
+      "sha256": "19db21c03cf9d25ea4e7808f52bd851d07283d913c7e9ad6bb3e84852daaf530"
+    },
+    {
+      "path": "build/Win64/Debug/ParserTests/DeclarationCorpus.dcu",
+      "bytes": 1983,
+      "modifiedUtc": "2026-10-26T13:44:11.1692431Z",
+      "sha256": "2c61fa5dd4bc716a2dd6d71d335ad6e6ad078f309dc591f903f51c472f239579"
+    },
+    {
+      "path": "build/Win64/Debug/ParserTests/PostfixCorpus.dcu",
+      "bytes": 5705,
+      "modifiedUtc": "2026-10-26T13:44:11.3538501Z",
+      "sha256": "bf37be08de3412da29917043ac57547134ef4ffa7e900d2c1435b6fdc7078e0e"
+    },
+    {
+      "path": "build/Win64/Debug/ParserTests/PropertyCorpus.dcu",
+      "bytes": 5977,
+      "modifiedUtc": "2026-10-26T13:44:11.3584313Z",
+      "sha256": "d9d2bbb26643b37685f84abbc17e0d9360e546a27a847989e4b6a98a236bb59d"
+    }
+  ],
+  "coverageJsonSha256": "62e8c1adde66e18f6c13cc754dab40cdd5ea83c44515a66055bc848cd374c339"
+}

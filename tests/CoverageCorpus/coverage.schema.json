@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DelphiFormatter M2.7 coverage report v1",
+  "type": "object",
+  "required": ["schemaVersion", "environment", "encodingPolicy", "repeatCount", "files", "summaries", "opaqueRanking", "exitCode"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "environment": {"type": "string"},
+    "encodingPolicy": {"type": "string"},
+    "repeatCount": {"type": "integer", "minimum": 1},
+    "manifestSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "exitCode": {"enum": [0, 1, 2]},
+    "repositories": {"type": "array", "items": {"type": "object", "required": ["name", "url", "commit", "license", "licenseSource", "files"]}},
+    "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+    "summaries": {"type": "array", "items": {"$ref": "#/$defs/summary"}},
+    "opaqueRanking": {"type": "array", "items": {"type": "object", "required": ["category", "units", "files", "regions"]}}
+  },
+  "$defs": {
+    "count": {"type": "integer", "minimum": 0},
+    "percent": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "file": {
+      "type": "object",
+      "required": ["path", "repository", "commit", "status", "encoding"],
+      "properties": {
+        "path": {"type": "string"},
+        "repository": {"type": "string"},
+        "commit": {"type": "string"},
+        "status": {"enum": ["structured", "opaque", "syntax_diagnostics", "lexer_error", "parser_exception", "invariant_failed", "file_error", "decode_failed", "encoding_ambiguous", "corpus_file_error"]},
+        "encoding": {"type": "string"},
+        "lossless": {"type": "boolean"},
+        "bytes": {"$ref": "#/$defs/count"},
+        "utf16Units": {"$ref": "#/$defs/count"},
+        "codeUnits": {"$ref": "#/$defs/count"},
+        "structuredCodeUnits": {"$ref": "#/$defs/count"},
+        "opaqueCodeUnits": {"$ref": "#/$defs/count"},
+        "errorCodeUnits": {"$ref": "#/$defs/count"},
+        "structuredPercent": {"$ref": "#/$defs/percent"},
+        "opaquePercent": {"$ref": "#/$defs/percent"},
+        "errorPercent": {"$ref": "#/$defs/percent"},
+        "tokenCategories": {"type": "array", "items": {
+          "type": "object", "required": ["firstToken", "count", "category"],
+          "properties": {"firstToken": {"$ref": "#/$defs/count"}, "count": {"type": "integer", "minimum": 1}, "category": {"enum": ["structured", "opaque", "error"]}}
+        }},
+        "opaqueRegions": {"type": "array", "items": {
+          "type": "object", "required": ["start", "end", "length", "line", "column", "parent", "snippet", "category", "diagnosticCodes", "outermost"],
+          "properties": {"start": {"$ref": "#/$defs/count"}, "end": {"$ref": "#/$defs/count"}, "length": {"$ref": "#/$defs/count"}, "line": {"type": "integer", "minimum": 1}, "column": {"type": "integer", "minimum": 1}, "snippet": {"type": "string", "maxLength": 160}, "diagnosticCodes": {"type": "array", "items": {"type": "string"}}, "outermost": {"type": "boolean"}}
+        }}
+      },
+      "allOf": [{"if": {"required": ["lossless"], "properties": {"lossless": {"const": true}}}, "then": {
+        "required": ["bytes", "utf16Units", "tokens", "nonTriviaTokens", "nodes", "opaqueNodes", "errorNodes", "missingTokens", "lexerDiagnostics", "parserDiagnostics", "codeUnits", "structuredCodeUnits", "opaqueCodeUnits", "errorCodeUnits", "structuredPercent", "opaquePercent", "errorPercent", "tokenCategories", "opaqueRegions", "diagnostics", "hasDirectives", "completeOpaque", "directiveFallback", "structureSha256"]
+      }}]
+    },
+    "summary": {
+      "type": "object", "required": ["repository", "group", "files", "validFiles", "codeUnits", "structuredCodeUnits", "opaqueCodeUnits", "errorCodeUnits", "structuredPercent", "opaquePercent", "errorPercent"],
+      "properties": {"structuredPercent": {"$ref": "#/$defs/percent"}, "opaquePercent": {"$ref": "#/$defs/percent"}, "errorPercent": {"$ref": "#/$defs/percent"}}
+    }
+  }
+}

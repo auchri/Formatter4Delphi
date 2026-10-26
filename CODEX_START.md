@@ -11,7 +11,11 @@ without a new task. Use Delphi 12.3-compatible pure RTL and DUnitX for tests.
 Build all projects with Win64/Debug when available, execute both test runners,
 verify fresh artifacts and report the exact toolchain and outstanding limits.
 
-M2.6 is the active stopping point: for/for-in, while, repeat, case, try/finally,
+M2.7 is the active analysis stopping point; see docs/PARSER_COVERAGE.md for
+the independent analyzer, pinned corpus, method, reports and actual validation.
+No lexer/parser grammar changes are authorized in M2.7.
+
+M2.6 remains the grammar stopping point: for/for-in, while, repeat, case, try/finally,
 try/except with handlers and simple raise. Class properties, richer types
 and generics remain opaque. Exact Delphi 12.3+ validation is still required;
 see M2_STATUS.md. Do not start another grammar milestone without authorization.
