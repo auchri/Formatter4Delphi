@@ -48,12 +48,29 @@ type
     [Test] procedure LongComparisonLookahead;
     [Test] procedure BooleanIdentifiers;
     [Test] procedure DirectiveEntryModes;
+    [Test] procedure Declarations;
+    [Test] procedure RoutineHierarchy;
+    [Test] procedure ParameterGroups;
+    [Test] procedure EmptyAndQualifiedRoutines;
+    [Test] procedure LocalDeclarations;
+    [Test] procedure TypeRecovery;
+    [Test] procedure DeclarationErrors;
+    [Test] procedure RoutineErrors;
+    [Test] procedure ResourceDirectives;
+    [Test] procedure UnsafeResources;
+    [Test] procedure CompiledDeclarationCorpus;
+    [Test] procedure DeclarationDeterminism;
+    [Test] procedure UnsupportedParameterTypes;
+    [Test] procedure DeclarationRecoveryBoundaries;
+    [Test] procedure OpaqueProceduralParameters;
+    [Test] procedure DeclarationLifetimes;
+
   end;
 
 implementation
 
 uses
-  System.SysUtils, System.Generics.Collections,
+  System.SysUtils, System.IOUtils, System.Generics.Collections,
   DelphiFormatter.Lexer.Scanner, DelphiFormatter.Lexer.Tokens,
   DelphiFormatter.Parser.Reader, DelphiFormatter.Parser.Delphi;
 
@@ -406,9 +423,9 @@ var T: TSyntaxTree;
 begin
   T := Parse('unit X; interface type T = class end; implementation procedure F; begin end; end. trailing');
   try
-    Assert.AreEqual(3, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(2, Count(T.Root, skOpaqueRegion));
     Assert.AreEqual(1, Count(T.Root, skUnitDeclaration));
-    Assert.AreEqual(0, Count(T.Root, skBlockStatement));
+    Assert.AreEqual(1, Count(T.Root, skBlockStatement));
   finally T.Free; end;
   T := Parse('begin while A do begin F; G end; H; end', 2);
   try
@@ -707,6 +724,288 @@ begin
         Assert.AreEqual(0, Count(T.Root, skMissingToken));
       finally T.Free; end;
     end;
+end;
+
+procedure TParserTests.OpaqueProceduralParameters;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface procedure P(A: procedure(X: Integer) of object; '+
+    'B: reference to function: Integer); procedure Q; implementation end.');
+  try
+    Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skParameterDeclaration));
+    Assert.IsTrue(Count(T.Root, skOpaqueRegion) >= 2);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DeclarationLifetimes;
+var I: Integer; T: TSyntaxTree;
+begin
+  for I := 0 to 99 do
+  begin
+    T := Parse('unit X; interface const A=2; procedure P; implementation '+
+      'procedure P; var V: Integer; begin V := A; end; end.' + Char($D800));
+    try
+      Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.DeclarationRecoveryBoundaries;
+const Bad: array[0..4] of string = ('const A = ', 'const A = 1 ',
+  'var A: ', 'var A: array[0..2] of Integer; B: Integer; ',
+  'type T = class procedure Hidden; ');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Bad do
+  begin
+    T := Parse('unit X; interface '+S+' implementation procedure Good; begin end; end.');
+    try
+      Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration));
+      Assert.AreEqual(1, Count(T.Root, skBlockStatement));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.Declarations;
+var T: TSyntaxTree; U: TSyntaxNode;
+begin
+  T := Parse('unit X; interface const Max = 100; Name = ''App''; '+
+    'Timeout: System.Integer = 30; var A, B: Double; Enabled: Boolean = True; '+
+    'implementation var Counter: Integer; const Version = 1; end.');
+  try
+    U := Child(T.Root, 0);
+    Assert.AreEqual(2, Count(U, skConstSection));
+    Assert.AreEqual(4, Count(U, skConstDeclaration));
+    Assert.AreEqual(2, Count(U, skVarSection));
+    Assert.AreEqual(3, Count(U, skVarDeclaration));
+    Assert.AreEqual(4, Count(U, skTypeReference));
+    Assert.AreEqual(Integer(skConstSection), Integer(Child(U, 0).Kind));
+    Assert.AreEqual(Integer(skConstDeclaration), Integer(Child(Child(U, 0), 0).Kind));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.RoutineHierarchy;
+var T: TSyntaxTree; U, R, H: TSyntaxNode;
+begin
+  T := Parse('unit X; interface function Add(A, B: Integer): Integer; '+
+    'procedure Reset; implementation function Add(A, B: Integer): Integer; '+
+    'begin Result := A + B; end; procedure Reset; begin end; end.');
+  try
+    U := Child(T.Root, 0);
+    Assert.AreEqual(4, Count(U, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(U, skBlockStatement));
+    Assert.AreEqual(2, Count(U, skReturnType));
+    Assert.AreEqual(0, Count(Child(U, 0), skBlockStatement));
+    R := Child(U, 2); H := Child(R, 0);
+    Assert.AreEqual(Integer(skRoutineHeader), Integer(H.Kind));
+    Assert.AreEqual(Integer(skParameterList), Integer(Child(H, 0).Kind));
+    Assert.AreEqual(Integer(skReturnType), Integer(Child(H, 1).Kind));
+    Assert.AreEqual(Integer(skBlockStatement), Integer(Child(R, 1).Kind));
+    Assert.AreEqual(1, Count(R, skBinaryExpression));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ParameterGroups;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface procedure P(A,B: Integer; const Name: string; '+
+    'var Counter: System.Integer; out Success: Boolean; N: Integer = 2); '+
+    'procedure Empty(); implementation end.');
+  try
+    Assert.AreEqual(2, Count(T.Root, skParameterList));
+    Assert.AreEqual(5, Count(T.Root, skParameterDeclaration));
+    Assert.AreEqual(5, Count(T.Root, skTypeReference));
+    Assert.AreEqual(0, Count(T.Root, skReturnType));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.EmptyAndQualifiedRoutines;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface implementation procedure TCalc.Reset; begin end; '+
+    'function TCalc.Add(A: Integer): System.Integer; begin Result := A; end; end.');
+  try
+    Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skBlockStatement));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.LocalDeclarations;
+var T: TSyntaxTree; R: TSyntaxNode;
+begin
+  T := Parse('unit X; interface implementation function Calculate(A,B: Integer): Integer; '+
+    'const Multiplier = 2; var Temp: Integer; begin Temp := A+B; '+
+    'if Temp > 0 then begin Result := Temp*Multiplier; end else Result := 0; end; end.');
+  try
+    R := Child(Child(T.Root, 0), 0);
+    Assert.AreEqual(Integer(skConstSection), Integer(Child(R, 1).Kind));
+    Assert.AreEqual(Integer(skVarSection), Integer(Child(R, 2).Kind));
+    Assert.AreEqual(Integer(skBlockStatement), Integer(Child(R, 3).Kind));
+    Assert.AreEqual(3, Count(R, skAssignmentStatement));
+    Assert.AreEqual(1, Count(R, skIfStatement));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.TypeRecovery;
+const Types: array[0..6] of string = (
+  'type T = class procedure Member; type TInner = record X: Integer; end; end; ',
+  'type T = class; TRef = class of TObject; ',
+  'type T = record A: array[0..1] of Integer; end; ',
+  'type T = interface procedure Member; end; ',
+  'type T = class class procedure Member; class var X: Integer; end; ',
+  'type T = record case Boolean of True: (X: Integer); False: (Y: Double); end; ',
+  'type TCallback = procedure(A: Integer); TFunc = function: Integer; ');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Types do
+  begin
+    T := Parse('unit X; interface '+S+'procedure P; implementation '+
+      'procedure P; begin end; threadvar X: Integer; procedure Q; begin end; end.');
+    try
+      Assert.AreEqual(3, Count(T.Root, skRoutineDeclaration));
+      Assert.AreEqual(2, Count(T.Root, skBlockStatement));
+      Assert.IsTrue(Count(T.Root, skOpaqueRegion) >= 2);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.DeclarationErrors;
+const Bad: array[0..5] of string = (': Integer;', 'A Integer;', 'A: ;',
+  'A: Integer B: Integer;', 'A: Integer = ;', 'A: array[0..2] of Integer;');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Bad do
+  begin
+    T := Parse('unit X; interface var '+S+' procedure P; implementation end.');
+    try
+      Assert.IsTrue(T.DiagnosticCount > 0);
+      Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration));
+      Assert.IsTrue(Count(T.Root, skVarDeclaration) > 0);
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.RoutineErrors;
+const Bad: array[0..6] of string = ('procedure Bad(A: Integer; ',
+  'function Bad: ; ', 'procedure Bad; ', 'procedure Bad; begin A := 1; ',
+  'procedure Bad; var A: Integer; ', 'procedure Bad ',
+  'procedure Bad; A := 1; ');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Bad do
+  begin
+    T := Parse('unit X; interface implementation '+S+
+      'procedure Good; begin end; end.');
+    try
+      Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+      Assert.IsTrue(T.DiagnosticCount > 0);
+    finally T.Free; end;
+  end;
+  T := Parse('unit X; interface implementation procedure P; begin A := 1; end.');
+  try
+    Assert.AreEqual(1, Count(T.Root, skRoutineDeclaration));
+    Assert.IsTrue(Count(T.Root, skMissingToken) >= 2);
+  finally T.Free; end;
+  T := Parse('unit X; interface implementation function P(A: Integer');
+  try Assert.IsTrue(T.DiagnosticCount > 0);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.ResourceDirectives;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface procedure P; implementation'#13#10+
+    '{$R *.dfm}'#13#10+'procedure P; begin end;'#13#10+
+    '(*$RESOURCE sample.res*)'#13#10+'procedure Q; begin end; end.');
+  try
+    Assert.AreEqual(3, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skDirective));
+    Assert.AreEqual(0, Count(T.Root, skOpaqueRegion));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.UnsafeResources;
+const Bodies: array[0..3] of string = (
+  'procedure P; begin'#13#10'{$R x.res}'#13#10'end;',
+  'procedure P(A:'#13#10'{$R x.res}'#13#10'Integer); begin end;',
+  '{$R x.res} procedure P; begin end;',
+  '{$IFDEF X} procedure P; {$ENDIF}');
+var S: string; T: TSyntaxTree;
+begin
+  for S in Bodies do
+  begin
+    T := Parse('unit X; interface implementation'#13#10+S+#13#10+'end.');
+    try
+      Assert.AreEqual(Integer(skOpaqueRegion), Integer(Child(T.Root, 0).Kind));
+      Assert.AreEqual(0, Count(T.Root, skRoutineDeclaration));
+    finally T.Free; end;
+  end;
+end;
+
+procedure TParserTests.CompiledDeclarationCorpus;
+var T: TSyntaxTree; S: string;
+begin
+  S := TFile.ReadAllText('tests/Fixtures/DeclarationCorpus.pas', TEncoding.UTF8);
+  T := Parse(S);
+  try
+    Assert.AreEqual(6, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(3, Count(T.Root, skBlockStatement));
+    Assert.AreEqual(1, Count(T.Root, skDirective));
+    Assert.AreEqual(0, T.DiagnosticCount);
+  finally T.Free; end;
+end;
+
+procedure TParserTests.DeclarationDeterminism;
+const Parts: array[0..16] of string = ('var', 'const', 'type', 'procedure',
+  'function', 'A', ':', '=', ';', '(', ')', 'begin', 'end', 'class', 'Integer', ',', '1');
+var Seed: UInt64; I,J: Integer; S: string; A,B: TSyntaxTree;
+begin
+  Seed := $4D322E32;
+  for I := 0 to 299 do
+  begin
+    S := 'unit X; interface ';
+    for J := 0 to I mod 35 do
+    begin
+      Seed := (Seed * UInt64(1664525) + UInt64(1013904223)) and UInt64($FFFFFFFF);
+      S := S + Parts[Integer(Seed mod UInt64(Length(Parts)))] + ' ';
+    end;
+    S := S + ' implementation procedure Good; begin end; end.';
+    A := Parse(S);
+    try
+      B := Parse(S);
+      try
+        Assert.AreEqual(Shape(A.Root), Shape(B.Root));
+        Assert.AreEqual(A.DiagnosticCount, B.DiagnosticCount);
+        for J := 0 to A.DiagnosticCount - 1 do
+        begin
+          Assert.AreEqual(A.GetDiagnostic(J).Code, B.GetDiagnostic(J).Code);
+          Assert.AreEqual(A.GetDiagnostic(J).Span.StartOffset, B.GetDiagnostic(J).Span.StartOffset);
+        end;
+      finally B.Free; end;
+    finally A.Free; end;
+  end;
+end;
+
+procedure TParserTests.UnsupportedParameterTypes;
+var T: TSyntaxTree;
+begin
+  T := Parse('unit X; interface procedure P(A: array of Integer; '+
+    'B: TList<Integer>); procedure Q; implementation end.');
+  try
+    Assert.AreEqual(2, Count(T.Root, skRoutineDeclaration));
+    Assert.AreEqual(2, Count(T.Root, skParameterDeclaration));
+    Assert.IsTrue(Count(T.Root, skOpaqueRegion) > 0);
+    Assert.IsTrue(T.DiagnosticCount > 0);
+  finally T.Free; end;
 end;
 
 initialization

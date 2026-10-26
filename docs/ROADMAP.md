@@ -34,12 +34,17 @@
 - **Gate:** exact CST roundtrip and correct tree shape; no discarded original tokens under error recovery.
 
 - Implemented scope and actual build/test evidence: `M2_STATUS.md`.
-- Stop after M2.1; no subsequent grammar is authorized by this milestone.
+- M2.1 is complete; M2.2 was separately authorized.
 
-### M2.2 — Basic declarations and routine bodies (next proposed task)
-- Small const/var declarations and procedure/function headers/bodies.
-- Preserve opaque regions for unsupported declarations; add structure/recovery tests.
-- Repeat Win64/Debug validation on exact Delphi 12.3 when available.
+### M2.2 — Basic declarations and routine bodies (completed)
+- Implemented: const/var sections, qualified type/routine names, parameter groups/defaults, local declarations and existing statement blocks.
+- Resource directives at safe section boundaries remain explicit; conditional/include directives retain complete-input fallback.
+- Nested unsupported types and procedural signatures remain opaque with contextual recovery.
+- Acceptance evidence: `M2_STATUS.md`. Stop after M2.2. Exact Delphi 12.3 validation remains open.
+
+### M2.3 — Proposed next small task (not authorized)
+- Add member/index expressions with focused assignment/call tests.
+- Keep classes, richer statements and directive evaluation outside that task.
 
 ### M3 — Grammar completion and validation
 - Real-world projects and conditional compiler directives/inclusions handled conservatively.

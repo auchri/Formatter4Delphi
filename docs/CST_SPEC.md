@@ -1,4 +1,4 @@
-# Lossless CST and basic parser — M2.1
+# Lossless CST and declarations parser — M2.2
 
 ## Public API and ownership
 
@@ -72,7 +72,7 @@ Repeated consumption after EOF is a no-op. Lookahead never consumes tokens.
   unmatched `if`; a preceding semicolon prevents binding and is diagnosed.
 - `unit Name; interface ... implementation ... end.` with dotted names and
   one optional uses clause per section. Uses lists accept dotted names and
-  optional `in 'filename'`. Declaration/routine bodies stay opaque.
+  optional `in 'filename'`. Sections contain ordered uses, declarations, routines and opaque regions.
 
 The entry roots are `skCompilationUnit`, `skExpressionRoot`, `skStatementRoot`.
 Each contains the parsed construct, any trailing opaque region, and EOF/trivia.
@@ -94,10 +94,15 @@ nodes and continue. Unsupported unit sections scan to `implementation` or final
 `end.` / incomplete `end` at EOF, retaining inner class/routine `end;` tokens.
 Unsupported trailing input becomes an opaque root child. A name followed by an angle-bracket list and a call opener is ambiguous with generic specialization and is conservatively opaque, including nested call arguments. M2.1 does not resolve that ambiguity semantically.
 
-If the input contains ANY compiler directive, the entire input body is one
-opaque region. This deliberately conservative M2.1 policy avoids treating
-conditional branches and includes as one definite grammar. Directives and all
-branches remain original leaves; no preprocessing occurs.
+Standalone, closed `{$R file.res}` / `(*$RESOURCE file.res*)` directives are
+accepted only as explicit `skDirective` nodes at unit-section boundaries.
+Only horizontal whitespace may surround them on their line. They remain
+significant original leaves. A resource directive encountered while parsing a
+header, declaration or body discards that tentative construction and falls back
+to a complete opaque input. This uses the same arena cleanup as normal parsing.
+All other directives (including conditionals, includes and mode switches) keep
+the complete-input opaque policy in every entry mode. Expressions and isolated
+statements keep that policy even for resources. No branches are evaluated.
 
 Recursive expression/statement entry depth is limited to 128. Exceeding it emits
 PAR004 and preserves the remaining fragment via opaque recovery. Binary chains,
@@ -120,6 +125,63 @@ non-flat syntax shape, precedence/associativity, statements, units, recovery,
 directives, deterministic malformed input and ownership. See `M2_STATUS.md` and
 `TEST_PLAN.md` for actual execution evidence.
 
-Future work: basic declarations and routine bodies, then richer expressions and
-statements. Full grammar, directive evaluation, AST, semantic analysis,
-formatting and incremental parsing are outside M2.1.
+Future grammar requires a new task. No AST, semantic analysis, formatting,
+configuration reader, CLI, IDE integration or incremental parsing is included.
+
+## M2.2 declaration hierarchy and coverage
+
+`skConstSection` / `skVarSection` contain individual `skConstDeclaration` /
+`skVarDeclaration` nodes. Names, modifiers and separators remain ordered leaves;
+`skTypeReference` wraps a simple or dotted type name. Initializers use the
+existing expression parser. `skRoutineDeclaration` contains a `skRoutineHeader`,
+local sections and, for implementations, the existing `skBlockStatement`.
+Headers contain optional `skParameterList` with `skParameterDeclaration` groups;
+functions also contain `skReturnType` wrapping a type reference. The header owns
+its semicolon, the routine owns its body's terminating semicolon. Unit `end.`
+is left to the unit parser, including after a missing routine `end;`.
+No unused body-wrapper kind or per-production classes were introduced.
+
+Fully structured examples:
+
+```delphi
+unit Example;
+interface
+const Version = 1; Timeout: Integer = 30;
+var X, Y: System.Integer; Enabled: Boolean = True;
+function Add(A, B: Integer; Scale: Integer = 2): Integer;
+implementation
+function Add(A, B: Integer; Scale: Integer): Integer;
+const Offset = 1;
+var Temp: Integer;
+begin
+  Temp := A + B;
+  Result := Temp * Scale + Offset;
+end;
+end.
+```
+
+Procedures, empty `()`/bodies, `const`/`var`/`out` parameter groups, multiple
+sections/routines and qualified method implementation names (`TCalc.Add`) are
+also structured. This is syntax recognition, not name/type/default validation.
+`tests/Fixtures/DeclarationCorpus.pas` is both compiled and parsed by the suite.
+
+Partially structured: `type T = class procedure M; end; procedure P;` retains
+the type section as opaque while parsing `P`. All type sections, including
+aliases, remain opaque in M2.2. The scanner tracks type/block nesting and
+parenthesis/bracket depth, recognizes class-method prefixes and forward classes,
+and distinguishes procedural type aliases from routine starts. A top-level
+semicolon permits synchronization at a following section or routine. Hard unit
+boundaries terminate even an unclosed type. Unsupported parameter type suffixes
+and declaration initializer/type suffixes are explicit opaque children; they
+are never claimed as complete type grammar.
+
+Fully opaque: a unit containing `{$IFDEF X}`, `{$I file.inc}`, an unknown
+compiler directive or a resource directive interrupting supported grammar.
+
+Missing declaration/header punctuation, names, types and body delimiters use
+PAR001 and zero-width missing leaves. Routine blocks stop before a following
+procedure/function or unit terminator. Unsupported routine modifiers, nested
+routines, advanced statements, classes/records, generics, anonymous methods,
+arrays/pointers and richer expressions are outside structured coverage.
+Recovery is deliberately conservative on ambiguous malformed nesting; it can
+retain more than one unsupported declaration in one opaque region.

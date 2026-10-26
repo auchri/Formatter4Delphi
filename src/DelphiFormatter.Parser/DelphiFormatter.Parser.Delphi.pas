@@ -16,6 +16,8 @@ type
     FArena: TObjectList<TSyntaxElement>;
     FDiagnostics: TList<TDiagnostic>;
     FDepth: Integer;
+    FRoutineBody: Boolean;
+    FAllowDirective, FUnsafeDirective: Boolean;
     FGenericCallOpeners: TArray<Boolean>;
     function Node(Kind: TSyntaxKind; Children: TList<TSyntaxElement>): TSyntaxNode;
     procedure Take(Children: TList<TSyntaxElement>);
@@ -33,6 +35,14 @@ type
     function Block: TSyntaxNode;
     function IfStatement: TSyntaxNode;
     function UsesClause: TSyntaxNode;
+    function SectionEnd: Boolean;
+    function DeclarationStart: Boolean;
+    function TypeReference: TSyntaxNode;
+    function DeclarationSection(IsConst: Boolean): TSyntaxNode;
+    function Parameters: TSyntaxNode;
+    function Routine(IsInterface: Boolean): TSyntaxNode;
+    function OpaqueDeclaration(StopAtSemicolon: Boolean = False): TSyntaxNode;
+    function ResourceDirective(Index: Integer): Boolean;
     function UnitDeclaration: TSyntaxNode;
     function OpaqueStatement(TrackAngles: Boolean = False): TSyntaxNode;
     procedure UnitSection(Children: TList<TSyntaxElement>; IsInterface: Boolean);
@@ -85,6 +95,8 @@ end;
 
 procedure TDelphiParser.Take(Children: TList<TSyntaxElement>);
 begin
+  if (FReader.PeekSignificant.Kind = tkCompilerDirective) and
+    not FAllowDirective then FUnsafeDirective := True;
   FReader.ConsumeWithTriviaInto(Children, FArena);
 end;
 
@@ -103,6 +115,8 @@ procedure TDelphiParser.Missing(Children: TList<TSyntaxElement>;
 var
   Leaf: TSyntaxToken;
 begin
+  if FReader.PeekSignificant.Kind = tkCompilerDirective then
+    FUnsafeDirective := True;
   Report('PAR001', 'Expected ' + Expected);
   // Anchor BEFORE pending trivia so sibling spans remain ordered.
   Leaf := TSyntaxToken.CreateMissing(Expected,
@@ -129,6 +143,8 @@ begin
     FReader.Matches('else') or FReader.Matches('then') or
     FReader.Matches(')') or FReader.Matches(',') or
     FReader.Matches('interface') or FReader.Matches('implementation');
+  if FRoutineBody then
+    Result := Result or FReader.Matches('procedure') or FReader.Matches('function');
 end;
 
 function TDelphiParser.Precedence: Integer;
@@ -281,7 +297,7 @@ begin
     else
     begin
       Kind := skError;
-      if Boundary then Missing(Children, 'expression')
+      if Boundary or DeclarationStart then Missing(Children, 'expression')
       else
       begin
         Report('PAR002', 'Unexpected expression token');
@@ -404,6 +420,9 @@ begin
     while not FReader.AtEOF and not FReader.Matches('end') and
       not FReader.Matches('implementation') do
     begin
+      if FRoutineBody and (FReader.Matches('procedure') or
+        FReader.Matches('function') or
+        (FReader.Matches('end') and FReader.Matches('.', 1))) then Break;
       if FReader.Matches('else') then
       begin
         Report('PAR002', 'Else cannot follow a statement separator');
@@ -431,7 +450,9 @@ begin
         finally Unexpected.Free; end;
       end;
     end;
-    Expect(Children, 'end');
+    if FRoutineBody and FReader.Matches('end') and FReader.Matches('.', 1) then
+      Missing(Children, 'end')
+    else Expect(Children, 'end');
     Result := Node(skBlockStatement, Children);
   finally
     Children.Free;
@@ -492,29 +513,312 @@ begin
   end;
 end;
 
-procedure TDelphiParser.UnitSection(Children: TList<TSyntaxElement>;
-  IsInterface: Boolean);
-var
-  Opaque: TList<TSyntaxElement>;
+function TDelphiParser.SectionEnd: Boolean;
 begin
-  if FReader.Matches('uses') then Children.Add(UsesClause);
-  Opaque := TList<TSyntaxElement>.Create;
+  Result := FReader.AtEOF or FReader.Matches('implementation') or
+    FReader.Matches('initialization') or FReader.Matches('finalization') or
+    (FReader.Matches('end') and (FReader.Matches('.', 1) or
+      (FReader.PeekSignificant(1).Kind = tkEOF)));
+end;
+
+function TDelphiParser.DeclarationStart: Boolean;
+begin
+  Result := SectionEnd or FReader.Matches('const') or FReader.Matches('var') or
+    FReader.Matches('type') or FReader.Matches('procedure') or
+    FReader.Matches('function') or FReader.Matches('begin') or
+    (FReader.PeekSignificant.Kind = tkCompilerDirective);
+end;
+
+function TDelphiParser.TypeReference: TSyntaxNode;
+var C: TList<TSyntaxElement>;
+begin
+  C := TList<TSyntaxElement>.Create;
   try
+    if FReader.Matches('string') then Take(C) else Identifier(C);
+    while FReader.Matches('.') do
+    begin
+      Take(C);
+      Identifier(C);
+    end;
+    Result := Node(skTypeReference, C);
+  finally C.Free; end;
+end;
+
+function TDelphiParser.OpaqueDeclaration(StopAtSemicolon: Boolean): TSyntaxNode;
+var C: TList<TSyntaxElement>; Depth, Parens: Integer;
+  First, InType, CanSync: Boolean;
+begin
+  C := TList<TSyntaxElement>.Create;
+  try
+    Report('PAR003', 'Unsupported declaration preserved as opaque');
+    Depth := 0;
+    Parens := 0;
+    First := True;
+    InType := FReader.Matches('type');
+    CanSync := False;
     while not FReader.AtEOF do
     begin
-      if IsInterface and FReader.Matches('implementation') then Break;
-      if FReader.Matches('end') and (FReader.Matches('.', 1) or
-        (FReader.PeekSignificant(1).Kind = tkEOF)) then Break;
-      Take(Opaque);
+      if SectionEnd then Break;
+      if StopAtSemicolon and (Depth = 0) and (Parens = 0) and
+        FReader.Matches(';') then Break;
+      if not First and (Depth = 0) and (Parens = 0) and
+        DeclarationStart and (not InType or CanSync) then Break;
+      if FReader.Matches('(') or FReader.Matches('[') then Inc(Parens)
+      else if FReader.Matches(')') or FReader.Matches(']') then
+      begin
+        if Parens > 0 then Dec(Parens);
+      end
+      else if (Parens = 0) and (FReader.Matches('record') or
+        FReader.Matches('object') or FReader.Matches('interface') or
+        FReader.Matches('begin') or FReader.Matches('try') or
+        (FReader.Matches('case') and not InType) or
+        (FReader.Matches('class') and not FReader.Matches('of', 1) and
+          not FReader.Matches(';', 1) and not FReader.Matches('procedure', 1) and
+          not FReader.Matches('function', 1) and not FReader.Matches('var', 1) and
+          not FReader.Matches('constructor', 1) and
+          not FReader.Matches('destructor', 1) and
+          not FReader.Matches('property', 1) and
+          not FReader.Matches('operator', 1))) then Inc(Depth)
+      else if (Parens = 0) and FReader.Matches('end') and (Depth > 0) then Dec(Depth);
+      CanSync := FReader.Matches(';');
+      Take(C);
+      First := False;
     end;
-    if Opaque.Count > 0 then
+    Result := Node(skOpaqueRegion, C);
+  finally C.Free; end;
+end;
+
+function TDelphiParser.DeclarationSection(IsConst: Boolean): TSyntaxNode;
+var C, D: TList<TSyntaxElement>; Before: Integer;
+begin
+  C := TList<TSyntaxElement>.Create;
+  D := TList<TSyntaxElement>.Create;
+  try
+    Take(C);
+    while not DeclarationStart do
     begin
-      Report('PAR003', 'Unsupported unit section preserved as opaque');
-      Children.Add(Node(skOpaqueRegion, Opaque));
+      Before := FReader.Position;
+      D.Clear;
+      Identifier(D);
+      if not IsConst then
+        while FReader.Matches(',') do
+        begin
+          Take(D);
+          Identifier(D);
+        end;
+      if not IsConst or FReader.Matches(':') then
+      begin
+        Expect(D, ':');
+        D.Add(TypeReference);
+      end;
+      if IsConst then Expect(D, '=');
+      if not IsConst and FReader.Matches('=') then
+      begin
+        Take(D);
+        D.Add(Expression);
+      end
+      else if IsConst then D.Add(Expression);
+      if not FReader.Matches(';') and not DeclarationStart and
+        (FReader.PeekSignificant.Kind <> tkIdentifier) then
+        D.Add(OpaqueDeclaration(True));
+      Expect(D, ';');
+      if IsConst then C.Add(Node(skConstDeclaration, D))
+      else C.Add(Node(skVarDeclaration, D));
+      if FReader.Position = Before then Break;
     end;
-  finally
-    Opaque.Free;
+    if IsConst then Result := Node(skConstSection, C)
+    else Result := Node(skVarSection, C);
+  finally D.Free; C.Free; end;
+end;
+
+function TDelphiParser.Parameters: TSyntaxNode;
+var C, D, O: TList<TSyntaxElement>; Before, Nest: Integer;
+begin
+  C := TList<TSyntaxElement>.Create;
+  D := TList<TSyntaxElement>.Create;
+  O := TList<TSyntaxElement>.Create;
+  try
+    Take(C);
+    while not FReader.AtEOF and not FReader.Matches(')') and
+      not SectionEnd and not FReader.Matches('begin') do
+    begin
+      Before := FReader.Position;
+      D.Clear;
+      if FReader.Matches('const') or FReader.Matches('var') or
+        FReader.Matches('out') then Take(D);
+      Identifier(D);
+      while FReader.Matches(',') do
+      begin
+        Take(D);
+        Identifier(D);
+      end;
+      Expect(D, ':');
+      D.Add(TypeReference);
+      if FReader.Matches('=') then
+      begin
+        Take(D);
+        D.Add(Expression);
+      end;
+      if not FReader.Matches(';') and not FReader.Matches(')') and
+        not SectionEnd and not FReader.Matches('begin') then
+      begin
+        Report('PAR003', 'Unsupported parameter suffix preserved as opaque');
+        O.Clear;
+        Nest := 0;
+        while not FReader.AtEOF and not SectionEnd do
+        begin
+          if (Nest = 0) and (FReader.Matches(';') or FReader.Matches(')') or
+            FReader.Matches('begin')) then Break;
+          if FReader.Matches('(') or FReader.Matches('[') then Inc(Nest)
+          else if FReader.Matches(')') or FReader.Matches(']') then
+          begin
+            if Nest > 0 then Dec(Nest);
+          end;
+          Take(O);
+        end;
+        D.Add(Node(skOpaqueRegion, O));
+      end;
+      C.Add(Node(skParameterDeclaration, D));
+      if not FReader.Matches(';') then Break;
+      // Leave a header semicolon after a missing closer to Routine.
+      if (FReader.PeekSignificant(1).Kind <> tkIdentifier) and
+        not FReader.Matches('const', 1) and not FReader.Matches('var', 1) and
+        not FReader.Matches('out', 1) then Break;
+      Take(C);
+      if FReader.Position = Before then Break;
+    end;
+    Expect(C, ')');
+    Result := Node(skParameterList, C);
+  finally O.Free; D.Free; C.Free; end;
+end;
+
+function TDelphiParser.Routine(IsInterface: Boolean): TSyntaxNode;
+var C, H, R: TList<TSyntaxElement>; IsFunction, SavedBody: Boolean;
+begin
+  C := TList<TSyntaxElement>.Create;
+  H := TList<TSyntaxElement>.Create;
+  R := TList<TSyntaxElement>.Create;
+  try
+    IsFunction := FReader.Matches('function');
+    Take(H);
+    Identifier(H);
+    while FReader.Matches('.') do
+    begin
+      Take(H);
+      Identifier(H);
+    end;
+    if FReader.Matches('(') then H.Add(Parameters);
+    if IsFunction then
+    begin
+      Expect(R, ':');
+      R.Add(TypeReference);
+      H.Add(Node(skReturnType, R));
+    end;
+    if not FReader.Matches(';') and not DeclarationStart then
+      H.Add(OpaqueDeclaration(True));
+    Expect(H, ';');
+    C.Add(Node(skRoutineHeader, H));
+    if not IsInterface then
+    begin
+      if FReader.Matches('forward') or FReader.Matches('external') then
+        C.Add(OpaqueDeclaration)
+      else
+      begin
+        while FReader.Matches('const') or FReader.Matches('var') or
+          FReader.Matches('type') do
+          if FReader.Matches('type') then C.Add(OpaqueDeclaration)
+          else C.Add(DeclarationSection(FReader.Matches('const')));
+        if FReader.Matches('begin') then
+        begin
+          SavedBody := FRoutineBody;
+          FRoutineBody := True;
+          try C.Add(Block);
+          finally FRoutineBody := SavedBody; end;
+          Expect(C, ';');
+        end
+        else
+        begin
+          Missing(C, 'begin');
+          if not DeclarationStart then C.Add(OpaqueDeclaration);
+          Missing(C, 'end');
+          if FReader.Matches(';') then Take(C);
+        end;
+      end;
+    end;
+    Result := Node(skRoutineDeclaration, C);
+  finally R.Free; H.Free; C.Free; end;
+end;
+
+function TDelphiParser.ResourceDirective(Index: Integer): Boolean;
+var S: string; I, P: Integer; Span: TSourceSpan;
+begin
+  Result := False;
+  Span := FLex.GetToken(Index).Span;
+  P := Span.StartOffset;
+  while (P > 0) and not CharInSet(FLex.Source[P], [#10, #13]) do
+  begin
+    if not CharInSet(FLex.Source[P], [' ', #9]) then Exit;
+    Dec(P);
   end;
+  P := Span.EndOffset + 1;
+  while (P <= Length(FLex.Source)) and
+    not CharInSet(FLex.Source[P], [#10, #13]) do
+  begin
+    if not CharInSet(FLex.Source[P], [' ', #9]) then Exit;
+    Inc(P);
+  end;
+  S := Trim(FLex.TokenText(Index));
+  if Copy(S, 1, 2) = '{$' then
+  begin
+    if (Length(S) < 4) or (S[Length(S)] <> '}') then Exit;
+    S := Copy(S, 3, Length(S) - 3);
+  end
+  else if Copy(S, 1, 3) = '(*$' then
+  begin
+    if Copy(S, Length(S) - 1, 2) <> '*)' then Exit;
+    S := Copy(S, 4, Length(S) - 5);
+  end
+  else Exit;
+  S := Trim(S);
+  I := 1;
+  while (I <= Length(S)) and CharInSet(S[I], ['A'..'Z', 'a'..'z']) do Inc(I);
+  Result := (SameText(Copy(S, 1, I - 1), 'R') or
+    SameText(Copy(S, 1, I - 1), 'RESOURCE')) and
+    (I <= Length(S)) and CharInSet(S[I], [' ', #9]);
+end;
+
+procedure TDelphiParser.UnitSection(Children: TList<TSyntaxElement>;
+  IsInterface: Boolean);
+var C: TList<TSyntaxElement>; Before: Integer;
+begin
+  C := TList<TSyntaxElement>.Create;
+  try
+    while not SectionEnd do
+    begin
+      Before := FReader.Position;
+      if FReader.Matches('uses') then Children.Add(UsesClause)
+      else if FReader.Matches('const') or FReader.Matches('var') then
+        Children.Add(DeclarationSection(FReader.Matches('const')))
+      else if FReader.Matches('procedure') or FReader.Matches('function') then
+        Children.Add(Routine(IsInterface))
+      else if (FReader.PeekSignificant.Kind = tkCompilerDirective) and
+        ResourceDirective(FReader.SignificantIndex) then
+      begin
+        C.Clear;
+        FAllowDirective := True;
+        try Take(C);
+        finally FAllowDirective := False; end;
+        Children.Add(Node(skDirective, C));
+      end
+      else Children.Add(OpaqueDeclaration);
+      if FReader.Position = Before then
+      begin
+        C.Clear;
+        Take(C);
+        Children.Add(Node(skOpaqueRegion, C));
+      end;
+    end;
+  finally C.Free; end;
 end;
 
 function TDelphiParser.UnitDeclaration: TSyntaxNode;
@@ -555,7 +859,9 @@ begin
   try
     HasDirective := False;
     for I := 0 to FLex.TokenCount - 1 do
-      if FLex.GetToken(I).Kind = tkCompilerDirective then HasDirective := True;
+      if (FLex.GetToken(I).Kind = tkCompilerDirective) and
+        ((RootKind <> skCompilationUnit) or not ResourceDirective(I)) then
+        HasDirective := True;
     if HasDirective then
       Report('PAR003', 'Directive-bearing input preserved as opaque')
     else if RootKind = skExpressionRoot then Children.Add(Expression)
@@ -566,6 +872,20 @@ begin
     end
     else if FReader.Matches('unit') then Children.Add(UnitDeclaration)
     else Report('PAR003', 'Unsupported compilation unit preserved as opaque');
+    if FUnsafeDirective then
+    begin
+      // A resource directive away from a supported section boundary is unsafe.
+      // Discard construction state and preserve the complete input explicitly.
+      Children.Clear;
+      FArena.Clear;
+      FReader.Free;
+      FReader := TTokenReader.Create(FLex);
+      FDiagnostics.Clear;
+      for I := 0 to FLex.DiagnosticCount - 1 do
+        FDiagnostics.Add(FLex.GetDiagnostic(I));
+      Report('PAR003', 'Directive outside a safe section boundary');
+      HasDirective := True;
+    end;
     if not FReader.AtEOF then
     begin
       if not HasDirective then Report('PAR002', 'Unexpected trailing source');

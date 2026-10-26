@@ -4,7 +4,7 @@
 
 **Start here (token efficient):** `CODEX_START.md` → `AGENTS.md` → `docs/CST_SPEC.md`. Read the longer technical documents only as needed.
 
-**Current milestone: M2.1 lossless CST and basic Delphi parser.** The lexer APIs remain stable. Expressions, statements and minimal units have hierarchical, lossless CSTs; unsupported regions stay opaque. AST, formatter and integrations remain future work. See [M2 status](docs/M2_STATUS.md).
+**Current milestone: M2.2 declarations and routine bodies.** The lexer APIs remain stable. Expressions, basic statements, const/var sections and routine headers/bodies have hierarchical, lossless CSTs; unsupported regions stay opaque. AST, formatter and integrations remain future work. See [M2 status](docs/M2_STATUS.md).
 
 ## Documents
 
@@ -59,5 +59,5 @@ Implemented scope, validation results and limitations: [M1 status](docs/M1_STATU
 
 
 
-M2.1 adds **32/32 passing parser tests** on the same Win64/Debug toolchain.
+M2.2 has **48/48 passing parser tests** on the same Win64/Debug toolchain.
 See [M2 status](docs/M2_STATUS.md) for CST coverage, limits and fresh artifacts.
