@@ -1,21 +1,23 @@
-# Current Codex entry point
+# Codex session entry point
 
-Read `AGENTS.md`, `docs/CST_SPEC.md`, `docs/ARCHITECTURE.md` and
-`docs/ROADMAP.md`. M1.0-M1.2 and M2.1-M2.6 lossless CST/declarations/postfix/class-record/property/control-flow parser are implemented.
-See `docs/M1_STATUS.md` and `docs/M2_STATUS.md` for actual scope and verification.
+Read [design/README.md](design/README.md) first, then [requirements](design/docs/spec/01_PRODUCT_REQUIREMENTS.md) and [canonical API/data contracts](design/docs/spec/14_CONTRACTS.md). Other design/spec chapters and ADRs elaborate the target. Follow [AGENTS.md](AGENTS.md) and [contribution rules](design/CONTRIBUTING_IMPLEMENTATION.md). The [implementation plan](design/docs/spec/09_IMPLEMENTATION_PLAN.md) is a plan, not authorization.
 
-Implement only a newly authorized roadmap milestone. Preserve lexer APIs and
-all original tokens; require hierarchical CST assertions as well as roundtrips.
-Do not begin further grammar, AST, formatting, configuration, CLI or IDE integration
-without a new task. Use Delphi 12.3-compatible pure RTL and DUnitX for tests.
-Build all projects with Win64/Debug when available, execute both test runners,
-verify fresh artifacts and report the exact toolchain and outstanding limits.
+**No implementation milestone is active.** Work only on the user's explicitly commissioned scope. Do not begin parser grammar, formatter, config, IO/CLI or other implementation merely because A0 describes it. A0 target APIs are not existing runtime capabilities.
 
-M2.7 is the active analysis stopping point; see docs/PARSER_COVERAGE.md for
-the independent analyzer, pinned corpus, method, reports and actual validation.
-No lexer/parser grammar changes are authorized in M2.7.
+## Actual starting point
 
-M2.6 remains the grammar stopping point: for/for-in, while, repeat, case, try/finally,
-try/except with handlers and simple raise. Class properties, richer types
-and generics remain opaque. Exact Delphi 12.3+ validation is still required;
-see M2_STATUS.md. Do not start another grammar milestone without authorization.
+Implemented: M1 lexer; M2.1–M2.6 lossless CST expressions/postfix, basic declarations/routines/classes/records/properties and control flow; M2.7 independent coverage/analyzer tooling. Unsupported syntax remains opaque. No production formatter, native config reader, product CLI, AST or include resolver.
+
+[docs/CST_SPEC.md](docs/CST_SPEC.md), [docs/LEXER_SPEC.md](docs/LEXER_SPEC.md), [M1 status](docs/M1_STATUS.md), [M2 status](docs/M2_STATUS.md) and [coverage method](docs/PARSER_COVERAGE.md) describe implementation/evidence. Historical roadmap/milestone text under docs/ is not a competing target or a new task. Exact Delphi 12.3 verification remains open; old CE Update 1 results must stay identified as such.
+
+PR #10 (M2.8 directive pilot) is independent of PR #11 (A0 architecture/integration). Neither its code nor its acceptance is implied by A0. Before implementation, inspect current main/PR status and follow the [baseline strategy](design/docs/spec/12_CURRENT_CODE_AUDIT.md). No automatic merge or cherry-pick of #10.
+
+## Before changing files
+
+Inspect status and preserve independent changes. Name requirement/test IDs, affected owners and acceptance criteria. Preserve lexer APIs, original tokens, UTF-16 spans, arena ownership and pinned corpus. For code, run scope-appropriate builds/tests and verify fresh artifacts; for documentation run the read-only validator:
+
+~~~powershell
+pwsh -NoProfile -File scripts/ValidateDesignDocs.ps1
+~~~
+
+It checks document structure/references, not semantic correctness of architecture or unimplemented APIs. Report actual checks and stop at the commissioned boundary.
