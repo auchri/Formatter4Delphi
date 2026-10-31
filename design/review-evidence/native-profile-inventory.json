@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Formatter_Compact.config",
+    "sha256": "ED923D396E648EC77DAFC4B6666F8ACB39ED096874330E706ABFB440F4CE811B",
+    "root": "TgConfig",
+    "schemaVersion": "3",
+    "totalOptions": 158,
+    "delphiOptions": 84,
+    "cppOptions": 72,
+    "duplicates": null
+  },
+  {
+    "name": "Formatter_Default.config",
+    "sha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+    "root": "TgConfig",
+    "schemaVersion": "3",
+    "totalOptions": 158,
+    "delphiOptions": 84,
+    "cppOptions": 72,
+    "duplicates": null
+  },
+  {
+    "name": "Formatter_Wide.config",
+    "sha256": "62C57C6E86B82769820B5F2FD27F1A655A358FF04F9A809EB601EB94C6A0EB98",
+    "root": "TgConfig",
+    "schemaVersion": "3",
+    "totalOptions": 158,
+    "delphiOptions": 84,
+    "cppOptions": 72,
+    "duplicates": null
+  },
+  {
+    "name": "Formatter.config",
+    "sha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+    "root": "TgConfig",
+    "schemaVersion": "3",
+    "totalOptions": 158,
+    "delphiOptions": 84,
+    "cppOptions": 72,
+    "duplicates": null
+  }
+]

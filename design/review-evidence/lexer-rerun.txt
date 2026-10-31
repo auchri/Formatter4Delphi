@@ -1,0 +1,16 @@
+**********************************************************************
+*        DUnitX - (c) 2015-2020 Vincent Parrett & Contributors       *
+*                                                                    *
+*        License - http://www.apache.org/licenses/LICENSE-2.0        *
+**********************************************************************
+
+DUnitX - [DelphiFormatter.Lexer.Tests.exe] - Starting Tests.
+
+................................................................................
+
+Tests Found   : 40
+Tests Ignored : 0
+Tests Passed  : 40
+Tests Leaked  : 0
+Tests Failed  : 0
+Tests Errored : 0
