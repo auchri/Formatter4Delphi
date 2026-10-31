@@ -1,0 +1,21 @@
+{
+  "reviewDate": "2026-10-31",
+  "remote": "https://github.com/auchri/Formatter4Delphi",
+  "main": "98fdb7e6ec8f590f0239348463cb1bda4dcd23f7",
+  "localHead": "65000fca7ce3890541aa1f691a17666ef47cfb92",
+  "openPullRequests": [
+    {
+      "number": 10,
+      "state": "open",
+      "merged": false,
+      "head": "65000fca7ce3890541aa1f691a17666ef47cfb92",
+      "base": "98fdb7e6ec8f590f0239348463cb1bda4dcd23f7",
+      "reviewThreads": 0
+    }
+  ],
+  "comparison": {
+    "aheadBy": 1,
+    "behindBy": 0
+  },
+  "notes": "Read-only GitHub inspection; main compared with exact local HEAD. No PR mutation."
+}

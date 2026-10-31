@@ -1,0 +1,16 @@
+{
+  "repository": "external",
+  "group": "all",
+  "files": 160,
+  "validFiles": 154,
+  "filesWithDirectives": 133,
+  "completeOpaqueFiles": 130,
+  "otherOpaqueFiles": 22,
+  "codeUnits": 3927296,
+  "structuredCodeUnits": 150327,
+  "opaqueCodeUnits": 3756252,
+  "errorCodeUnits": 20717,
+  "structuredPercent": 3.82774815038133,
+  "opaquePercent": 95.6447387719184,
+  "errorPercent": 0.52751307770028
+}

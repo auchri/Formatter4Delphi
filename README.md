@@ -1,63 +1,70 @@
-# Delphi Formatter — implementation blueprint
+# Formatter4Delphi
 
-**Target:** a Delphi 12.3+ source formatter written in Delphi, independent of the Delphi IDE, with behavioral compatibility with the original Delphi formatter's `.config` profiles. Add separate settings for editor behavior (tabs, tab stops, indentation, line endings, encoding, etc.) without changing `.config` semantics.
+A Delphi 12.3-targeted, pure-RTL parsing toolkit and planned safe source formatter. The product goals are an exact lossless lexer, a structural Source-CST suitable for later AST lowering, and verified support for original RAD-Studio formatter profiles (*.config). AST implementation, a full compiler/preprocessor, LSP and IDE plugins are outside the current scope.
 
-**Start here (token efficient):** `CODEX_START.md` → `AGENTS.md` → `docs/CST_SPEC.md`. Read the longer technical documents only as needed.
+## Start here: target architecture
 
-**Current milestone: M2.3 postfix expressions and assignment targets.** The lexer APIs remain stable. Expressions, basic statements, const/var sections and routine headers/bodies, member/index/dereference chains and assignment targets have hierarchical, lossless CSTs; unsupported regions stay opaque. AST, formatter and integrations remain future work. See [M2 status](docs/M2_STATUS.md).
+[design/README.md](design/README.md) is the architecture entry point. [Product requirements](design/docs/spec/01_PRODUCT_REQUIREMENTS.md) define the scope; [canonical API/data contracts](design/docs/spec/14_CONTRACTS.md) define target interfaces. Other design/spec chapters and ADRs elaborate these contracts. See the [small-PR implementation plan](design/docs/spec/09_IMPLEMENTATION_PLAN.md), [feature matrix](design/docs/spec/10_LANGUAGE_COVERAGE.md) and [traceability](design/docs/spec/15_TRACEABILITY.md).
 
-## Documents
+These are target specifications, not implemented capabilities or authorization to begin implementation. **No implementation milestone is currently active.** Codex sessions also follow [AGENTS.md](AGENTS.md), [CODEX_START.md](CODEX_START.md) and [contribution rules](design/CONTRIBUTING_IMPLEMENTATION.md).
 
-- `CODEX_START.md`: current entry instructions for Codex.
-- `AGENTS.md`: persistent repository conventions and scope boundaries.
-- `docs/LEXER_HANDOFF.md`: historical lexer handoff.
-- `docs/ARCHITECTURE.md`: layer boundaries, components, classes, APIs and ownership.
-- `docs/LEXER_SPEC.md`: lexer contract, recognition order, Delphi edge cases and diagnostics.
-- `docs/CST_SPEC.md`: implemented lossless CST/parser API, grammar and recovery contract.
-- `docs/TEST_PLAN.md`: concrete tests and acceptance criteria.
-- `docs/ROADMAP.md`: phased work with exit gates.
-- `docs/DECISIONS.md`: settled architectural decisions and intentionally open questions.
+## Implemented baseline
 
-## Reference documentation
+- Lossless lexer for identifiers, literals/numerals, comments/compiler directives, symbols and trivia, with UTF-16 spans and diagnostics.
+- Generic immutable Source-CST and M2.1–M2.6 grammar: expressions/postfix chains, assignments/blocks/if, basic declarations/routines, classical classes/records, ordinary properties and control flow. Unsupported syntax remains opaque; this is not complete Delphi grammar.
+- M2.7 independent corpus/coverage analyzer and reproducible pinned corpus. It is an analysis console, not the product formatter CLI.
 
-- Delphi syntax / identifiers / numbers: https://docwiki.embarcadero.com/RADStudio/Athens/en/Fundamental_Syntactic_Elements_(Delphi)
-- Delphi multiline strings: https://docwiki.embarcadero.com/RADStudio/Athens/en/String_Types_(Delphi)
-- Delphi compiler directives: https://docwiki.embarcadero.com/RADStudio/Athens/en/Delphi_Compiler_Directives_(List)_Index
-- Delphi native formatter CLI: https://docwiki.embarcadero.com/RADStudio/Florence/en/Formatter.EXE,_the_Command_Line_Formatter
-- DUnitX: https://github.com/VSoftTechnologies/DUnitX
+There is no production formatter, native config reader, product CLI, AST or include resolver yet. The open [PR #10](https://github.com/auchri/Formatter4Delphi/pull/10) contains the separate M2.8 directive pilot. A0/PR #11 neither incorporates nor merges it. Follow the [baseline strategy](design/docs/spec/12_CURRENT_CODE_AUDIT.md) before implementation.
 
-Documentation and test fixtures are project-authored. Do not copy implementation code from third-party parsers without a licensing review.
+## Implementation and historical evidence
+
+The documents under docs/ describe actual implementation, existing tests and historical milestones/decisions; they do not override the A0 target architecture.
+
+| Document | Purpose |
+|---|---|
+| [Lexer specification](docs/LEXER_SPEC.md) | implemented token/diagnostic contract |
+| [CST specification](docs/CST_SPEC.md) | implemented parser API, ownership, grammar and recovery |
+| [Architecture](docs/ARCHITECTURE.md) | implementation-era architecture and evolution |
+| [Test plan](docs/TEST_PLAN.md) | existing test obligations and history |
+| [M1 status](docs/M1_STATUS.md) / [M2 status](docs/M2_STATUS.md) | actual builds, test counts and limitations |
+| [Corpus analysis](docs/PARSER_COVERAGE.md) | pinned corpus, decoding, metrics and analyzer |
+| [Decisions](docs/DECISIONS.md) / [historical roadmap](docs/ROADMAP.md) | recorded decisions/milestones, not new commissions |
+| [Lexer handoff](docs/LEXER_HANDOFF.md) | historical handoff |
+
+Recorded local builds used Delphi 12 Community Edition Update 1, not exact 12.3. Consult the status documents for source baselines and counts; old results are not a fresh build of the current checkout.
 
 ## Build and test
 
-Open `DelphiFormatter.groupproj` in Delphi 12.3 and select Win64 / Debug.
-The runtime package contains only RTL-based core/lexer units; the console
-test projects compile their core/lexer and syntax/parser units directly and use bundled DUnitX.
-No package installation into the IDE is needed.
-Use **Project > Build All Projects** (German IDE: **Projekt > Alle Projekte
-erzeugen**), then run both `build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe` and `build\Win64\Debug\DelphiFormatter.Parser.Tests.exe`.
+Open DelphiFormatter.groupproj in Delphi 12.3, choose Win64/Debug and **Project > Build All Projects**. Core/lexer use only RTL; the console tests use bundled DUnitX and compile parser/syntax units directly. No IDE package installation is needed.
 
-From the RAD Studio command prompt (with `rsvars.bat` already loaded):
+From a RAD Studio command prompt with rsvars.bat loaded:
 
-```bat
+~~~bat
 msbuild DelphiFormatter.groupproj /t:Build /p:Config=Debug /p:Platform=Win64
 build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe
 build\Win64\Debug\DelphiFormatter.Parser.Tests.exe
-```
+~~~
 
-`DUnitXSource` defaults to `$(BDS)\source\DUnitX` and can be overridden with
-`/p:DUnitXSource=C:\path\to\DUnitX\Source`. Build artifacts go under `build/`.
-The test runner returns 0 for success, 1 for failed/empty test runs, 2 for runner errors.
-Check that a fresh executable was produced before running tests: the installed
-compiler can report unsupported command-line compilation with exit code 0.
+Run the lexer/parser runners from the repository root. Run the additional coverage test runner with an isolated writable working directory and its build subdirectory available, as it generates test reports; see the coverage/test documentation. Preserve original corpus inputs. DUnitXSource defaults to the installation's source/DUnitX directory and can be overridden as an MSBuild property. Artifacts go under build/.
 
-The lexer was built through the installed Delphi 12 Community
-Edition Update 1 IDE on Win64/Debug: **40/40 DUnitX tests passed**. That is a real
-IDE build and execution; a build with exactly Delphi 12.3 is still unverified.
+The test runners return 0 on success, 1 for failed/empty runs and 2 for runner exceptions. Verify fresh executables and corpus DCUs: the CE command-line compiler can refuse compilation while returning exit code 0. Do not report an old executable rerun as a fresh build.
 
-Implemented scope, validation results and limitations: [M1 status](docs/M1_STATUS.md).
+## Validate documentation
 
+Requires PowerShell 7. Run from the repository root:
 
+~~~powershell
+pwsh -NoProfile -File scripts/ValidateDesignDocs.ps1
+~~~
 
-M2.3 has **68/68 passing parser tests** on the same Win64/Debug toolchain.
-See [M2 status](docs/M2_STATUS.md) for CST coverage, limits and fresh artifacts.
+The [read-only validator](scripts/ValidateDesignDocs.ps1) derives its default repository path from the script location; an explicit -Repository path supports another checkout. It validates required documents, IDs, traceability, relative Markdown links and obvious competing fenced API definitions. Errors include file/line/cause and exit code 1; success returns 0. Warnings are separate. Text heuristics do not prove full semantic consistency, Delphi compilation or native formatter compatibility.
+
+## References
+
+- [Delphi syntax and lexical elements](https://docwiki.embarcadero.com/RADStudio/Athens/en/Fundamental_Syntactic_Elements_%28Delphi%29)
+- [Delphi string types](https://docwiki.embarcadero.com/RADStudio/Athens/en/String_Types_%28Delphi%29)
+- [Compiler directives](https://docwiki.embarcadero.com/RADStudio/Athens/en/Delphi_Compiler_Directives_%28List%29_Index)
+- [Native formatter CLI](https://docwiki.embarcadero.com/RADStudio/Florence/en/Formatter.EXE,_the_Command_Line_Formatter)
+- [DUnitX](https://github.com/VSoftTechnologies/DUnitX)
+
+Documentation and fixtures are project-authored. Do not copy third-party parser implementations without a licensing review.

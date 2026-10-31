@@ -1,0 +1,4 @@
+# Historical logs and manifests must retain their original bytes and hashes.
+* -text whitespace=cr-at-eol
+# Preserve the archived runner output's trailing blank line.
+coverage-isolated-rerun.txt whitespace=cr-at-eol,-blank-at-eof

@@ -1,0 +1,101 @@
+{
+  "archive": "Formatter4Delphi_Architektur_und_Anforderungen.zip",
+  "archiveSha256": "FC737C783CFDA376D16D7C6E647F2E51BF8AF11CB49DE743B2E7FB64FAA1B13F",
+  "files": [
+    {
+      "path": "design/CONTRIBUTING_IMPLEMENTATION.md",
+      "bytes": 2659,
+      "sha256": "C2E402EEB4B8B70673E1AAE44CE2897250EDE66E2C8324EB8BE9FF42B622E6BC"
+    },
+    {
+      "path": "design/README.md",
+      "bytes": 6505,
+      "sha256": "7CCB0CF31464B394D5E0BF246EE11C967C62C902146F45FB97DBE31AAC00E233"
+    },
+    {
+      "path": "design/docs/adr/ADR-001-source-cst.md",
+      "bytes": 2527,
+      "sha256": "4B5F066BC53CE1DEE496CA2BF76690388C260B84602CCDEF92BDCA876E24DAC8"
+    },
+    {
+      "path": "design/docs/adr/ADR-002-safe-editing.md",
+      "bytes": 1490,
+      "sha256": "04633E3C5C84EAF63585BDA745152A2DACEFBB3251C2DD79871E680A84107269"
+    },
+    {
+      "path": "design/docs/adr/ADR-003-native-config.md",
+      "bytes": 1798,
+      "sha256": "ADC133A75C6BA085D10E34E7342B69919BBE7541C855A45A020147B7B137EC19"
+    },
+    {
+      "path": "design/docs/spec/01_PRODUCT_REQUIREMENTS.md",
+      "bytes": 7764,
+      "sha256": "A5E0D2450BF342A95C8C5C1A01A757F7199B2F3984C726B8A03FBADCFD1F9C7D"
+    },
+    {
+      "path": "design/docs/spec/02_ARCHITECTURE.md",
+      "bytes": 9198,
+      "sha256": "BD446C143C562C01DB1E44416DFDEBD3A097E00657A56F755317D89804556252"
+    },
+    {
+      "path": "design/docs/spec/03_LEXER.md",
+      "bytes": 5694,
+      "sha256": "AEACF8319BC70F948C25FEA9B76B503714BE0F9DDDA36B347C594257ABF0850A"
+    },
+    {
+      "path": "design/docs/spec/04_SOURCE_CST.md",
+      "bytes": 9210,
+      "sha256": "D71C2952E7C956C849046E60D83888FE0895F0723023CD34FF46CECD545EABC3"
+    },
+    {
+      "path": "design/docs/spec/05_DIRECTIVES.md",
+      "bytes": 6967,
+      "sha256": "5894253BD6771FCD85F591DB82DD0CE572BB587C2A73A4588F43B968CFDD4DFA"
+    },
+    {
+      "path": "design/docs/spec/06_FORMATTER.md",
+      "bytes": 9654,
+      "sha256": "95945B63050CE6A2A404500B0DFC67A0A9D5DE8AB9CD13B3E9F3004EAF876669"
+    },
+    {
+      "path": "design/docs/spec/07_RAD_CONFIG.md",
+      "bytes": 8548,
+      "sha256": "05774134586E682081F1581635D9D97EE895987C06ADD3F5522820AF63E2C4BB"
+    },
+    {
+      "path": "design/docs/spec/08_TESTS.md",
+      "bytes": 7769,
+      "sha256": "E9F562B94D7CC8BB61C51014F3EF570702671C98FCB36BDAAED3B1ED6CF11AD5"
+    },
+    {
+      "path": "design/docs/spec/09_IMPLEMENTATION_PLAN.md",
+      "bytes": 8578,
+      "sha256": "A79CF085101BB50476A79F6EBEA98B8D913892D089BE7D89A6B6ABE1550A6820"
+    },
+    {
+      "path": "design/docs/spec/10_LANGUAGE_COVERAGE.md",
+      "bytes": 4809,
+      "sha256": "2AF99E238C34C75E7F5F8C9D1F26CDC7307AB463A033858FB72128312D1FBDFC"
+    },
+    {
+      "path": "design/docs/spec/11_OPEN_QUESTIONS.md",
+      "bytes": 3253,
+      "sha256": "3F631B06E37BB6FBFE4B849627C396C6B0D2E0D9D616838ABAA4D8EBB99E2597"
+    },
+    {
+      "path": "design/docs/spec/12_CURRENT_CODE_AUDIT.md",
+      "bytes": 4439,
+      "sha256": "5CA5ADFE3EC4F852187779584AFF19DC2AED1CBCF2951792008C456DC1C72703"
+    },
+    {
+      "path": "design/docs/spec/13_ACCEPTANCE_SCENARIOS.md",
+      "bytes": 3347,
+      "sha256": "A6EC54213EFE2A1561E5E5367E2280637283B0FB9523442A1D155A1C217D57EB"
+    },
+    {
+      "path": "design/fixtures/contracts/README.md",
+      "bytes": 1028,
+      "sha256": "8E6ACF48E7980D67D6A76218957ED0D526D3830D6FE095E88E02446AB6FA130A"
+    }
+  ]
+}
