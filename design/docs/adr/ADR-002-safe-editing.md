@@ -21,3 +21,7 @@ Codec/BOM/Byteorigin und gesicherter Writer bleiben außerhalb der Engine. Round
 ## Folgen / Verifikation
 
 FMT-01 bis FMT-10/IO-01 bis IO-04 → T-SLOT/T-S0/T-VERIFY/T-IDEM/T-IO/T-WRITE/T-CLI. Weitere Rule-/Partial-/Tokenrewritefreigaben nur mit eigenem Scope und spezifischem Nachweis. Native Kompatibilität bleibt vom Textoutcome getrennt.
+
+## S1-Umsetzung
+
+S1 implementiert diese Entscheidung für Assignmentabstände ([Evidenz](../../../docs/S1_STATUS.md)). Belegte Präzisierungen ohne Vertragslockerung: Eingefrorene angeforderte Slots verweigern nicht die Datei, sondern werden als TProtectedRange gemeldet (Kommentaranker frCommentAnchor, Literal-/CharCode-Anker frUnsupportedConstruct, EOL-Slot frUnsupportedWhitespace); Controlwhitespace in einem angeforderten Slot verweigert die Datei. Sich berührende Editspans gelten wegen geschlossener Grenzen als Konflikt. Die Verifikation prüft unabhängig von der Slotentscheidung erneut Ankerarten, Slotspans, Owner und Fingerprints; eine absichtlich geschwächte Slotfreigabe wurde dadurch im Mutationstest verweigert. FormatTextWithEditTransform ist eine ausdrückliche Testnaht für T-VERIFY, kein kanonischer API-Zusatz. Provenance-EvidenceIds sind eine kommagetrennte Zeichenkette statt eines geteilten dynamischen Arrays.

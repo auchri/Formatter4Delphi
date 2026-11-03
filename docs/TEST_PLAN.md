@@ -1,5 +1,19 @@
 # Test plan — DUnitX from day one
 
+## S1 formatter tests
+
+`DelphiFormatter.Formatting.Tests` is a separate DUnitX Win64/Debug project
+with 37 methods for the S0 assignment-spacing slice: exact outputs for all five
+internal `AssignmentSpacing` values, exact minimal edits with original token
+indices, frozen comment/literal/line-break slots, whole-file refusal for
+directives, includes, opaque/error/missing syntax, lexical errors and control
+whitespace, edit conflicts, protected-boundary and stale-snapshot rejection,
+a forced verification failure, LexicalSignatureV1/SyntaxFingerprintV1
+comparisons, SourceIdentity vectors, idempotence and determinism, result
+lifetime after options/lexer/tree release and repeated allocation. The E2E-01
+input `tests/Fixtures/FormatterAssignmentCorpus.pas` is compiled into the runner
+and only read. Method-to-contract mapping and actual results: `S1_STATUS.md`.
+
 ## M2.7 independent analyzer tests
 
 `DelphiFormatter.Coverage.Tests` is a separate DUnitX Win64/Debug project.

@@ -54,11 +54,15 @@ Präfix bei Produktionsunits jeweils DelphiFormatter.; das Rollen-/APIregister s
 | Fixtures.ClassRecordCorpus | gültige Aggregat-/Memberformen | kein vollständiger Typegrammarbeweis | T-GRAMMAR/T-ROLES/E-COMP |
 | Fixtures.PropertyCorpus | gewöhnliche Property-/Specifierformen | class/generic/komplexe Formen teilweise opaque | T-GRAMMAR/T-ROLES/E-COMP |
 | Fixtures.ControlFlowCorpus | gültige Loop/Case/Try/Elsepositive | with/inline-for nur opaque Recovery | T-GRAMMAR/T-REC/E-COMP |
+| Core.TextEdits (S1) | TTextEdit, kanonische Normalisierung/Konflikte, einmalige Rückwärtsanwendung | keine Syntax-/Config-/IO-Abhängigkeit | T-SLOT/T-API |
+| Syntax.Query (S1, minimal) | geliehene Assignment-/Routinerollen, erste/letzte Ankerblätter | weitere Rollen nur je beauftragtem Schritt | T-ROLES/T-OWN |
+| Formatting.Options/Safety/Verification/Engine (S1) | S0-Optionen ohne Defaults, positive Slotfreigabe, LexicalSignatureV1/SyntaxFingerprintV1, FormatText/TFormatResult | nur Assignmentabstände; kein Partial/Config/IO | T-S0/T-SLOT/T-VERIFY/T-IDEM/T-OWN/T-API |
+| Tests.Formatting, Fixtures.FormatterAssignmentCorpus (S1) | 37 Formatter-Tests, kompilierte E2E-01-Quelle | Fixture wird nur gelesen, nie formatiert zurückgeschrieben | T-S0/T-VERIFY/E-COMP |
 | Fixtures.DirectiveCorpus (nur #10) | compilierbare enge Pilotfälle | nicht im gepinnten M2.7-Manifest, keine allgemeinen Branchrollen | T-DIR/T-ROLES/E-COMP |
 
 Dateinamen/Ordner unter src und tests sind unverändert. Die drei Test-DPRs sind Console-Runs; Coverage.dpr ist Analyzer; Lexer.dproj das RTL-Lexerpackage. Group/DPR/DPROJ bei neuen Units nur um benötigte Referenzen erweitern, keine VCL/FMX. Existierende Skripte Fetch/Test/Validate/Compare behalten ihre Analyseverantwortung. Corpusmanifest, Sourcehashes/Archives/Encodingpolicy bleiben unverändert.
 
-Formatter-, Config-, produktive IO- und CLIunits existieren noch nicht; keine Bestandsklassen in diese Rollen umdeuten. Syntax.Query/Directives/Parser.TokenWindow werden erst im jeweils beauftragten Schritt angelegt.
+Seit S1 existieren Core.TextEdits, Formatting.Options/Safety/Verification/Engine und eine minimale Syntax.Query (nur Assignment-/Routinerollen und Ankerkanten, keine Fakttabelle); Evidenz und Abweichungen in [S1-Status](../../../docs/S1_STATUS.md). Config-, produktive IO- und CLIunits existieren noch nicht; keine Bestandsklassen in diese Rollen umdeuten. Syntax.Directives/Parser.TokenWindow und weitere Rollenqueries werden erst im jeweils beauftragten Schritt angelegt.
 
 ## Evidenzgrenzen
 

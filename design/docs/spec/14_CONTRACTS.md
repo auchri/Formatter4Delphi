@@ -1,6 +1,6 @@
 # 14 – Kanonische Daten- und API-Verträge (A0)
 
-**Status:** normative Zielspezifikation zur A0-Freigabe, keine implementierte API. Bestehende APIs bleiben gültig. **Einziger Definitionsort** für die hier genannten Typen und Funktionen. Andere Dokumente referenzieren diesen Vertrag; sie dürfen keine abweichenden Signaturen definieren. Anforderungen und Nachweise: [01](01_PRODUCT_REQUIREMENTS.md), [15](15_TRACEABILITY.md).
+**Status:** normative Zielspezifikation zur A0-Freigabe, keine implementierte API, außer: S1 implementiert die Abschnitte 6 (TFormatRefusalReason, TSlotDecision, TProtectedRange), 7, 8 (nur S0-Felder), 9 und 11 (in Formatting.Verification); Abweichungen/Präzisierungen in ADR-002 und [S1-Status](../../../docs/S1_STATUS.md). Bestehende APIs bleiben gültig. **Einziger Definitionsort** für die hier genannten Typen und Funktionen. Andere Dokumente referenzieren diesen Vertrag; sie dürfen keine abweichenden Signaturen definieren. Anforderungen und Nachweise: [01](01_PRODUCT_REQUIREMENTS.md), [15](15_TRACEABILITY.md).
 
 ## 1. Regeln für alle Ergebnisse
 
