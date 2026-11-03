@@ -8,6 +8,8 @@ Historischer Review hat die mitgelieferten Profile aus Studio/23.0/bin/config ei
 
 Beobachtete Delphiwerte umfassen TabSize/IndentSize/UseTabs in DelphiEditor, AssignSpaces, IndentCompilerDirectives, NumOfEmptyLinesAroundCompilerDirectives und CompilerDirectivesCapitalization. Das sind **ältere lokale Beispieldaten**, kein Schema-/Verhaltensbeweis für 12.3. Root/Assemblies/Comments/Typ-/Kategorieattribute gehören zur Importinventur; Version=3 ist keine RAD-Produktversion.
 
+**O1-Evidenz** ([Bericht](../../../tests/FormatterOracle/O1_REPORT.md), [Manifest](../../../tests/FormatterOracle/manifest/o1-manifest.json)): ausschließlich Build 29.0.51961.7529 (BDS 23.0, Starter), kein 12.3. Shipped-Hashes identisch mit dem Inventar oben. Alle 7 obigen Delphi-Keys vorhanden, in Default/Compact/Wide wertgleich. IDE-geschriebene Profile ergänzen Config.FileVersion/FileSource/Profile (Category Internal, IsBrowsable, ohne Levels), Exporte zusätzlich UTF-8-BOM; Save As überschreibt auch das aktive Benutzerprofil. Wertedomänen der Enumtypen stammen aus Assembly-Metadaten, Profile enthalten keine DefaultValue. Keine Formatierwirkung beobachtet; Unknown/Duplicate/Invalid/Encoding bleiben O2-Experimente.
+
 ## Getrennte Verarbeitung
 
 1. **NativeReader:** Byteencoding/syntaktische Struktur mit sicheren Limits, Rohbytes/Eintragsreihenfolge/Originalorte und unbekannte Elemente erhalten. DTD/externe Entities untersagen, nie Assemblies/Typen aus Profil laden, kein string.Replace-Parser.

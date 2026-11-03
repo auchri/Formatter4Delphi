@@ -1,0 +1,1265 @@
+{
+  "manifestFormat": "formatter4delphi.oracle-manifest/1",
+  "milestone": "O1",
+  "description": "O1 research inventory and O2 experiment plan. Hashes describe local artifacts that are NOT in the repository.",
+  "repositoryBase": {
+    "branch": "main",
+    "commit": "e30c48e3bed4a0ee299b2dda937c398fef917f43",
+    "note": "PR #12 (S1) merged. PR #10 (M2.8 pilot) open at 65000fca7ce3890541aa1f691a17666ef47cfb92 and not used."
+  },
+  "toolchains": [
+    {
+      "id": "TC-BDS23-29.0.51961.7529",
+      "observedOn": "2026-11-03",
+      "ide": {
+        "bdsRegistryKey": "BDS\\23.0",
+        "registryProductVersion": "29",
+        "registryEdition": "Starter",
+        "installLanguage": "DE",
+        "bdsExe": {
+          "location": "$(BDS)\\bin\\bds.exe",
+          "sha256": "902D731F6977DCD168384224C02CE12894795AFEFF442643CF38B1C7AFA03446",
+          "sizeBytes": 1810416,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0",
+          "productName": "Personal"
+        }
+      },
+      "compiler": {
+        "dcc32290": {
+          "location": "$(BDS)\\bin\\dcc32290.dll",
+          "sha256": "4C358B9D9C80526DDE66E6B410B6AAD139AA366B1ECB404EC009CA5CECF84407",
+          "sizeBytes": 3387880,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0.51961.7529",
+          "productName": "Embarcadero Delphi/C++Builder (Standard)"
+        },
+        "dcc64290": {
+          "location": "$(BDS)\\bin\\dcc64290.dll",
+          "sha256": "B78BC1C84A70BD0CA266AA7151CD88BEDC9D0D247A51A2BB96551FF600EA48BA",
+          "sizeBytes": 4313064,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0.51961.7529",
+          "productName": "Embarcadero Delphi/C++Builder (Enterprise)"
+        },
+        "commandLineCompiler": "unavailable: dcc32.exe/dcc64.exe print \"This version of the product does not support command line compiling.\" (observed)"
+      },
+      "formatter": {
+        "exe": {
+          "location": "$(BDS)\\bin\\Formatter.exe",
+          "sha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "sizeBytes": 373232,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0.51961.7529",
+          "productName": "Embarcadero RAD Studio",
+          "fileDescription": "Standalone Formatter",
+          "peMachine": "x86",
+          "peSubsystem": "console",
+          "managedAssembly": "Formatter, Version=29.0.0.0, Culture=neutral, PublicKeyToken=91d62ebb5b0d1b1b"
+        },
+        "supportingAssemblies": [
+          {
+            "location": "$(BDS)\\bin\\Embarcadero.Modeling.Formatter.dll",
+            "sha256": "2E9291A2DD1334570FAD8488BB3F9B8E242B0875DE343127E6058DFA6B285E67",
+            "sizeBytes": 229872,
+            "fileVersion": "29.0.51961.7529",
+            "productVersion": "29.0.51961.7529",
+            "productName": "Embarcadero RAD Studio"
+          },
+          {
+            "location": "$(BDS)\\bin\\Embarcadero.Modeling.Formatter.Resources.dll",
+            "sha256": "E04522FE60F93B7100FE3B9CE99D28DDDC9A54A4D470116F7ECBA238EF83EE39",
+            "sizeBytes": 13296,
+            "fileVersion": "29.0.51961.7529",
+            "productVersion": "29.0.51961.7529",
+            "productName": "Embarcadero RAD Studio"
+          },
+          {
+            "location": "$(BDS)\\bin\\Embarcadero.Modeling.OPENAPI3.DLL",
+            "sha256": "A94CFF8068ED62388216BB31AF471D1F731395CB7DDB2675B5967B21FEAD8E57",
+            "sizeBytes": 238064,
+            "fileVersion": "29.0.51961.7529",
+            "productVersion": "29.0.51961.7529",
+            "productName": "Embarcadero RAD Studio"
+          }
+        ],
+        "documentedParameters": {
+          "source": "usage dialog of this Formatter.exe (run O1-X01-R1); the RAD Studio online help was not consulted in O1",
+          "parameters": [
+            "-cpp",
+            "-delphi",
+            "-config <file>",
+            "-e <encoding>",
+            "-d <directory>",
+            "-r",
+            "-b",
+            "-log <file>",
+            "-silent",
+            "<filename>..."
+          ],
+          "delphiExtensions": [
+            ".pas",
+            ".dpr",
+            ".dpk",
+            ".dpkw",
+            ".inc"
+          ],
+          "unverified": "Accepted values of -e, precedence of -config over IDE/user settings, behavior without -config, exit codes for success/failure."
+        }
+      },
+      "nativeConfigSchema": {
+        "rootElement": "TgConfig",
+        "versionAttribute": "3",
+        "note": "Profile schema attribute only; not a product or formatter version."
+      },
+      "productRelease": {
+        "claim": "RAD Studio 12 Athens Update 1 (12.1)",
+        "evidenceStatus": "derived-unverified",
+        "basis": "Build 29.0.51961.7529 equals the build the repository history labels \"CE 12 Update 1\"; no vendor release table was checked in O1."
+      },
+      "matchesTarget12_3": false,
+      "targetNote": "Delphi 12.3 artifacts are not installed. Every observation in this manifest is restricted to this toolchain; 12.3 compatibility is unverified."
+    }
+  ],
+  "environments": [
+    {
+      "id": "ENV-WIN11-DEAT",
+      "os": "Microsoft Windows NT 10.0.26300.0",
+      "osArchitecture": "X64",
+      "culture": "de-AT",
+      "uiCulture": "de-DE",
+      "ansiCodePage": 1252
+    }
+  ],
+  "profiles": [
+    {
+      "id": "PR-SHIP-DEFAULT",
+      "origin": "shipped",
+      "committed": false,
+      "location": "$(BDS)\\bin\\config\\Formatter_Default.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+      "sizeBytes": 28938,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 158,
+      "inventoryLabel": "shipped:Formatter_Default.config",
+      "note": "Byte-identical to Formatter.config."
+    },
+    {
+      "id": "PR-SHIP-COMPACT",
+      "origin": "shipped",
+      "committed": false,
+      "location": "$(BDS)\\bin\\config\\Formatter_Compact.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "ED923D396E648EC77DAFC4B6666F8ACB39ED096874330E706ABFB440F4CE811B",
+      "sizeBytes": 28940,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 158,
+      "inventoryLabel": "shipped:Formatter_Compact.config",
+      "note": ""
+    },
+    {
+      "id": "PR-SHIP-WIDE",
+      "origin": "shipped",
+      "committed": false,
+      "location": "$(BDS)\\bin\\config\\Formatter_Wide.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "62C57C6E86B82769820B5F2FD27F1A655A358FF04F9A809EB601EB94C6A0EB98",
+      "sizeBytes": 28987,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 158,
+      "inventoryLabel": "shipped:Formatter_Wide.config",
+      "note": "CppFormatter.ForceBraces has Category CppIndentation here, CppLinebreaks elsewhere."
+    },
+    {
+      "id": "PR-SHIP-FORMATTER",
+      "origin": "shipped",
+      "committed": false,
+      "location": "$(BDS)\\bin\\config\\Formatter.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+      "sizeBytes": 28938,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 158,
+      "inventoryLabel": "shipped:Formatter.config",
+      "note": "Byte-identical to Formatter_Default.config."
+    },
+    {
+      "id": "PR-IDE-ACTIVE-BEFORE",
+      "origin": "ide-active",
+      "committed": false,
+      "location": "%APPDATA%\\Embarcadero\\BDS\\23.0\\Formatter.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "C4CA4A64CDF2FF0613704624B2597A0A91751F6C755EF532F9D9642C3D4016C2",
+      "sizeBytes": 29064,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 159,
+      "inventoryLabel": "ide-active-snapshots:Formatter.before-export.config",
+      "note": "Active IDE profile before O1-X02; restored to these exact bytes after the experiment."
+    },
+    {
+      "id": "PR-IDE-ACTIVE-AFTER",
+      "origin": "ide-active",
+      "committed": false,
+      "location": "%APPDATA%\\Embarcadero\\BDS\\23.0\\Formatter.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "F94372C0E429EEC911267187C6F4996BBB2D13504B28E6A83D21AA634EF0E9B2",
+      "sizeBytes": 29337,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 161,
+      "inventoryLabel": "ide-active-snapshots:Formatter.after-export.config",
+      "note": "Active IDE profile as written by the IDE during O1-X02 (contains the AssignSpaces change)."
+    },
+    {
+      "id": "PR-IDE-EXPORT-DEFAULT",
+      "origin": "ide-export",
+      "committed": false,
+      "location": "local/ide-exports/Default.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "96BA1A3152BBFF08E695C6949C1D53CD89335D700B16F619EF5097D641C9CB31",
+      "sizeBytes": 29395,
+      "encoding": {
+        "bom": "utf-8",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 161,
+      "inventoryLabel": "ide-exports:Default.config",
+      "note": "IDE Save As after selecting the Default profile."
+    },
+    {
+      "id": "PR-IDE-EXPORT-ASSIGN-NONE",
+      "origin": "ide-export",
+      "committed": false,
+      "location": "local/ide-exports/Default no space.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "88B1248FEDD50457331626AF7D1557E99F9D24A44BE038E620D3BE971769D9A5",
+      "sizeBytes": 29403,
+      "encoding": {
+        "bom": "utf-8",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 161,
+      "inventoryLabel": "ide-exports:Default no space.config",
+      "note": "IDE Save As after changing only the assignment-operator spacing to None."
+    },
+    {
+      "id": "PR-FX-MIN-ASSIGN-NONE",
+      "origin": "self-authored",
+      "committed": true,
+      "path": "fixtures/profiles/O1MinimalAssignNone.config",
+      "sha256": "39729D395A5C85509A061CF7D550013C81C2CA4003C68640FED89F537D275076",
+      "sizeBytes": 440,
+      "purpose": "Only DelphiFormatter.AssignSpaces=None; all other options absent (missing-option handling).",
+      "evidenceStatus": "designed-unobserved",
+      "note": "Project-authored negative/minimal profile. How the original IDE or Formatter.exe treats it is unobserved."
+    },
+    {
+      "id": "PR-FX-UNKNOWN",
+      "origin": "self-authored",
+      "committed": true,
+      "path": "fixtures/profiles/O1UnknownOption.config",
+      "sha256": "B522AA0F7E919B8B890DA646AAB9789E4C0654A6490039F2D195A6297DCAB8FE",
+      "sizeBytes": 612,
+      "purpose": "Valid AssignSpaces plus an unknown option name and an unknown element.",
+      "evidenceStatus": "designed-unobserved",
+      "note": "Project-authored negative/minimal profile. How the original IDE or Formatter.exe treats it is unobserved."
+    },
+    {
+      "id": "PR-FX-DUPLICATE",
+      "origin": "self-authored",
+      "committed": true,
+      "path": "fixtures/profiles/O1DuplicateConflict.config",
+      "sha256": "C9949934033A35CCC2DFB7DB8BD1C1F7CF3C21DE24708244CBA165B132569B8D",
+      "sizeBytes": 645,
+      "purpose": "AssignSpaces twice with conflicting values None then BeforeAndAfter.",
+      "evidenceStatus": "designed-unobserved",
+      "note": "Project-authored negative/minimal profile. How the original IDE or Formatter.exe treats it is unobserved."
+    },
+    {
+      "id": "PR-FX-INVALID",
+      "origin": "self-authored",
+      "committed": true,
+      "path": "fixtures/profiles/O1InvalidValues.config",
+      "sha256": "29863B2313A83E808E9E95C236E07A744B33432D2435ACE8F8E46CAF46689CBA",
+      "sizeBytes": 570,
+      "purpose": "AssignSpaces outside USE_SPACE domain and non-integer TabSize.",
+      "evidenceStatus": "designed-unobserved",
+      "note": "Project-authored negative/minimal profile. How the original IDE or Formatter.exe treats it is unobserved."
+    },
+    {
+      "id": "PR-FX-MIN-UTF16",
+      "origin": "self-authored",
+      "committed": true,
+      "path": "fixtures/profiles/O1MinimalAssignNoneUtf16.config",
+      "sha256": "F20EF24189469D5446171ABA0736FDEE26F9AF2C3B5068DBC3D06CC6B87920B4",
+      "sizeBytes": 918,
+      "purpose": "Same options as PR-FX-MIN-ASSIGN-NONE, UTF-16LE with BOM and encoding=\"utf-16\".",
+      "evidenceStatus": "designed-unobserved",
+      "note": "Project-authored negative/minimal profile. How the original IDE or Formatter.exe treats it is unobserved."
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "FX-ASSIGN",
+      "path": "fixtures/delphi/O1AssignSpacing.pas",
+      "sha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+      "sizeBytes": 546,
+      "purpose": "Assignment := with none/one/two/tab spacing, line-broken RHS, for-loop, string/comment decoys, if/else on one line.",
+      "encoding": "ascii",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    },
+    {
+      "id": "FX-NESTED",
+      "path": "fixtures/delphi/O1NestedStatements.pas",
+      "sha256": "C10DF45FD9C414026224EEFEE7D6E8C6D6984150231437C511375004D792E53C",
+      "sizeBytes": 819,
+      "purpose": "Nested local function, if/else, for/while, case with else, try/finally, repeat/until.",
+      "encoding": "ascii",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "lossless with PAR001/PAR003: the M2.6 grammar does not structure the nested local routine (known F4D parser gap, not a fixture defect claim)"
+    },
+    {
+      "id": "FX-TABS",
+      "path": "fixtures/delphi/O1TabsIndent.pas",
+      "sha256": "E922B3D7D4D58084DF78FA20931C31E650F02F63505185CA7DDF08A9001A02FE",
+      "sizeBytes": 339,
+      "purpose": "Tab, space and mixed tab/space indentation in declarations and statements.",
+      "encoding": "ascii",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    },
+    {
+      "id": "FX-EOL-CRLF",
+      "path": "fixtures/delphi/O1LineEndingsCRLF.pas",
+      "sha256": "70D61C5ABE2537A5204E4BE9BDC746C2CD58E09089669288A474A0A5906684B0",
+      "sizeBytes": 346,
+      "purpose": "Line-ending baseline: CRLF only, final CRLF.",
+      "encoding": "ascii",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    },
+    {
+      "id": "FX-EOL-LF",
+      "path": "fixtures/delphi/O1LineEndingsLF.pas",
+      "sha256": "520CA3F56CED196306DD3519DE9B52306C48547216C2E5EAB8F61618933FDEC2",
+      "sizeBytes": 320,
+      "purpose": "Same code, LF only, final LF.",
+      "encoding": "ascii",
+      "eol": "lf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    },
+    {
+      "id": "FX-EOL-MIXED",
+      "path": "fixtures/delphi/O1LineEndingsMixed.pas",
+      "sha256": "E1C8343F338E3B6C6340EAC63DA4E4661A105DCC34C6424399797C1372ED9985",
+      "sizeBytes": 351,
+      "purpose": "Same code, CRLF/LF/CR rotating, no final newline.",
+      "encoding": "ascii",
+      "eol": "mixed",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    },
+    {
+      "id": "FX-COMMENTS",
+      "path": "fixtures/delphi/O1CommentsStrings.pas",
+      "sha256": "5D5C6F01A8DD9A971B7193765EE2A844683A6021A8E49E1F290A432321335FD6",
+      "sizeBytes": 682,
+      "purpose": "All three comment forms, multi-line comment, string literals containing := and comment openers, doubled quotes, char codes, non-ASCII text.",
+      "encoding": "utf-8-bom",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    },
+    {
+      "id": "FX-DIRECTIVES",
+      "path": "fixtures/delphi/O1CompilerDirectives.pas",
+      "sha256": "414752D14B11E5E69FF28BA38F1A0FB06EAA1B0EBD2766419F05517BCBD0E61C",
+      "sizeBytes": 719,
+      "purpose": "IFDEF/ELSE/ENDIF, IF Defined/IFEND, IFOPT, lowercase ifdef with inactive uses clause, indented directives, region/endregion.",
+      "encoding": "ascii",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": {
+        "designedValidFor": [
+          {
+            "defines": []
+          },
+          {
+            "defines": [
+              "DEBUG"
+            ]
+          }
+        ],
+        "designedInvalidFor": [
+          {
+            "defines": [
+              "O1_UNDEFINED_SYMBOL"
+            ],
+            "reason": "activates uses of a unit that does not exist"
+          }
+        ],
+        "note": "Design intent only; no configuration was compiled."
+      },
+      "f4dParse": "lossless, whole file opaque (PAR003 directive fallback, expected for S0/M2.7)"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "O1-X01",
+      "title": "Formatter.exe parameter discovery",
+      "experimentRefs": [
+        "E-ORACLE"
+      ],
+      "status": "executed",
+      "runs": [
+        {
+          "runId": "O1-X01-R1",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-?"
+          ],
+          "workingDirectory": "<isolated-empty-scratch-dir>",
+          "encodingArgument": null,
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 1,
+          "repetitionsIdentical": null,
+          "observedDifference": "No console output. A modal window titled \"Embarcadero Source Code Formatter\" showed the usage text and blocked until closed (WM_CLOSE); then exit code 1. No file was created in the working directory.",
+          "evidenceStatus": "observed",
+          "supportedScope": "Parameter list of this exact Formatter.exe. Shows that an unrecognized/help argument opens a blocking dialog; O2 must run with a timeout and must not rely on console output."
+        }
+      ]
+    },
+    {
+      "id": "O1-X02",
+      "title": "IDE Save As export with exactly one changed Delphi option",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "executed",
+      "procedure": "German IDE UI. Tools > Optionen > Formatierer > Profile und Status: Default profile selected, Save As -> Default.config. Then the Delphi spaces option \"Leerzeichen um Zuweisungsoperatoren festlegen\" set to \"Keine\", Save As -> \"Default no space.config\". Performed manually by the repository owner; a planned third export after restoring the value was not made.",
+      "runs": [
+        {
+          "runId": "O1-X02-R1",
+          "status": "executed",
+          "kind": "ide-export",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": null,
+          "profileId": "PR-IDE-EXPORT-DEFAULT",
+          "profileSha256": "96BA1A3152BBFF08E695C6949C1D53CD89335D700B16F619EF5097D641C9CB31",
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": null,
+          "workingDirectory": null,
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": 1,
+          "repetitionsIdentical": null,
+          "observedDifference": "Against shipped Default: UTF-8 BOM added; Formatter.Confirmation True->False (same as the active IDE profile before the experiment); three appended options Config.FileVersion=29.0.51961.7529, Config.FileSource=<absolute export path>, Config.Profile=<export file name>, each Type System.String, Category Internal, IsBrowsable False, no Levels attribute. All 158 original options keep order, types and categories.",
+          "evidenceStatus": "observed",
+          "supportedScope": "IDE export format of this toolchain only."
+        },
+        {
+          "runId": "O1-X02-R2",
+          "status": "executed",
+          "kind": "ide-export",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": null,
+          "profileId": "PR-IDE-EXPORT-ASSIGN-NONE",
+          "profileSha256": "88B1248FEDD50457331626AF7D1557E99F9D24A44BE038E620D3BE971769D9A5",
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": null,
+          "workingDirectory": null,
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": 1,
+          "repetitionsIdentical": null,
+          "observedDifference": "Against PR-IDE-EXPORT-DEFAULT: only DelphiFormatter.AssignSpaces BeforeAndAfter->None plus the export-specific Config.FileSource/Config.Profile values. UI label \"Leerzeichen um Zuweisungsoperatoren festlegen\", UI value \"Keine\" maps to stored value None.",
+          "evidenceStatus": "observed",
+          "supportedScope": "Mapping of one UI value to one stored value for this toolchain and UI language."
+        },
+        {
+          "runId": "O1-X02-R3",
+          "status": "executed",
+          "kind": "ide-side-effect",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": null,
+          "profileId": "PR-IDE-ACTIVE-AFTER",
+          "profileSha256": "F94372C0E429EEC911267187C6F4996BBB2D13504B28E6A83D21AA634EF0E9B2",
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": null,
+          "workingDirectory": null,
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": 1,
+          "repetitionsIdentical": null,
+          "observedDifference": "The active %APPDATA% profile was rewritten at the same second as the second export: AssignSpaces=None, Config.FileSource=<its own absolute path>, Config.Profile=\"\" appended, no BOM. Restored afterwards from a byte backup (hash verified).",
+          "evidenceStatus": "observed",
+          "supportedScope": "Save As in this IDE also persists the current settings as the active profile."
+        }
+      ]
+    },
+    {
+      "id": "O1-X03",
+      "title": "Static inventory and comparison of shipped, active and exported profiles",
+      "experimentRefs": [
+        "E-CONFIG",
+        "E-XML"
+      ],
+      "status": "executed",
+      "runs": [
+        {
+          "runId": "O1-X03-R1",
+          "status": "executed",
+          "kind": "static-analysis",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": null,
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": "090F23FBAE2265BC54C2E61EA433FB808B6B7CA4B90DB209399EC28639C43B3E",
+          "commandLine": [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            "tests/FormatterOracle/scripts/Get-NativeArtifactInventory.ps1",
+            "-BdsRoot",
+            "<BDS>",
+            "-UserConfigDir",
+            "<APPDATA>\\Embarcadero\\BDS\\23.0",
+            "-ExtraProfileDir",
+            "tests/FormatterOracle/local/ide-exports,tests/FormatterOracle/local/ide-active-snapshots",
+            "-OutFile",
+            "<out.json>"
+          ],
+          "workingDirectory": "<repository-root>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "See inventory JSON and O1_REPORT.md. Two runs produced byte-identical output.",
+          "evidenceStatus": "observed",
+          "supportedScope": "Profile structure and stored values; says nothing about formatting behavior."
+        }
+      ]
+    },
+    {
+      "id": "O1-X04",
+      "title": "Declared value domains from OpenAPI3 assembly metadata",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "executed",
+      "runs": [
+        {
+          "runId": "O1-X04-R1",
+          "status": "executed",
+          "kind": "static-analysis",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": null,
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": null,
+          "workingDirectory": null,
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "All 17 Type attribute values resolve to System.Boolean/Int32/String or a Borland.Together.OpenAPI3.Config enum declared in Embarcadero.Modeling.OPENAPI3.DLL. Every stored value in all observed profiles lies inside its declared domain. CfgFileAttribute also declares DisplayName, IsReadOnly, DefaultValue and Level, which no observed profile uses.",
+          "evidenceStatus": "observed",
+          "supportedScope": "Declared domains only (metadata constants, no code loaded). Acceptance by Formatter.exe is unobserved."
+        }
+      ]
+    },
+    {
+      "id": "O1-X05",
+      "title": "Supplementary F4D lossless parse of the fixtures",
+      "experimentRefs": [],
+      "status": "executed",
+      "runs": [
+        {
+          "runId": "O1-X05-R1",
+          "status": "executed",
+          "kind": "static-analysis",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": null,
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "build/Win64/Debug/DelphiFormatter.Coverage.exe",
+            "--directory",
+            "tests/FormatterOracle/fixtures/delphi",
+            "--include",
+            "*.pas",
+            "--output",
+            "<scratch>"
+          ],
+          "workingDirectory": "<repository-root>",
+          "encodingArgument": null,
+          "exitCode": 0,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": 1,
+          "repetitionsIdentical": null,
+          "observedDifference": "All 8 fixtures lossless (tool-internal repeat 2, deterministic=true). 6 structured, FX-DIRECTIVES opaque (directive fallback), FX-NESTED syntax_diagnostics at the nested local function.",
+          "evidenceStatus": "observed",
+          "supportedScope": "Existing local coverage binary (sha256 2E826E3C66730FA5DD217B8F14052A52A1E654471EEFAC66C0CEEDCB55C2A7A2, not rebuilt in O1). Not compiler evidence."
+        }
+      ]
+    },
+    {
+      "id": "O1-B01",
+      "title": "Delphi 12.3 artifact inventory",
+      "experimentRefs": [
+        "E-CONFIG",
+        "E-COMP"
+      ],
+      "status": "blocked",
+      "reason": "No RAD Studio 12.3 installation available; only BDS 23.0 build 29.0.51961.7529 (Starter).",
+      "runs": []
+    },
+    {
+      "id": "O1-B02",
+      "title": "Compile the fixtures",
+      "experimentRefs": [
+        "E-COMP"
+      ],
+      "status": "blocked",
+      "reason": "The installed edition has no command-line compiler; fixtures stay designed-not-compiled.",
+      "runs": []
+    },
+    {
+      "id": "O2-P01",
+      "title": "AssignSpaces None versus BeforeAndAfter on the assignment fixture",
+      "experimentRefs": [
+        "E-ORACLE",
+        "E-CONFIG"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Which bytes change between the two exports (only AssignSpaces differs)? Are string/comment decoys untouched? Is the result repeatable?",
+      "decisionUse": "First possible C2 capability for (TC, AssignSpaces, None/BeforeAndAfter, assignment statements).",
+      "runs": [
+        {
+          "runId": "O2-P01-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-IDE-EXPORT-ASSIGN-NONE",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P02",
+      "title": "Profile with only one option (missing options)",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Does Formatter.exe accept a partial profile, and which values does it use for absent options (compare with PR-SHIP-DEFAULT run)?",
+      "decisionUse": "Default policy for absent keys; until observed, C1/C2 treat missing required values as error.",
+      "runs": [
+        {
+          "runId": "O2-P02-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-FX-MIN-ASSIGN-NONE",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P03",
+      "title": "Unknown option and unknown element",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Ignored, rejected, logged or dialog?",
+      "decisionUse": "Recognition rule for unknown keys/elements.",
+      "runs": [
+        {
+          "runId": "O2-P03-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-FX-UNKNOWN",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P04",
+      "title": "Duplicate option with conflicting values",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "First wins, last wins or error?",
+      "decisionUse": "Duplicate rule; until observed C1 reports ambiguous.",
+      "runs": [
+        {
+          "runId": "O2-P04-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-FX-DUPLICATE",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P05",
+      "title": "Values outside declared domains",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Fallback to default, error, or abort?",
+      "decisionUse": "Typed-invalid handling.",
+      "runs": [
+        {
+          "runId": "O2-P05-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-FX-INVALID",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P06",
+      "title": "UTF-16 profile encoding",
+      "experimentRefs": [
+        "E-CONFIG",
+        "E-XML"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Same result as PR-FX-MIN-ASSIGN-NONE?",
+      "decisionUse": "Accepted profile encodings (UTF-8 BOM/no BOM already observed as IDE output).",
+      "runs": [
+        {
+          "runId": "O2-P06-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-FX-MIN-UTF16",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P07",
+      "title": "Source encodings with and without -e",
+      "experimentRefs": [
+        "E-BYTES"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Is the BOM preserved, how are non-ASCII characters written, which -e values are accepted?",
+      "decisionUse": "IO1/E-BYTES byte versus text parity.",
+      "runs": [
+        {
+          "runId": "O2-P07-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": null,
+          "inputFixtureId": "FX-COMMENTS",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "-e",
+            "<encoding-under-test>",
+            "<abs:run-dir>/O1CommentsStrings.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P08",
+      "title": "Line endings CRLF/LF/mixed",
+      "experimentRefs": [
+        "E-BYTES",
+        "E-LAYOUT"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Preserved or normalized (also for FX-EOL-CRLF and FX-EOL-LF)? Final newline added?",
+      "decisionUse": "EOL policy evidence; F4D default stays preserve.",
+      "runs": [
+        {
+          "runId": "O2-P08-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": null,
+          "inputFixtureId": "FX-EOL-MIXED",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "<abs:run-dir>/O1LineEndingsMixed.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P09",
+      "title": "TabSize/IndentSize/UseTabs, one at a time",
+      "experimentRefs": [
+        "E-TABS"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Effect of each DelphiFormatter editor value in isolation; byte diff of indentation.",
+      "decisionUse": "E-TABS precedence and native tab semantics.",
+      "runs": [
+        {
+          "runId": "O2-P09-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": null,
+          "inputFixtureId": "FX-TABS",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-variant>",
+            "<abs:run-dir>/O1TabsIndent.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P10",
+      "title": "Directive options on the directive fixture",
+      "experimentRefs": [
+        "E-CONDITIONAL"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Effect of IndentCompilerDirectives, NumOfEmptyLinesAroundCompilerDirectives, CompilerDirectivesCapitalization; are inactive branches changed?",
+      "decisionUse": "Parity evidence only; never a safety argument.",
+      "runs": [
+        {
+          "runId": "O2-P10-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": null,
+          "inputFixtureId": "FX-DIRECTIVES",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-variant>",
+            "<abs:run-dir>/O1CompilerDirectives.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P11",
+      "title": "Non-interactive failure behavior",
+      "experimentRefs": [
+        "E-ORACLE"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Does -silent suppress dialogs? Exit code and log content for a missing input/profile.",
+      "decisionUse": "Runner timeout/exit-code contract for O2.",
+      "runs": [
+        {
+          "runId": "O2-P11-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": null,
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:missing-profile>",
+            "-log",
+            "<abs:run-dir>/formatter.log",
+            "<abs:run-dir>/does-not-exist.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    },
+    {
+      "id": "O2-P12",
+      "title": "Influence of IDE export metadata (Config.*) and Formatter.Confirmation",
+      "experimentRefs": [
+        "E-CONFIG"
+      ],
+      "status": "planned",
+      "plannedFor": "O2",
+      "question": "Same output as with PR-SHIP-DEFAULT?",
+      "decisionUse": "Relevance of Config.* and Formatter.* entries for Delphi output.",
+      "runs": [
+        {
+          "runId": "O2-P12-R1",
+          "status": "planned",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "profileId": "PR-IDE-EXPORT-DEFAULT",
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "<abs:profile-copy>",
+            "<abs:run-dir>/O1AssignSpacing.pas"
+          ],
+          "workingDirectory": "<run-dir>",
+          "encodingArgument": null,
+          "exitCode": null,
+          "stdoutSha256": null,
+          "stderrSha256": null,
+          "repetitions": null,
+          "repetitionsIdentical": null,
+          "observedDifference": null,
+          "evidenceStatus": null,
+          "supportedScope": null
+        }
+      ]
+    }
+  ]
+}
