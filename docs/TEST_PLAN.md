@@ -3,9 +3,12 @@
 ## S1 formatter tests
 
 `DelphiFormatter.Formatting.Tests` is a separate DUnitX Win64/Debug project
-with 37 methods for the S0 assignment-spacing slice: exact outputs for all five
+with 44 methods for the S0 assignment-spacing slice: exact outputs for all five
 internal `AssignmentSpacing` values, exact minimal edits with original token
-indices, frozen comment/literal/line-break slots, whole-file refusal for
+indices, atomic refusal of protected slots that would need a change (and
+no-edit acceptance of protected slots already in the target state), target-
+state verification against wrong, missing and extra edits, 5,000-assignment
+input, whole-file refusal for
 directives, includes, opaque/error/missing syntax, lexical errors and control
 whitespace, edit conflicts, protected-boundary and stale-snapshot rejection,
 a forced verification failure, LexicalSignatureV1/SyntaxFingerprintV1

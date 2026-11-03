@@ -153,38 +153,43 @@ var
   Diagnostics: TList<TDiagnostic>;
   Ranges: TList<TProtectedRange>;
   Planned: TList<TTextEdit>;
-  Decisions: TList<TSlotDecision>;
-  Owners: TList<Integer>;
   Edits, Normalized: TArray<TTextEdit>;
   Input: TVerificationInput;
   Reasons: TFormatRefusalReasons;
   I: Integer;
 
-  procedure Plan(const Decision: TSlotDecision; Before: Boolean; Owner: Integer);
-  var
-    Current, Desired: string;
+  procedure RefuseAt(Reason: TFormatRefusalReasons; const Code, Message: string;
+    const Span: TSourceSpan);
   begin
-    Decisions.Add(Decision);
-    if not Decision.AllowWhitespace then
-    begin
-      // Requested but frozen by the S0 profile: reported, never edited.
-      Ranges.Add(TProtectedRange.Create(Decision.Span, Decision.Reasons));
-      Exit;
-    end;
-    if (Owners.Count = 0) or (Owners.Last <> Owner) then
-      Owners.Add(Owner);
-    Current := Copy(Source, Decision.Span.StartOffset + 1, Decision.Span.Length);
-    Desired := DesiredSlotText(Options.AssignmentSpacing, Before);
-    if Current <> Desired then
-      Planned.Add(TTextEdit.Create(Decision.Span, Desired, S0AssignmentSpacingRuleId,
-        Decision.LeftOriginalIndex, Decision.RightOriginalIndex));
+    Reasons := Reasons + Reason;
+    Diagnostics.Add(TDiagnostic.Create(Code, Message, dsWarning, Span));
   end;
 
   procedure Refuse(Reason: TFormatRefusalReasons; const Code, Message: string);
   begin
-    Reasons := Reasons + Reason;
-    Diagnostics.Add(TDiagnostic.Create(Code, Message, dsWarning,
-      TSourceSpan.Create(0, Length(Source))));
+    RefuseAt(Reason, Code, Message, TSourceSpan.Create(0, Length(Source)));
+  end;
+
+  // Atomic S0: a requested slot either already has its target text, gets a
+  // released edit, or - when protected and different - refuses the file.
+  procedure Plan(const Decision: TSlotDecision; Before: Boolean);
+  var
+    Current, Desired: string;
+  begin
+    Current := Copy(Source, Decision.Span.StartOffset + 1, Decision.Span.Length);
+    Desired := DesiredSlotText(Options.AssignmentSpacing, Before);
+    if not Decision.AllowWhitespace then
+    begin
+      // Protected slots are reported and never edited.
+      Ranges.Add(TProtectedRange.Create(Decision.Span, Decision.Reasons));
+      if Current <> Desired then
+        RefuseAt(Decision.Reasons, 'FMT016',
+          'Formatting refused: requested assignment spacing needs a change ' +
+          'in a protected slot', Decision.Span);
+    end
+    else if Current <> Desired then
+      Planned.Add(TTextEdit.Create(Decision.Span, Desired, S0AssignmentSpacingRuleId,
+        Decision.LeftOriginalIndex, Decision.RightOriginalIndex));
   end;
 
 begin
@@ -193,12 +198,11 @@ begin
   Identity := ComputeSourceIdentity(Source);
   Formatted := Source;
   Normalized := nil;
+  Analysis := Default(TS0Analysis);
   Reasons := [];
   Diagnostics := TList<TDiagnostic>.Create;
   Ranges := TList<TProtectedRange>.Create;
   Planned := TList<TTextEdit>.Create;
-  Decisions := TList<TSlotDecision>.Create;
-  Owners := TList<Integer>.Create;
   try
     Lex := TDelphiLexer.Tokenize(Source);
     try
@@ -221,9 +225,12 @@ begin
         begin
           for Site in Analysis.Sites do
           begin
-            Plan(Site.Before, True, Site.OwnerOrdinal);
-            Plan(Site.After, False, Site.OwnerOrdinal);
+            Plan(Site.Before, True);
+            Plan(Site.After, False);
           end;
+        end;
+        if Reasons = [] then
+        begin
           Edits := Planned.ToArray;
           if Assigned(Transform) then
             Transform(Edits);
@@ -237,8 +244,7 @@ begin
             Input.Snapshot := Source;
             Input.OriginalLex := Lex;
             Input.OriginalTree := Tree;
-            Input.Decisions := Decisions.ToArray;
-            Input.OwnerOrdinals := Owners.ToArray;
+            Input.AssignmentSpacing := Options.AssignmentSpacing;
             Input.Edits := Normalized;
             if not VerifyAndApply(Input, Formatted, Failure) then
               Refuse([frValidationFailure], 'FMT012',
@@ -266,8 +272,6 @@ begin
       Result := TFormatResult.CreateResult(Source, Identity, Formatted, foChanged,
         Options.Compatibility, Normalized, Diagnostics.ToArray, Ranges.ToArray, []);
   finally
-    Owners.Free;
-    Decisions.Free;
     Planned.Free;
     Ranges.Free;
     Diagnostics.Free;

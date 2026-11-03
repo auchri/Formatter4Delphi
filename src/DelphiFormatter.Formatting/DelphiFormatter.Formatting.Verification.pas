@@ -5,7 +5,7 @@ interface
 uses
   DelphiFormatter.Core.TextEdits, DelphiFormatter.Lexer.Tokens,
   DelphiFormatter.Syntax.Nodes, DelphiFormatter.Syntax.Tree,
-  DelphiFormatter.Formatting.Safety;
+  DelphiFormatter.Formatting.Options, DelphiFormatter.Formatting.Safety;
 
 type
   TLexicalSignatureEntry = record
@@ -20,15 +20,16 @@ type
   TSyntaxFingerprintV1 = TArray<string>;
 
   // Borrowed inputs of one verification run. Snapshot is the string the
-  // edits are applied to; it must equal OriginalSource exactly.
+  // edits are applied to; it must equal OriginalSource exactly. The requested
+  // slots, their release and their target texts are derived again here from
+  // the original tree and AssignmentSpacing; planner decisions are no input.
   TVerificationInput = record
     OriginalSource: string;
     SourceIdentity: string;
     Snapshot: string;
     OriginalLex: TDelphiLexResult;
     OriginalTree: TSyntaxTree;
-    Decisions: TArray<TSlotDecision>;
-    OwnerOrdinals: TArray<Integer>;
+    AssignmentSpacing: TAssignmentSpacing;
     Edits: TArray<TTextEdit>;
   end;
 
@@ -38,15 +39,18 @@ function SyntaxFingerprintV1(Tree: TSyntaxTree; Owner: TSyntaxElement): TSyntaxF
 function SameSyntaxFingerprint(const A, B: TSyntaxFingerprintV1): Boolean;
 
 // Checks the snapshot and edit set, applies the edits once, re-lexes and
-// re-parses once and verifies every S0 invariant. Returns False with
-// Formatted='' and a Failure description on the first violation.
+// re-parses once and verifies every S0 invariant, including that every
+// requested assignment slot of the output has its AssignmentSpacing target
+// text. Returns False with Formatted='' and a Failure description on the
+// first violation.
 function VerifyAndApply(const Input: TVerificationInput; out Formatted: string;
   out Failure: string): Boolean;
 
 implementation
 
 uses
-  System.SysUtils, System.Generics.Collections, DelphiFormatter.Core.Spans,
+  System.SysUtils, System.Generics.Collections, System.Generics.Defaults,
+  DelphiFormatter.Core.Spans,
   DelphiFormatter.Core.Diagnostics, DelphiFormatter.Lexer.Scanner,
   DelphiFormatter.Syntax.Query, DelphiFormatter.Parser.Delphi;
 
@@ -214,6 +218,30 @@ begin
     (New.Span.Length = Stop - Start);
 end;
 
+type
+  TRequestedSlot = record
+    Decision: TSlotDecision;
+    Before: Boolean;
+  end;
+
+// Target text of one assignment slot. Deliberately derived here from the
+// option value alone, independent of the engine's planning code.
+function TargetSlotText(Spacing: TAssignmentSpacing; Before: Boolean): string;
+begin
+  case Spacing of
+    asNone:
+      Result := '';
+    asBefore:
+      if Before then Result := ' ' else Result := '';
+    asAfter:
+      if Before then Result := '' else Result := ' ';
+    asBoth:
+      Result := ' ';
+  else
+    raise EArgumentException.Create('AsIs has no target slot text');
+  end;
+end;
+
 function VerifyAndApply(const Input: TVerificationInput; out Formatted: string;
   out Failure: string): Boolean;
 var
@@ -221,13 +249,17 @@ var
   NewTree: TSyntaxTree;
   Edits: TArray<TTextEdit>;
   Edit: TTextEdit;
-  Decision: TSlotDecision;
+  Analysis: TS0Analysis;
+  Site: TAssignmentSlotSite;
+  Requested: TList<TRequestedSlot>;
+  Slots: TArray<TRequestedSlot>;
+  Slot: TRequestedSlot;
+  Owners: TList<Integer>;
   OldAnchors, NewAnchors: TArray<Integer>;
   OldRoutines, NewRoutines: TArray<TSyntaxNode>;
   Scratch: TList<TDiagnostic>;
   Output, Expected, Actual: string;
   I, J, K, P, Delta, Ordinal, OldStart, NewStart, Left: Integer;
-  Found, Covered: Boolean;
 
   function Fail(const Message: string): Boolean;
   begin
@@ -235,11 +267,22 @@ var
     Result := False;
   end;
 
+  procedure Request(const Decision: TSlotDecision; Before: Boolean);
+  var
+    Item: TRequestedSlot;
+  begin
+    Item.Decision := Decision;
+    Item.Before := Before;
+    Requested.Add(Item);
+  end;
+
 begin
   Formatted := '';
   Failure := '';
   if (Input.OriginalLex = nil) or (Input.OriginalTree = nil) then
     raise EArgumentNilException.Create('Original lexer result and tree are required');
+  if Integer(Byte(Input.AssignmentSpacing)) > Ord(High(TAssignmentSpacing)) then
+    raise EArgumentOutOfRangeException.Create('AssignmentSpacing out of range');
   Lex := Input.OriginalLex;
   Edits := Input.Edits;
 
@@ -253,140 +296,167 @@ begin
     (Input.OriginalTree.Source <> Input.OriginalSource) then
     Exit(Fail('Analysis does not belong to the snapshot'));
 
-  // 2. Canonical, released, horizontal-only edits; one per slot.
-  OldRoutines := UnitRoutines(Input.OriginalTree);
-  for I := 0 to High(Edits) do
-  begin
-    Edit := Edits[I];
-    if Edit.Span.EndOffset > Length(Input.Snapshot) then
-      Exit(Fail('Edit outside source bounds'));
-    if (I > 0) and (Edit.Span.StartOffset <= Edits[I - 1].Span.EndOffset) then
-      Exit(Fail('Edits are not canonical, disjoint and separated'));
-    if Edit.RuleId <> S0AssignmentSpacingRuleId then
-      Exit(Fail('Edit from an unreleased rule: ' + Edit.RuleId));
-    for J := 1 to Length(Edit.NewText) do
-      if (Edit.NewText[J] <> ' ') and (Edit.NewText[J] <> #9) then
-        Exit(Fail('Edit text is not horizontal whitespace'));
-    if (Edit.RightOriginalIndex <= 0) or
-      (Edit.RightOriginalIndex >= Lex.TokenCount) or
-      not IsAnchorKind(Lex.GetToken(Edit.RightOriginalIndex).Kind) or
-      (Edit.LeftOriginalIndex <> PreviousAnchor(Lex, Edit.RightOriginalIndex)) then
-      Exit(Fail('Edit does not denote a slot between adjacent anchors'));
-    if IsProtectedAnchor(Lex, Edit.LeftOriginalIndex) or
-      IsProtectedAnchor(Lex, Edit.RightOriginalIndex) then
-      Exit(Fail('Edit at a protected boundary'));
-    Found := False;
-    for Decision in Input.Decisions do
-      if (Decision.LeftOriginalIndex = Edit.LeftOriginalIndex) and
-        (Decision.RightOriginalIndex = Edit.RightOriginalIndex) then
-      begin
-        Found := Decision.AllowWhitespace and (Decision.Reasons = []) and
-          (Decision.SourceIdentity = Input.SourceIdentity) and
-          (Decision.Span.StartOffset = Edit.Span.StartOffset) and
-          (Decision.Span.Length = Edit.Span.Length);
-        Break;
-      end;
-    if not Found then
-      Exit(Fail('Edit is not covered by a released slot decision'));
-    if (SlotSpan(Lex, Edit.LeftOriginalIndex, Edit.RightOriginalIndex).StartOffset <>
-      Edit.Span.StartOffset) or
-      (SlotSpan(Lex, Edit.LeftOriginalIndex, Edit.RightOriginalIndex).Length <>
-      Edit.Span.Length) then
-      Exit(Fail('Edit span differs from its slot span'));
-    Actual := Copy(Input.Snapshot, Edit.Span.StartOffset + 1, Edit.Span.Length);
-    if (Pos(#13, Actual) > 0) or (Pos(#10, Actual) > 0) then
-      Exit(Fail('Edit replaces a line-break slot'));
-    if Actual = Edit.NewText then
-      Exit(Fail('Edit does not change its slot'));
-    // The slot must lie inside one released complete owner.
-    Covered := False;
-    for Ordinal in Input.OwnerOrdinals do
-      if (Ordinal >= 0) and (Ordinal <= High(OldRoutines)) and
-        (FirstAnchorIndex(OldRoutines[Ordinal]) < Edit.LeftOriginalIndex) and
-        (LastAnchorIndex(OldRoutines[Ordinal]) > Edit.RightOriginalIndex) then
-        Covered := True;
-    if not Covered then
-      Exit(Fail('Edit outside every released owner'));
-  end;
-
-  // 3. Apply exactly once, back to front.
-  Output := ApplyTextEdits(Input.Snapshot, Edits);
-
-  // 4. Re-lex once: signature, mapped anchors and every slot text.
-  NewLex := TDelphiLexer.Tokenize(Output);
+  // 2. Independent S0 analysis: requested slots, their release and owners.
+  Analysis := AnalyzeS0(Lex, Input.OriginalTree, Input.SourceIdentity,
+    Input.AssignmentSpacing <> asAsIs);
+  if Analysis.Reasons <> [] then
+    Exit(Fail('S0 preconditions do not hold for the input'));
+  if (Input.AssignmentSpacing = asAsIs) and (Length(Edits) > 0) then
+    Exit(Fail('AsIs requests no edits'));
+  Requested := TList<TRequestedSlot>.Create;
+  Owners := TList<Integer>.Create;
   try
-    if not SameLexicalSignature(LexicalSignatureV1(Lex), LexicalSignatureV1(NewLex)) then
-      Exit(Fail('LexicalSignatureV1 differs'));
-    OldAnchors := AnchorIndices(Lex);
-    NewAnchors := AnchorIndices(NewLex);
-    P := 0;
-    Delta := 0;
-    for K := 0 to High(OldAnchors) do
+    for Site in Analysis.Sites do
     begin
-      Left := -1;
-      if K > 0 then Left := OldAnchors[K - 1];
-      Expected := SlotText(Lex, Input.Snapshot, Left, OldAnchors[K]);
-      if (P <= High(Edits)) and (Edits[P].RightOriginalIndex = OldAnchors[K]) then
-      begin
-        Expected := Edits[P].NewText;
-        Delta := Delta + Length(Edits[P].NewText) - Edits[P].Span.Length;
-        Inc(P);
-      end;
-      Left := -1;
-      if K > 0 then Left := NewAnchors[K - 1];
-      if SlotText(NewLex, Output, Left, NewAnchors[K]) <> Expected then
-        Exit(Fail('Slot text changed outside the released edits'));
-      OldStart := Lex.GetToken(OldAnchors[K]).Span.StartOffset;
-      NewStart := NewLex.GetToken(NewAnchors[K]).Span.StartOffset;
-      if NewStart <> OldStart + Delta then
-        Exit(Fail('Anchor offset does not follow the edit map'));
+      Request(Site.Before, True);
+      Request(Site.After, False);
+      if (Owners.Count = 0) or (Owners.Last <> Site.OwnerOrdinal) then
+        Owners.Add(Site.OwnerOrdinal);
     end;
-    if P <> Length(Edits) then
-      Exit(Fail('Edit not matched to an original slot'));
-    if NewLex.DiagnosticCount <> Lex.DiagnosticCount then
-      Exit(Fail('Lexical diagnostics changed'));
-    for I := 0 to Lex.DiagnosticCount - 1 do
-      if not SameDiagnostic(Lex.GetDiagnostic(I), NewLex.GetDiagnostic(I), Edits) then
-        Exit(Fail('Lexical diagnostics changed'));
-
-    // 5. Re-parse once: diagnostics, preconditions and owner fingerprints.
-    NewTree := TDelphiParser.Parse(NewLex);
-    Scratch := nil;
-    try
-      Scratch := TList<TDiagnostic>.Create;
-      if NewTree.Serialize <> Output then
-        Exit(Fail('Re-parsed tree is not lossless'));
-      if NewTree.DiagnosticCount <> Input.OriginalTree.DiagnosticCount then
-        Exit(Fail('Parser diagnostics changed'));
-      for I := 0 to NewTree.DiagnosticCount - 1 do
-        if not SameDiagnostic(Input.OriginalTree.GetDiagnostic(I),
-          NewTree.GetDiagnostic(I), Edits) then
-          Exit(Fail('Parser diagnostics changed'));
-      if CheckS0Preconditions(NewLex, NewTree, Scratch) <> [] then
-        Exit(Fail('S0 preconditions do not hold for the output'));
-      NewRoutines := UnitRoutines(NewTree);
-      if Length(NewRoutines) <> Length(OldRoutines) then
-        Exit(Fail('Routine owners changed'));
-      if (Length(Edits) > 0) and (Length(Input.OwnerOrdinals) = 0) then
-        Exit(Fail('Edits without a released owner'));
-      for Ordinal in Input.OwnerOrdinals do
+    Slots := Requested.ToArray;
+    // Ordered by right anchor so edits and slots merge monotonically.
+    TArray.Sort<TRequestedSlot>(Slots, TComparer<TRequestedSlot>.Construct(
+      function(const A, B: TRequestedSlot): Integer
       begin
-        if (Ordinal < 0) or (Ordinal > High(OldRoutines)) then
-          Exit(Fail('Unknown released owner'));
-        if AnchorOrdinal(OldAnchors, FirstAnchorIndex(OldRoutines[Ordinal])) <>
-          AnchorOrdinal(NewAnchors, FirstAnchorIndex(NewRoutines[Ordinal])) then
-          Exit(Fail('Owner correspondence lost'));
-        if not SameSyntaxFingerprint(
-          SyntaxFingerprintV1(Input.OriginalTree, OldRoutines[Ordinal]),
-          SyntaxFingerprintV1(NewTree, NewRoutines[Ordinal])) then
-          Exit(Fail('SyntaxFingerprintV1 differs'));
+        Result := A.Decision.RightOriginalIndex - B.Decision.RightOriginalIndex;
+      end));
+
+    // 3. Canonical, released, horizontal-only edits; one per requested slot.
+    OldRoutines := UnitRoutines(Input.OriginalTree);
+    J := 0;
+    for I := 0 to High(Edits) do
+    begin
+      Edit := Edits[I];
+      if Edit.Span.EndOffset > Length(Input.Snapshot) then
+        Exit(Fail('Edit outside source bounds'));
+      if (I > 0) and (Edit.Span.StartOffset <= Edits[I - 1].Span.EndOffset) then
+        Exit(Fail('Edits are not canonical, disjoint and separated'));
+      if Edit.RuleId <> S0AssignmentSpacingRuleId then
+        Exit(Fail('Edit from an unreleased rule: ' + Edit.RuleId));
+      for K := 1 to Length(Edit.NewText) do
+        if (Edit.NewText[K] <> ' ') and (Edit.NewText[K] <> #9) then
+          Exit(Fail('Edit text is not horizontal whitespace'));
+      if (Edit.RightOriginalIndex <= 0) or
+        (Edit.RightOriginalIndex >= Lex.TokenCount) or
+        not IsAnchorKind(Lex.GetToken(Edit.RightOriginalIndex).Kind) or
+        (Edit.LeftOriginalIndex <> PreviousAnchor(Lex, Edit.RightOriginalIndex)) then
+        Exit(Fail('Edit does not denote a slot between adjacent anchors'));
+      if IsProtectedAnchor(Lex, Edit.LeftOriginalIndex) or
+        IsProtectedAnchor(Lex, Edit.RightOriginalIndex) then
+        Exit(Fail('Edit at a protected boundary'));
+      while (J <= High(Slots)) and
+        (Slots[J].Decision.RightOriginalIndex < Edit.RightOriginalIndex) do
+        Inc(J);
+      if (J > High(Slots)) or
+        (Slots[J].Decision.RightOriginalIndex <> Edit.RightOriginalIndex) or
+        (Slots[J].Decision.LeftOriginalIndex <> Edit.LeftOriginalIndex) or
+        not Slots[J].Decision.AllowWhitespace or
+        (Slots[J].Decision.Span.StartOffset <> Edit.Span.StartOffset) or
+        (Slots[J].Decision.Span.Length <> Edit.Span.Length) then
+        Exit(Fail('Edit is not covered by a released requested slot'));
+      Actual := Copy(Input.Snapshot, Edit.Span.StartOffset + 1, Edit.Span.Length);
+      if (Pos(#13, Actual) > 0) or (Pos(#10, Actual) > 0) then
+        Exit(Fail('Edit replaces a line-break slot'));
+      if Actual = Edit.NewText then
+        Exit(Fail('Edit does not change its slot'));
+    end;
+
+    // 4. Apply exactly once, back to front.
+    Output := ApplyTextEdits(Input.Snapshot, Edits);
+
+    // 5. Re-lex once: signature, mapped anchors and every slot text.
+    NewLex := TDelphiLexer.Tokenize(Output);
+    try
+      if not SameLexicalSignature(LexicalSignatureV1(Lex), LexicalSignatureV1(NewLex)) then
+        Exit(Fail('LexicalSignatureV1 differs'));
+      OldAnchors := AnchorIndices(Lex);
+      NewAnchors := AnchorIndices(NewLex);
+      P := 0;
+      Delta := 0;
+      for K := 0 to High(OldAnchors) do
+      begin
+        Left := -1;
+        if K > 0 then Left := OldAnchors[K - 1];
+        Expected := SlotText(Lex, Input.Snapshot, Left, OldAnchors[K]);
+        if (P <= High(Edits)) and (Edits[P].RightOriginalIndex = OldAnchors[K]) then
+        begin
+          Expected := Edits[P].NewText;
+          Delta := Delta + Length(Edits[P].NewText) - Edits[P].Span.Length;
+          Inc(P);
+        end;
+        Left := -1;
+        if K > 0 then Left := NewAnchors[K - 1];
+        if SlotText(NewLex, Output, Left, NewAnchors[K]) <> Expected then
+          Exit(Fail('Slot text changed outside the released edits'));
+        OldStart := Lex.GetToken(OldAnchors[K]).Span.StartOffset;
+        NewStart := NewLex.GetToken(NewAnchors[K]).Span.StartOffset;
+        if NewStart <> OldStart + Delta then
+          Exit(Fail('Anchor offset does not follow the edit map'));
+      end;
+      if P <> Length(Edits) then
+        Exit(Fail('Edit not matched to an original slot'));
+      if NewLex.DiagnosticCount <> Lex.DiagnosticCount then
+        Exit(Fail('Lexical diagnostics changed'));
+      for I := 0 to Lex.DiagnosticCount - 1 do
+        if not SameDiagnostic(Lex.GetDiagnostic(I), NewLex.GetDiagnostic(I), Edits) then
+          Exit(Fail('Lexical diagnostics changed'));
+
+      // 6. Rule target state: every requested slot of the output has exactly
+      // the text AssignmentSpacing demands. Missing, extra or wrong edits and
+      // protected slots that would need a change all fail here.
+      if Input.AssignmentSpacing <> asAsIs then
+        for Slot in Slots do
+        begin
+          K := AnchorOrdinal(OldAnchors, Slot.Decision.RightOriginalIndex);
+          if K < 0 then
+            Exit(Fail('Requested slot has no anchor correspondence'));
+          Left := -1;
+          if K > 0 then Left := NewAnchors[K - 1];
+          if SlotText(NewLex, Output, Left, NewAnchors[K]) <>
+            TargetSlotText(Input.AssignmentSpacing, Slot.Before) then
+            Exit(Fail(Format('Output does not satisfy AssignmentSpacing at the ' +
+              'slot between original tokens %d and %d',
+              [Slot.Decision.LeftOriginalIndex, Slot.Decision.RightOriginalIndex])));
+        end;
+
+      // 7. Re-parse once: diagnostics, preconditions and owner fingerprints.
+      NewTree := TDelphiParser.Parse(NewLex);
+      Scratch := nil;
+      try
+        Scratch := TList<TDiagnostic>.Create;
+        if NewTree.Serialize <> Output then
+          Exit(Fail('Re-parsed tree is not lossless'));
+        if NewTree.DiagnosticCount <> Input.OriginalTree.DiagnosticCount then
+          Exit(Fail('Parser diagnostics changed'));
+        for I := 0 to NewTree.DiagnosticCount - 1 do
+          if not SameDiagnostic(Input.OriginalTree.GetDiagnostic(I),
+            NewTree.GetDiagnostic(I), Edits) then
+            Exit(Fail('Parser diagnostics changed'));
+        if CheckS0Preconditions(NewLex, NewTree, Scratch) <> [] then
+          Exit(Fail('S0 preconditions do not hold for the output'));
+        NewRoutines := UnitRoutines(NewTree);
+        if Length(NewRoutines) <> Length(OldRoutines) then
+          Exit(Fail('Routine owners changed'));
+        for Ordinal in Owners do
+        begin
+          if AnchorOrdinal(OldAnchors, FirstAnchorIndex(OldRoutines[Ordinal])) <>
+            AnchorOrdinal(NewAnchors, FirstAnchorIndex(NewRoutines[Ordinal])) then
+            Exit(Fail('Owner correspondence lost'));
+          if not SameSyntaxFingerprint(
+            SyntaxFingerprintV1(Input.OriginalTree, OldRoutines[Ordinal]),
+            SyntaxFingerprintV1(NewTree, NewRoutines[Ordinal])) then
+            Exit(Fail('SyntaxFingerprintV1 differs'));
+        end;
+      finally
+        Scratch.Free;
+        NewTree.Free;
       end;
     finally
-      Scratch.Free;
-      NewTree.Free;
+      NewLex.Free;
     end;
   finally
-    NewLex.Free;
+    Owners.Free;
+    Requested.Free;
   end;
   Formatted := Output;
   Result := True;

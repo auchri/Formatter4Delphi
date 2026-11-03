@@ -19,7 +19,8 @@ type
     function HasDiagnostic(R: TFormatResult; const Code: string): Boolean;
     function ProtectedCount(R: TFormatResult; Reason: TFormatRefusalReason): Integer;
     procedure CheckRefused(const Source: string; Spacing: TAssignmentSpacing;
-      Reason: TFormatRefusalReason; const Transform: TEditSetTransform = nil);
+      Reason: TFormatRefusalReason; const Transform: TEditSetTransform = nil;
+      const Code: string = '');
     procedure CheckSameEdit(const Expected, Actual: TTextEdit);
   public
     // Positive S0 behaviour (T-S0, T-SLOT, T-IDEM)
@@ -51,6 +52,14 @@ type
     [Test] procedure InvalidOptionsAreDiagnosed;
     [Test] procedure ManipulatedEditsAndStaleSnapshotsAreRejected;
     [Test] procedure ForcedVerificationFailureRefuses;
+    // Atomic S0 and option-aware verification (review fixes)
+    [Test] procedure UnsatisfiableProtectedSlotRefusesWholeFile;
+    [Test] procedure ProtectedSlotAlreadySatisfiedDoesNotBlock;
+    [Test] procedure AsIsPreservesSourceExactly;
+    [Test] procedure SuccessfulOutputSatisfiesEveryRequestedSlot;
+    [Test] procedure TargetVerificationRejectsManipulatedEdits;
+    [Test] procedure TargetVerificationDirect;
+    [Test] procedure ThousandsOfAssignments;
     // Verification primitives, API and ownership (T-VERIFY, T-API, T-OWN)
     [Test] procedure LexicalSignatureV1Comparison;
     [Test] procedure SyntaxFingerprintV1Comparison;
@@ -184,7 +193,7 @@ end;
 
 procedure TFormattingTests.CheckRefused(const Source: string;
   Spacing: TAssignmentSpacing; Reason: TFormatRefusalReason;
-  const Transform: TEditSetTransform);
+  const Transform: TEditSetTransform; const Code: string);
 var
   R: TFormatResult;
 begin
@@ -200,6 +209,8 @@ begin
     Assert.AreEqual(Length(Source), R.GetProtectedRange(0).Span.Length);
     Assert.IsTrue(R.RefusalReasons = R.GetProtectedRange(0).Reasons);
     Assert.AreEqual(ComputeSourceIdentity(Source), R.SourceIdentity);
+    if Code <> '' then
+      Assert.IsTrue(HasDiagnostic(R, Code), DiagnosticText(R));
   finally
     R.Free;
   end;
@@ -430,7 +441,9 @@ var
   Source, First: string;
   R: TFormatResult;
 begin
-  Source := UnitWith(['X:=1;', 'X  :=  2;', 'X'#9':= 3; // note', 'X :='#13#10'    4;']);
+  // Line-break slots are refused for every requested value (see
+  // LineBreaksAroundOperatorAreNeverReplaced), so they are not part of this input.
+  Source := UnitWith(['X:=1;', 'X  :=  2;', 'X'#9':= 3; // note', 'X := 4; { c }']);
   for Spacing := Low(TAssignmentSpacing) to High(TAssignmentSpacing) do
   begin
     First := Formatted(Source, Spacing);
@@ -529,13 +542,14 @@ procedure TFormattingTests.AssignmentLookalikesInStringsAndComments;
 var
   R: TFormatResult;
 begin
-  R := Run(UnitWith(['S:=''X:=1'';', '// X:=2', '{ Y:=3 } X := 4;'], CRLF,
-    '  X: Integer;' + CRLF + '  S: string;'), asBoth);
+  // Before: the literal-anchored slot after ':=' must stay empty, which it
+  // already is, so the protected slot does not block the released one.
+  R := Run(UnitWith(['S:=''X:=1'';', '// X:=2', '{ Y:=3 } X :=4;'], CRLF,
+    '  X: Integer;' + CRLF + '  S: string;'), asBefore);
   try
     Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
-    // Only the slot before the real operator changes; string, comments and
-    // the literal-anchored slot stay byte-identical.
-    Assert.AreEqual(UnitWith(['S :=''X:=1'';', '// X:=2', '{ Y:=3 } X := 4;'], CRLF,
+    // String, comments and the literal-anchored slot stay byte-identical.
+    Assert.AreEqual(UnitWith(['S :=''X:=1'';', '// X:=2', '{ Y:=3 } X :=4;'], CRLF,
       '  X: Integer;' + CRLF + '  S: string;'), R.FormattedText);
     Assert.AreEqual(1, R.EditCount);
     Assert.AreEqual(1, ProtectedCount(R, frUnsupportedConstruct));
@@ -570,35 +584,62 @@ procedure TFormattingTests.CommentAdjacentToOperatorFreezesSlot;
 var
   R: TFormatResult;
 begin
-  R := Run(UnitWith(['X{a}:=1;', 'X:={b}2;', 'X(*c*):=(*d*)3;', 'X//e' + CRLF +
-    '    :=4;']), asBoth);
+  // Comment directly before / after ':=' and the slot would need a change.
+  CheckRefused(UnitWith(['X:=1;', 'X{a}:=2;']), asBoth, frCommentAnchor, nil, 'FMT016');
+  CheckRefused(UnitWith(['X:=1;', 'X:={b}2;']), asBoth, frCommentAnchor, nil, 'FMT016');
+  CheckRefused(UnitWith(['X {a} := {b} 3;']), asNone, frCommentAnchor, nil, 'FMT016');
+  CheckRefused(UnitWith(['X {a}:= 3;']), asBoth, frCommentAnchor, nil, 'FMT016');
+  // Original spaces at protected slots that already match the request.
+  R := Run(UnitWith(['X:=1;', 'X {a} := {b} 2;']), asBoth);
   try
     Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
-    Assert.AreEqual(UnitWith(['X{a}:= 1;', 'X :={b}2;', 'X(*c*):=(*d*)3;', 'X//e' +
-      CRLF + '    := 4;']), R.FormattedText);
-    Assert.AreEqual(5, ProtectedCount(R, frCommentAnchor));
+    Assert.AreEqual(UnitWith(['X := 1;', 'X {a} := {b} 2;']), R.FormattedText);
+    Assert.AreEqual(2, R.EditCount);
+    Assert.AreEqual(2, ProtectedCount(R, frCommentAnchor));
     Assert.IsTrue(HasDiagnostic(R, 'FMT101'));
-    Assert.AreEqual(3, R.EditCount);
+  finally
+    R.Free;
+  end;
+  R := Run(UnitWith(['X:=1;', 'X(*c*):=(*d*)3;']), asNone);
+  try
+    Assert.AreEqual(Ord(foUnchanged), Ord(R.Outcome), DiagnosticText(R));
+    Assert.AreEqual(2, ProtectedCount(R, frCommentAnchor));
   finally
     R.Free;
   end;
 end;
 
 procedure TFormattingTests.LiteralAdjacentToOperatorFreezesSlot;
+const
+  Locals = '  S: string;' + CRLF + '  C: Char;' + CRLF + '  X: Integer;';
 var
-  Source: string;
   R: TFormatResult;
 begin
-  Source := UnitWith(['S:=''a'';', 'C:=#13;', 'S  :=  ''b''#10;', 'X:=$FF;'], CRLF,
-    '  S: string;' + CRLF + '  C: Char;' + CRLF + '  X: Integer;');
-  R := Run(Source, asBoth);
+  // String literal / char code directly after ':=' needing a change.
+  CheckRefused(UnitWith(['S:=''a'';'], CRLF, Locals), asBoth, frUnsupportedConstruct,
+    nil, 'FMT016');
+  CheckRefused(UnitWith(['C:=#13;'], CRLF, Locals), asAfter, frUnsupportedConstruct,
+    nil, 'FMT016');
+  CheckRefused(UnitWith(['S  :=  ''b''#10;'], CRLF, Locals), asBefore,
+    frUnsupportedConstruct, nil, 'FMT016');
+  // Protected slots already in the requested state; numeric literals are
+  // released code anchors.
+  R := Run(UnitWith(['S:=''a'';', 'C:=#13;', 'X:=$FF;'], CRLF, Locals), asBefore);
   try
     Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
-    // Numeric literals are permitted code anchors; string/char codes are not.
-    Assert.AreEqual(UnitWith(['S :=''a'';', 'C :=#13;', 'S :=  ''b''#10;', 'X := $FF;'],
-      CRLF, '  S: string;' + CRLF + '  C: Char;' + CRLF + '  X: Integer;'),
+    Assert.AreEqual(UnitWith(['S :=''a'';', 'C :=#13;', 'X :=$FF;'], CRLF, Locals),
       R.FormattedText);
-    Assert.AreEqual(3, ProtectedCount(R, frUnsupportedConstruct));
+    Assert.AreEqual(3, R.EditCount);
+    Assert.AreEqual(2, ProtectedCount(R, frUnsupportedConstruct));
+  finally
+    R.Free;
+  end;
+  R := Run(UnitWith(['S := ''a'';', 'C := #13;', 'X:=$FF;'], CRLF, Locals), asBoth);
+  try
+    Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
+    Assert.AreEqual(UnitWith(['S := ''a'';', 'C := #13;', 'X := $FF;'], CRLF, Locals),
+      R.FormattedText);
+    Assert.AreEqual(2, R.EditCount);
   finally
     R.Free;
   end;
@@ -686,19 +727,29 @@ end;
 
 procedure TFormattingTests.LineBreaksAroundOperatorArePreserved;
 var
+  Spacing: TAssignmentSpacing;
+  Source: string;
   R: TFormatResult;
 begin
-  R := Run(UnitWith(['X' + CRLF + '    :=1;', 'X:=' + CRLF + '    2;',
-    'X' + #10 + ':=' + #13 + '3;']), asNone);
+  // A line break is never replaced by horizontal spaces. It cannot hold any
+  // requested horizontal target text, so every non-AsIs request refuses the
+  // file atomically; nothing else is changed.
+  for Spacing := asNone to asBoth do
+  begin
+    CheckRefused(UnitWith(['X:=1;', 'X' + CRLF + '    :=2;']), Spacing,
+      frUnsupportedWhitespace, nil, 'FMT016');
+    CheckRefused(UnitWith(['X:=1;', 'X:=' + CRLF + '    2;']), Spacing,
+      frUnsupportedWhitespace, nil, 'FMT016');
+  end;
+  Source := UnitWith(['X' + CRLF + '    :=1;', 'X:=' + CRLF + '    2;',
+    'X' + #10 + ':=' + #13 + '3;']);
+  R := Run(Source, asAsIs);
   try
     Assert.AreEqual(Ord(foUnchanged), Ord(R.Outcome), DiagnosticText(R));
-    Assert.AreEqual(4, ProtectedCount(R, frUnsupportedWhitespace));
-    Assert.IsTrue(HasDiagnostic(R, 'FMT102'));
+    Assert.AreEqual(Source, R.FormattedText);
   finally
     R.Free;
   end;
-  Assert.AreEqual(UnitWith(['X' + CRLF + '    := 1;', 'X :=' + CRLF + '    2;']),
-    Formatted(UnitWith(['X' + CRLF + '    :=1;', 'X:=' + CRLF + '    2;']), asBoth));
 end;
 
 procedure TFormattingTests.ConflictingEditsAreDetected;
@@ -737,29 +788,32 @@ var
   Op, Comment, Target: Integer;
   Boundary, Frozen: TTextEdit;
 begin
-  Source := UnitWith(['X{a}:=1;']);
+  // The comment slot already has the requested ' '; only the slot after
+  // ':=' is planned. Injected edits next to the comment must be rejected.
+  Source := UnitWith(['X {a} :=1;']);
   Lex := TDelphiLexer.Tokenize(Source);
   try
     Op := TokenIndices(Lex, ':=')[0];
     Comment := PreviousAnchor(Lex, Op);
     Target := PreviousAnchor(Lex, Comment);
-    Boundary := TTextEdit.Create(SlotSpan(Lex, Target, Comment), ' ',
+    Boundary := TTextEdit.Create(SlotSpan(Lex, Target, Comment), '',
       S0AssignmentSpacingRuleId, Target, Comment);
-    Frozen := TTextEdit.Create(SlotSpan(Lex, Comment, Op), ' ',
+    Frozen := TTextEdit.Create(SlotSpan(Lex, Comment, Op), '',
       S0AssignmentSpacingRuleId, Comment, Op);
   finally
     Lex.Free;
   end;
+  Assert.AreEqual(UnitWith(['X {a} := 1;']), Formatted(Source, asBoth));
   CheckRefused(Source, asBoth, frValidationFailure,
     procedure(var Edits: TArray<TTextEdit>)
     begin
       Edits := Edits + [Boundary];
-    end);
+    end, 'FMT012');
   CheckRefused(Source, asBoth, frValidationFailure,
     procedure(var Edits: TArray<TTextEdit>)
     begin
       Edits := Edits + [Frozen];
-    end);
+    end, 'FMT012');
 end;
 
 procedure TFormattingTests.InvalidOptionsAreDiagnosed;
@@ -885,12 +939,11 @@ begin
     Input.Snapshot := Source;
     Input.OriginalLex := Lex;
     Input.OriginalTree := Tree;
+    Input.AssignmentSpacing := asBoth;
     Analysis := AnalyzeS0(Lex, Tree, Input.SourceIdentity, True);
     Assert.IsTrue(Analysis.Reasons = []);
     Assert.AreEqual(1, Integer(Length(Analysis.Sites)));
     Site := Analysis.Sites[0];
-    Input.Decisions := [Site.Before, Site.After];
-    Input.OwnerOrdinals := [Site.OwnerOrdinal];
     Input.Edits := [
       TTextEdit.Create(Site.Before.Span, ' ', S0AssignmentSpacingRuleId,
         Site.Before.LeftOriginalIndex, Site.Before.RightOriginalIndex),
@@ -929,14 +982,6 @@ begin
     Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'no-op edit');
 
     Bad := Input;
-    Bad.OwnerOrdinals := nil;
-    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'no released owner');
-
-    Bad := Input;
-    Bad.Decisions := [Site.Before];
-    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'undecided slot');
-
-    Bad := Input;
     Bad.Edits := [Input.Edits[1], Input.Edits[0]];
     Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'not canonical');
   finally
@@ -962,6 +1007,284 @@ begin
     Assert.AreEqual(Source, R.FormattedText);
     Assert.AreEqual(0, R.EditCount);
     Assert.IsTrue(HasDiagnostic(R, 'FMT012'));
+  finally
+    R.Free;
+  end;
+end;
+
+{ Atomic S0 and option-aware verification }
+
+procedure TFormattingTests.UnsatisfiableProtectedSlotRefusesWholeFile;
+const
+  Locals = '  X: Integer;' + CRLF + '  S: string;';
+begin
+  // Earlier safe assignments are not changed when a later one is refused ...
+  CheckRefused(UnitWith(['X:=1;', 'X  :=  2;', 'S:=''a'';'], CRLF, Locals), asBoth,
+    frUnsupportedConstruct, nil, 'FMT016');
+  // ... nor later ones after an earlier refusal.
+  CheckRefused(UnitWith(['S:=''a'';', 'X:=1;'], CRLF, Locals), asBoth,
+    frUnsupportedConstruct, nil, 'FMT016');
+  CheckRefused(UnitWith(['X:=1;', 'X:={c}2;', 'X:=3;']), asAfter, frCommentAnchor,
+    nil, 'FMT016');
+end;
+
+procedure TFormattingTests.ProtectedSlotAlreadySatisfiedDoesNotBlock;
+const
+  Locals = '  X: Integer;' + CRLF + '  S: string;';
+var
+  R: TFormatResult;
+begin
+  R := Run(UnitWith(['X:=1;', 'S :=''a'';', 'X {c} := 2;', 'X  :=3;'], CRLF, Locals),
+    asBefore);
+  try
+    Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
+    Assert.AreEqual(UnitWith(['X :=1;', 'S :=''a'';', 'X {c} :=2;', 'X :=3;'], CRLF,
+      Locals), R.FormattedText);
+    Assert.AreEqual(3, R.EditCount);
+    Assert.AreEqual(1, ProtectedCount(R, frUnsupportedConstruct));
+    Assert.AreEqual(1, ProtectedCount(R, frCommentAnchor));
+    Assert.IsFalse(HasDiagnostic(R, 'FMT016'));
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TFormattingTests.AsIsPreservesSourceExactly;
+var
+  Source: string;
+  R: TFormatResult;
+begin
+  Source := UnitWith(['X:=1;', 'X  :=  2;', 'X{a}:={b}3;', 'S:=''s''#13;',
+    'X'#9':='#9'4;', 'X' + CRLF + '  :=' + #10 + '5;'], CRLF,
+    '  X: Integer;' + CRLF + '  S: string;');
+  R := Run(Source, asAsIs);
+  try
+    Assert.AreEqual(Ord(foUnchanged), Ord(R.Outcome), DiagnosticText(R));
+    Assert.AreEqual(Source, R.FormattedText);
+    Assert.AreEqual(0, R.EditCount);
+    Assert.AreEqual(0, R.ProtectedRangeCount);
+    Assert.IsTrue(R.RefusalReasons = []);
+  finally
+    R.Free;
+  end;
+end;
+
+procedure TFormattingTests.SuccessfulOutputSatisfiesEveryRequestedSlot;
+const
+  // Independent expectation table for this test: [value, before?].
+  Targets: array[asNone..asBoth, Boolean] of string = (('', ''), ('', ' '),
+    (' ', ''), (' ', ' '));
+var
+  Spacing: TAssignmentSpacing;
+  Output: string;
+  Lex: TDelphiLexResult;
+  Tree: TSyntaxTree;
+  Analysis: TS0Analysis;
+  Site: TAssignmentSlotSite;
+
+  function Slot(const D: TSlotDecision): string;
+  begin
+    Result := Copy(Output, D.Span.StartOffset + 1, D.Span.Length);
+  end;
+
+begin
+  for Spacing := asNone to asBoth do
+  begin
+    Output := Formatted(UnitWith(['X:=1;', 'X  :=  2;', 'X'#9':= 3;', 'X := 4; // c',
+      'if X > 0 then X:=-X else X:= not X;']), Spacing);
+    Lex := TDelphiLexer.Tokenize(Output);
+    try
+      Tree := TDelphiParser.Parse(Lex);
+      try
+        Analysis := AnalyzeS0(Lex, Tree, ComputeSourceIdentity(Output), True);
+        Assert.IsTrue(Analysis.Reasons = []);
+        Assert.AreEqual(6, Integer(Length(Analysis.Sites)));
+        for Site in Analysis.Sites do
+        begin
+          Assert.AreEqual(Targets[Spacing, True], Slot(Site.Before));
+          Assert.AreEqual(Targets[Spacing, False], Slot(Site.After));
+        end;
+      finally
+        Tree.Free;
+      end;
+    finally
+      Lex.Free;
+    end;
+  end;
+end;
+
+procedure TFormattingTests.TargetVerificationRejectsManipulatedEdits;
+var
+  Source: string;
+  Lex: TDelphiLexResult;
+  Plus, BeforePlus, Op: Integer;
+  Extra, Injected: TTextEdit;
+  R: TFormatResult;
+begin
+  Source := UnitWith(['X:=1;', 'X  :=  2;', 'X := X + 1;']);
+  Lex := TDelphiLexer.Tokenize(Source);
+  try
+    Plus := TokenIndices(Lex, '+')[0];
+    BeforePlus := PreviousAnchor(Lex, Plus);
+    // Syntactically harmless, but not a requested assignment slot.
+    Extra := TTextEdit.Create(SlotSpan(Lex, BeforePlus, Plus), '  ',
+      S0AssignmentSpacingRuleId, BeforePlus, Plus);
+  finally
+    Lex.Free;
+  end;
+  CheckRefused(Source, asBoth, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Edits[0].NewText := #9;
+    end, 'FMT012');
+  CheckRefused(Source, asBoth, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Edits[0].NewText := '  ';
+    end, 'FMT012');
+  CheckRefused(Source, asBoth, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Delete(Edits, 1, 1);
+    end, 'FMT012');
+  CheckRefused(Source, asBoth, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Edits[High(Edits)].NewText := ' '#9;
+    end, 'FMT012');
+  CheckRefused(Source, asBoth, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Edits := Edits + [Extra];
+    end, 'FMT012');
+  CheckRefused(Source, asBoth, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Edits := nil;
+    end, 'FMT012');
+  // The untouched, correct edit set passes.
+  R := Run(Source, asBoth,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+    end);
+  try
+    Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
+    Assert.AreEqual(UnitWith(['X := 1;', 'X := 2;', 'X := X + 1;']), R.FormattedText);
+    Assert.AreEqual(4, R.EditCount);
+  finally
+    R.Free;
+  end;
+  // AsIs requests nothing; any injected edit is rejected.
+  Source := UnitWith(['X:=1;']);
+  Lex := TDelphiLexer.Tokenize(Source);
+  try
+    Op := TokenIndices(Lex, ':=')[0];
+    Injected := TTextEdit.Create(SlotSpan(Lex, Op - 1, Op), ' ',
+      S0AssignmentSpacingRuleId, Op - 1, Op);
+  finally
+    Lex.Free;
+  end;
+  CheckRefused(Source, asAsIs, frValidationFailure,
+    procedure(var Edits: TArray<TTextEdit>)
+    begin
+      Edits := Edits + [Injected];
+    end, 'FMT012');
+end;
+
+procedure TFormattingTests.TargetVerificationDirect;
+var
+  Source, Output, Failure: string;
+  Lex: TDelphiLexResult;
+  Tree: TSyntaxTree;
+  Analysis: TS0Analysis;
+  Site: TAssignmentSlotSite;
+  Input, Bad: TVerificationInput;
+begin
+  Source := UnitWith(['X:=1;']);
+  Lex := TDelphiLexer.Tokenize(Source);
+  Tree := TDelphiParser.Parse(Lex);
+  try
+    Input.OriginalSource := Source;
+    Input.SourceIdentity := ComputeSourceIdentity(Source);
+    Input.Snapshot := Source;
+    Input.OriginalLex := Lex;
+    Input.OriginalTree := Tree;
+    Input.AssignmentSpacing := asBoth;
+    Analysis := AnalyzeS0(Lex, Tree, Input.SourceIdentity, True);
+    Site := Analysis.Sites[0];
+    Input.Edits := [
+      TTextEdit.Create(Site.Before.Span, ' ', S0AssignmentSpacingRuleId,
+        Site.Before.LeftOriginalIndex, Site.Before.RightOriginalIndex),
+      TTextEdit.Create(Site.After.Span, ' ', S0AssignmentSpacingRuleId,
+        Site.After.LeftOriginalIndex, Site.After.RightOriginalIndex)];
+    Assert.IsTrue(VerifyAndApply(Input, Output, Failure), Failure);
+
+    Bad := Input;
+    Bad.Edits := Copy(Input.Edits);
+    Bad.Edits[0].NewText := #9;
+    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'tab instead of space');
+    Assert.IsTrue(Pos('AssignmentSpacing', Failure) > 0, Failure);
+    Assert.AreEqual('', Output);
+
+    Bad := Input;
+    Bad.Edits := Copy(Input.Edits);
+    Bad.Edits[1].NewText := '  ';
+    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'two spaces');
+
+    Bad := Input;
+    Bad.Edits := [Input.Edits[0]];
+    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'missing edit');
+
+    Bad := Input;
+    Bad.Edits := nil;
+    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'no edits');
+
+    Bad := Input;
+    Bad.AssignmentSpacing := asNone;
+    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'edits for another value');
+
+    Bad := Input;
+    Bad.AssignmentSpacing := asAsIs;
+    Assert.IsFalse(VerifyAndApply(Bad, Output, Failure), 'AsIs with edits');
+
+    Bad := Input;
+    Bad.AssignmentSpacing := asAsIs;
+    Bad.Edits := nil;
+    Assert.IsTrue(VerifyAndApply(Bad, Output, Failure), Failure);
+    Assert.AreEqual(Source, Output);
+
+    Bad := Input;
+    Bad.AssignmentSpacing := asNone;
+    Bad.Edits := nil;
+    Assert.IsTrue(VerifyAndApply(Bad, Output, Failure), 'None already holds');
+  finally
+    Tree.Free;
+    Lex.Free;
+  end;
+end;
+
+procedure TFormattingTests.ThousandsOfAssignments;
+const
+  Count = 5000;
+var
+  Body, Expected: TArray<string>;
+  I: Integer;
+  R: TFormatResult;
+begin
+  SetLength(Body, Count);
+  SetLength(Expected, Count);
+  for I := 0 to Count - 1 do
+  begin
+    if Odd(I) then Body[I] := 'X  :=  X + 1;' else Body[I] := 'X:=' + IntToStr(I) + ';';
+    if Odd(I) then Expected[I] := 'X := X + 1;'
+    else Expected[I] := 'X := ' + IntToStr(I) + ';';
+  end;
+  // Linear merge of edits and slots; no timing assertion (T-PERF).
+  R := Run(UnitWith(Body), asBoth);
+  try
+    Assert.AreEqual(Ord(foChanged), Ord(R.Outcome), DiagnosticText(R));
+    Assert.AreEqual(UnitWith(Expected), R.FormattedText);
+    Assert.AreEqual(2 * Count, R.EditCount);
   finally
     R.Free;
   end;
@@ -1094,10 +1417,10 @@ var
   Edit: TTextEdit;
   Diagnostic: TDiagnostic;
 begin
-  R := Run(UnitWith(['X{c}:=1;']), asBoth);
+  R := Run(UnitWith(['X {c} :=1;']), asBoth);
   try
     // Options, lexer result and tree are all freed by now.
-    Assert.AreEqual(UnitWith(['X{c}:= 1;']), R.FormattedText);
+    Assert.AreEqual(UnitWith(['X {c} := 1;']), R.FormattedText);
     Edit := R.GetEdit(0);
     Edit.NewText := 'changed';
     Assert.AreEqual(' ', R.GetEdit(0).NewText, 'edits are value copies');
@@ -1161,11 +1484,12 @@ var
   A, B: TFormatResult;
   I: Integer;
 begin
-  Source := UnitWith(['X{c}:=1;', 'X  :=  2;', 'S:=''s'';', 'X:='#13#10'3;'], CRLF,
+  Source := UnitWith(['X {c} :=1;', 'X  :=  2;', 'S := ''s'';'], CRLF,
     '  X: Integer;' + CRLF + '  S: string;');
   A := Run(Source, asBoth);
   B := Run(Source, asBoth);
   try
+    Assert.AreEqual(Ord(foChanged), Ord(A.Outcome), DiagnosticText(A));
     Assert.AreEqual(A.FormattedText, B.FormattedText);
     Assert.AreEqual(A.EditCount, B.EditCount);
     for I := 0 to A.EditCount - 1 do

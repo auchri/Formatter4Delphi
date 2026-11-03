@@ -56,8 +56,8 @@ Präfix bei Produktionsunits jeweils DelphiFormatter.; das Rollen-/APIregister s
 | Fixtures.ControlFlowCorpus | gültige Loop/Case/Try/Elsepositive | with/inline-for nur opaque Recovery | T-GRAMMAR/T-REC/E-COMP |
 | Core.TextEdits (S1) | TTextEdit, kanonische Normalisierung/Konflikte, einmalige Rückwärtsanwendung | keine Syntax-/Config-/IO-Abhängigkeit | T-SLOT/T-API |
 | Syntax.Query (S1, minimal) | geliehene Assignment-/Routinerollen, erste/letzte Ankerblätter | weitere Rollen nur je beauftragtem Schritt | T-ROLES/T-OWN |
-| Formatting.Options/Safety/Verification/Engine (S1) | S0-Optionen ohne Defaults, positive Slotfreigabe, LexicalSignatureV1/SyntaxFingerprintV1, FormatText/TFormatResult | nur Assignmentabstände; kein Partial/Config/IO | T-S0/T-SLOT/T-VERIFY/T-IDEM/T-OWN/T-API |
-| Tests.Formatting, Fixtures.FormatterAssignmentCorpus (S1) | 37 Formatter-Tests, kompilierte E2E-01-Quelle | Fixture wird nur gelesen, nie formatiert zurückgeschrieben | T-S0/T-VERIFY/E-COMP |
+| Formatting.Options/Safety/Verification/Engine (S1) | S0-Optionen ohne Defaults, positive Slotfreigabe, atomare Verweigerung, LexicalSignatureV1/SyntaxFingerprintV1, Regelzielzustandsprüfung, FormatText/TFormatResult | nur Assignmentabstände; kein Partial/Config/IO | T-S0/T-SLOT/T-VERIFY/T-IDEM/T-OWN/T-API |
+| Tests.Formatting, Fixtures.FormatterAssignmentCorpus (S1) | 44 Formatter-Tests, kompilierte E2E-01-Quelle | Fixture wird nur gelesen, nie formatiert zurückgeschrieben | T-S0/T-VERIFY/E-COMP |
 | Fixtures.DirectiveCorpus (nur #10) | compilierbare enge Pilotfälle | nicht im gepinnten M2.7-Manifest, keine allgemeinen Branchrollen | T-DIR/T-ROLES/E-COMP |
 
 Dateinamen/Ordner unter src und tests sind unverändert. Die drei Test-DPRs sind Console-Runs; Coverage.dpr ist Analyzer; Lexer.dproj das RTL-Lexerpackage. Group/DPR/DPROJ bei neuen Units nur um benötigte Referenzen erweitern, keine VCL/FMX. Existierende Skripte Fetch/Test/Validate/Compare behalten ihre Analyseverantwortung. Corpusmanifest, Sourcehashes/Archives/Encodingpolicy bleiben unverändert.
