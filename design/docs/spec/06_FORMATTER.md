@@ -18,6 +18,7 @@ Freigegebene Funktion: ausschließlich horizontale Abstände direkt vor/nach := 
 - Keine neuen Zeilen, kein Ändern vorhandener EOL, kein Indent-/Alignment-/Case-/Commenttext-/Directiveedit, kein Syntax-Autofix. Ein explizites AsIs erzeugt keine Edits.
 - Wenn keine angeforderte Regelstelle vorhanden ist: erfolgreich unchanged nach Verifikation der Inputvorbedingungen.
 - Nur unchanged/changed/refused; kein Partial. Erster Slice darf konservativ mehr verweigern, muss Gründe nennen; keine Safetyzusagen für Include-/Branchformatierung.
+- Atomar: Jeder angeforderte Assignmentslot hat nach Erfolg genau den Zieltext der Option. Ein geschützter Slot (Kommentar-, Literal-/CharCode-Anker, EOL), der ihn bereits hat, bleibt ohne Edit; muss er verändert werden, wird die ganze Datei verweigert und keine andere geplante Änderung angewandt. Ein EOL-Slot kann keinen horizontalen Zieltext haben und führt daher bei jeder Anforderung außer AsIs zur Verweigerung; er wird nie durch Spaces ersetzt. AsIs fordert nichts an.
 
 Diese engere Erstfreigabe hindert nicht die spätere deklarierte Erweiterung des Profils. Jede Erweiterung benennt eigene Voraussetzungen, Tests und Kompatibilitätswirkung. Ein unbekannter Compilersemantikeffekt ist kein neuer Rewriteauftrag.
 
@@ -42,7 +43,7 @@ Edits sind maximal eine vollständige Slotersetzung je Slot. Dieselbe Offsetposi
 3. Einmal rückwärts anwenden. Erzeuge eine monotone Editmap der unveränderten Originalanker und Bereiche; bei gemeinsamen Einfügepunkten ist wegen Konfliktregel keine unbestimmte Ordnung zulässig.
 4. Neu lexen. LexicalSignatureV1 exakt vergleichen; vollständige Sequenz statt bloß Hash. Tokenkorrespondenz stellt Kommentar-/Directive-/Unknown-/EOF-Erhaltung sicher.
 5. Neu parsen. Je freigegebenem vollständigem Owner SyntaxFingerprintV1 vergleichen. Diagnostic-Code/Severity/Message und gemappten Ort vergleichen; keine neuen Lexer-/Parserdiagnosen im freigegebenen Bereich, nicht nur gleich viele.
-6. Geschützte Source-Slices nach Editmap und Ankerbeziehungen exakt vergleichen. EOL-/Kommentarbindung zusätzlich prüfen; reine meaningful-token-Gleichheit reicht nicht.
+6. Geschützte Source-Slices nach Editmap und Ankerbeziehungen exakt vergleichen. EOL-/Kommentarbindung zusätzlich prüfen; reine meaningful-token-Gleichheit reicht nicht. Zusätzlich den Regelzielzustand prüfen: angeforderte Slots unabhängig von der Planung aus Originalbaum und validierter Option ableiten; jeder muss in der Ausgabe genau den Zieltext tragen, jeder Edit muss einen freigegebenen angeforderten Slot treffen. Fehlende, zusätzliche oder falsche Edits sind damit Verletzungen.
 7. Bei jeder Verletzung gesamte Editmenge verwerfen, output=input, 0 Edits, refused. Kein unbeschränktes Entfernen einzelner Edits und erneut Versuchen.
 
 Gleicher Parser/Lexer vor/nach Edit ist ein notwendiger Schutz, kein Compiler-/Semantikbeweis. Compiler-validierte Positivfixtures und unabhängige Gegenbeispiele bleiben erforderlich. Idempotenz wird in Tests durch zweimaliges FormatText geprüft; Engine ruft sich nicht rekursiv zum Beweis auf.

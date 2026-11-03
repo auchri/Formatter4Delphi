@@ -1,6 +1,6 @@
 # 14 – Kanonische Daten- und API-Verträge (A0)
 
-**Status:** normative Zielspezifikation zur A0-Freigabe, keine implementierte API. Bestehende APIs bleiben gültig. **Einziger Definitionsort** für die hier genannten Typen und Funktionen. Andere Dokumente referenzieren diesen Vertrag; sie dürfen keine abweichenden Signaturen definieren. Anforderungen und Nachweise: [01](01_PRODUCT_REQUIREMENTS.md), [15](15_TRACEABILITY.md).
+**Status:** normative Zielspezifikation zur A0-Freigabe, keine implementierte API, außer: S1 implementiert die Abschnitte 6 (TFormatRefusalReason, TSlotDecision, TProtectedRange), 7, 8 (nur S0-Felder), 9 und 11 (in Formatting.Verification); Abweichungen/Präzisierungen in ADR-002 und [S1-Status](../../../docs/S1_STATUS.md). Bestehende APIs bleiben gültig. **Einziger Definitionsort** für die hier genannten Typen und Funktionen. Andere Dokumente referenzieren diesen Vertrag; sie dürfen keine abweichenden Signaturen definieren. Anforderungen und Nachweise: [01](01_PRODUCT_REQUIREMENTS.md), [15](15_TRACEABILITY.md).
 
 ## 1. Regeln für alle Ergebnisse
 
@@ -229,4 +229,4 @@ Owner: Formatting.Verification (darf anfangs als privater Teil von Engine/Edits 
 - LexicalSignatureV1: geordnete (TokenKind, exakter UTF-16-Text) aller Tokens außer tkWhitespace/tkNewLine; einschließlich Kommentare, Direktiven, Unknown und genau EOF. Keine offsets/Trivia. Vergleich via vollständiger Sequenz, ein Hash allein ist kein Gleichheitsbeweis.
 - SyntaxFingerprintV1: geordnete (Kind, Child-Rollenfolge, strukturierte Operator-/Delimiter-/Keyword-/Name-/Literallexeme, LocalIssues, Missing.ExpectedText)-Ereignisse eines vollständig freigegebenen Besitzers. Keine Source-Spans, Tokenindizes oder ordinary Trivia; Kommentare/Direktiven durch LexicalSignature und Ankervergleich separat erfasst. Rohlexeme bleiben exakt, kein freies Casefolding.
 
-Die implementierende Rolle muss die in 04 angegebenen Rollen deterministisch abfragen; fehlende Rolle/unknown fingerprint version führt zur Verweigerung. Lokale Fingerprints werden über gemappte Originaltoken-Korrespondenz verglichen. Kein neuer Compiler-/Semantikbeweis behauptet.
+Neben beiden Fingerprints prüft die Verifikation den Regelzielzustand der explizit angeforderten Optionen (06, Schritt 6) unabhängig von der geplanten Editmenge. Die implementierende Rolle muss die in 04 angegebenen Rollen deterministisch abfragen; fehlende Rolle/unknown fingerprint version führt zur Verweigerung. Lokale Fingerprints werden über gemappte Originaltoken-Korrespondenz verglichen. Kein neuer Compiler-/Semantikbeweis behauptet.

@@ -13,8 +13,9 @@ These are target specifications, not implemented capabilities or authorization t
 - Lossless lexer for identifiers, literals/numerals, comments/compiler directives, symbols and trivia, with UTF-16 spans and diagnostics.
 - Generic immutable Source-CST and M2.1–M2.6 grammar: expressions/postfix chains, assignments/blocks/if, basic declarations/routines, classical classes/records, ordinary properties and control flow. Unsupported syntax remains opaque; this is not complete Delphi grammar.
 - M2.7 independent corpus/coverage analyzer and reproducible pinned corpus. It is an analysis console, not the product formatter CLI.
+- S1 safe formatter foundation: `FormatText` on an in-memory string changes only the horizontal spacing around `:=` of assignment statements in complete routines of complete, directive-free units (internal S0 option `AssignmentSpacing`), with token-bound slot safety and re-lex/re-parse verification; see [S1 status](docs/S1_STATUS.md).
 
-There is no production formatter, native config reader, product CLI, AST or include resolver yet. The open [PR #10](https://github.com/auchri/Formatter4Delphi/pull/10) contains the separate M2.8 directive pilot. A0/PR #11 neither incorporates nor merges it. Follow the [baseline strategy](design/docs/spec/12_CURRENT_CODE_AUDIT.md) before implementation.
+There is no further formatting rule, native config reader, product CLI, AST or include resolver yet. The open [PR #10](https://github.com/auchri/Formatter4Delphi/pull/10) contains the separate M2.8 directive pilot. A0/PR #11 neither incorporates nor merges it. Follow the [baseline strategy](design/docs/spec/12_CURRENT_CODE_AUDIT.md) before implementation.
 
 ## Implementation and historical evidence
 
@@ -43,9 +44,10 @@ From a RAD Studio command prompt with rsvars.bat loaded:
 msbuild DelphiFormatter.groupproj /t:Build /p:Config=Debug /p:Platform=Win64
 build\Win64\Debug\DelphiFormatter.Lexer.Tests.exe
 build\Win64\Debug\DelphiFormatter.Parser.Tests.exe
+build\Win64\Debug\DelphiFormatter.Formatting.Tests.exe
 ~~~
 
-Run the lexer/parser runners from the repository root. Run the additional coverage test runner with an isolated writable working directory and its build subdirectory available, as it generates test reports; see the coverage/test documentation. Preserve original corpus inputs. DUnitXSource defaults to the installation's source/DUnitX directory and can be overridden as an MSBuild property. Artifacts go under build/.
+Run the lexer/parser/formatting runners from the repository root. Run the additional coverage test runner with an isolated writable working directory and its build subdirectory available, as it generates test reports; see the coverage/test documentation. Preserve original corpus inputs. DUnitXSource defaults to the installation's source/DUnitX directory and can be overridden as an MSBuild property. Artifacts go under build/.
 
 The test runners return 0 on success, 1 for failed/empty runs and 2 for runner exceptions. Verify fresh executables and corpus DCUs: the CE command-line compiler can refuse compilation while returning exit code 0. Do not report an old executable rerun as a fresh build.
 

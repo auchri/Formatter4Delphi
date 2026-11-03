@@ -81,4 +81,6 @@ Jede LF-Zeile in 10 nennt Zielrollen N-*, eigenen Positiv-/Recoveryfall, E-COMP/
 
 A0 liefert konsolidierte Dokumente und dokumentiert Selbstchecks, keine Runtimecapability. Vorherige Review-/CE-Logs sind historische Evidenz. Implementierungs-PRs ergänzen je zugeordneter Testinstanz exakten Testnamen, Quelle, Toolchain, Datum/Hash/Ergebnis oder ausdrücklich blocked/not-run. Ein geplanter Testvertrag darf niemals als passed interpretiert werden.
 
+S1-Nachweis: FMT-01 bis FMT-09, API-01 bis API-03 und DIR-04 (S0-Verweigerung bei Direktiven) sind für den S0-Assignmentumfang mit benannten Testmethoden je T-S0/T-SLOT/T-VERIFY/T-IDEM/T-OWN/T-API/T-LOSS, Toolchain, Artefakthashes und Ergebnissen in [S1-Status](../../../docs/S1_STATUS.md) belegt (Delphi 12 CE Update 1, nicht 12.3). FMT-04 nur ohne T-ORACLE, FMT-08 nur ohne T-IO; FMT-10 und alle CFG-/IO-Anforderungen bleiben offen.
+
 Kein Gate verlangt vor S1 vollständige Grammatik oder vor internen Optionen native Defaultkenntnis. Fehlende Oracleevidenz verhindert nur den nativen Claim; ungeprüfte Compiler-/Includeeffekte erlauben keine Lockerung der Schutzregeln.
