@@ -4,12 +4,14 @@ Normative experiment register: [11_OPEN_QUESTIONS](../../design/docs/spec/11_OPE
 This list narrows those experiments to what O1 could and could not settle for toolchain
 `TC-BDS23-29.0.51961.7529`. "Planned run" refers to [o1-manifest.json](manifest/o1-manifest.json).
 
-## A. Target version (blocks every 12.3 claim)
+## A. Target version (future; blocks only 12.3 claims, not O2/C1/lexer/CST)
+
+Build 29.0.51961.7529 is the current reference for all experiments; results are recorded for it.
 
 | Question | Status after O1 | Next step |
 |---|---|---|
-| Are 12.3 `Formatter.exe`, shipped profiles and IDE exports identical to build 29.0.51961.7529? | unknown, no 12.3 artifacts (O1-B01) | install/obtain 12.3, rerun the inventory script, diff against the committed inventory |
-| Which RAD Studio release is build 29.0.51961.7529? | derived "12.1 / 12 Update 1", unverified | check against the vendor's release table |
+| Are 12.3 `Formatter.exe`, shipped profiles and IDE exports identical to build 29.0.51961.7529? | unknown, no 12.3 artifacts (O1-B01 not-run) | when a 12.3 installation exists: rerun the inventory script, diff against the committed inventory |
+| Which RAD Studio release is build 29.0.51961.7529? | "Delphi 12 CE Update 1" per repository documents (secondary), unverified in O1 | check against the vendor's release table |
 | Does 12.3 still use `TgConfig Version="3"` and the same option set/types? | unknown | inventory diff (as above) |
 
 ## B. Profile semantics (C1)

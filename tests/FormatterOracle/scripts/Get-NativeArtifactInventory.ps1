@@ -92,26 +92,45 @@ function Test-AbsolutePath([string]$Value) {
 }
 
 function Get-Encoding([byte[]]$Bytes) {
+    # Encoding is recognized by BOM only (UTF-8, UTF-16LE/BE); without BOM the payload is decoded as
+    # strict UTF-8. Line ends are counted on the decoded UTF-16 code units, CRLF counting once.
+    # validUtf8WithoutBom: payload after the BOM is strict UTF-8 (null for UTF-16 BOMs).
+    # If decoding fails, eol/endsWithNewline are null and a locale-independent decodeError is added.
     $bom = 'none'; $skip = 0
     if ($Bytes.Length -ge 3 -and $Bytes[0] -eq 0xEF -and $Bytes[1] -eq 0xBB -and $Bytes[2] -eq 0xBF) { $bom = 'utf-8'; $skip = 3 }
     elseif ($Bytes.Length -ge 2 -and $Bytes[0] -eq 0xFF -and $Bytes[1] -eq 0xFE) { $bom = 'utf-16le'; $skip = 2 }
     elseif ($Bytes.Length -ge 2 -and $Bytes[0] -eq 0xFE -and $Bytes[1] -eq 0xFF) { $bom = 'utf-16be'; $skip = 2 }
-    $strict = [Text.UTF8Encoding]::new($false, $true)
-    $validUtf8 = $true
-    try { [void]$strict.GetString($Bytes, $skip, $Bytes.Length - $skip) } catch { $validUtf8 = $false }
-    $nonAscii = @($Bytes[$skip..($Bytes.Length - 1)] | Where-Object { $_ -ge 0x80 }).Count
+    $payload = $Bytes.Length - $skip
+    $nonAscii = 0
+    for ($i = $skip; $i -lt $Bytes.Length; $i++) { if ($Bytes[$i] -ge 0x80) { $nonAscii++ } }
+
+    $utf8 = [Text.UTF8Encoding]::new($false, $true)
+    $validUtf8 = $null
+    $text = $null; $decodeError = $null
+    if ($bom -in 'none', 'utf-8') {
+        try { $text = $utf8.GetString($Bytes, $skip, $payload); $validUtf8 = $true }
+        catch { $validUtf8 = $false; $decodeError = 'invalid UTF-8 byte sequence' }
+    } elseif ($payload % 2 -ne 0) {
+        $decodeError = "odd byte count for $bom"
+    } else {
+        $utf16 = [Text.UnicodeEncoding]::new($bom -eq 'utf-16be', $false, $true)
+        try { $text = $utf16.GetString($Bytes, $skip, $payload) } catch { $decodeError = "invalid $bom code unit sequence" }
+    }
+
+    $result = [ordered]@{ bom = $bom; validUtf8WithoutBom = $validUtf8; nonAsciiBytes = $nonAscii; eol = $null; endsWithNewline = $null }
+    if ($null -ne $decodeError) {
+        $result.decodeError = $decodeError
+        return $result
+    }
     $crlf = 0; $lf = 0; $cr = 0
-    for ($i = 0; $i -lt $Bytes.Length; $i++) {
-        if ($Bytes[$i] -eq 13) {
-            if ($i + 1 -lt $Bytes.Length -and $Bytes[$i + 1] -eq 10) { $crlf++; $i++ } else { $cr++ }
-        } elseif ($Bytes[$i] -eq 10) { $lf++ }
+    for ($i = 0; $i -lt $text.Length; $i++) {
+        if ($text[$i] -eq "`r") {
+            if ($i + 1 -lt $text.Length -and $text[$i + 1] -eq "`n") { $crlf++; $i++ } else { $cr++ }
+        } elseif ($text[$i] -eq "`n") { $lf++ }
     }
-    $last = if ($Bytes.Length) { $Bytes[$Bytes.Length - 1] } else { 0 }
-    [ordered]@{
-        bom = $bom; validUtf8WithoutBom = $validUtf8; nonAsciiBytes = $nonAscii
-        eol = [ordered]@{ crlf = $crlf; lf = $lf; cr = $cr }
-        endsWithNewline = ($last -eq 10 -or $last -eq 13)
-    }
+    $result.eol = [ordered]@{ crlf = $crlf; lf = $lf; cr = $cr }
+    $result.endsWithNewline = $text.Length -gt 0 -and ($text[-1] -eq "`n" -or $text[-1] -eq "`r")
+    $result
 }
 
 function Read-Profile([string]$Label, [string]$Location, [string]$Path) {
@@ -123,7 +142,26 @@ function Read-Profile([string]$Label, [string]$Location, [string]$Path) {
     $doc = [Xml.XmlDocument]::new()
     $doc.XmlResolver = $null
     $reader = [Xml.XmlReader]::Create([IO.MemoryStream]::new($bytes), $settings)
-    try { $doc.Load($reader) } finally { $reader.Dispose() }
+    $parseError = $null
+    try { $doc.Load($reader) }
+    catch {
+        $inner = $_.Exception
+        while ($inner.InnerException -and $inner -isnot [Xml.XmlException]) { $inner = $inner.InnerException }
+        $parseError = $inner -is [Xml.XmlException] ?
+            ('XmlException at line {0}, position {1}' -f $inner.LineNumber, $inner.LinePosition) : $inner.GetType().FullName
+    }
+    finally { $reader.Dispose() }
+    if ($null -ne $parseError) {
+        # Not a readable profile: keep identity/encoding facts, no options (parseError marks the record).
+        return [ordered]@{
+            label = $Label; location = $Location
+            sizeBytes = $bytes.Length; sha256 = Get-Sha256 $bytes
+            encoding = Get-Encoding $bytes
+            xml = $null; parseError = $parseError
+            optionCount = 0; duplicateOptionNames = @(); derivedNamePrefixCounts = [ordered]@{}
+            options = [Collections.Generic.List[object]]::new()
+        }
+    }
 
     $declaration = $doc.get_ChildNodes() | Where-Object { $_.get_NodeType() -eq 'XmlDeclaration' } | Select-Object -First 1
     $root = $doc.DocumentElement

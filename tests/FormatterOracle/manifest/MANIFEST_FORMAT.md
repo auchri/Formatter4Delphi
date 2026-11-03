@@ -36,6 +36,17 @@ Run record fields (all present, `null` when not applicable): `runId`, `status`, 
 `stderrSha256`, `repetitions`, `repetitionsIdentical`, `observedDifference`, `evidenceStatus`,
 `supportedScope`.
 
+Every run record must contain all of these fields; `null` means "not applicable / not observed",
+a missing field is an error. `toolchainId` is always required; formatter runs (also planned ones)
+require `formatterSha256`, `commandLine` and `workingDirectory`; IDE runs require `profileId` and
+`profileSha256`. `blocked`/`not-run` experiments list no runs, `executed`/`planned` ones at least one.
+
+Cross-references: an id must name a record of the right kind (`toolchainId` → toolchain,
+`profileId` → profile, `inputFixtureId` → fixture, `environmentId` → environment). A hash given
+next to an id must equal that record's hash (`formatterSha256` = toolchain `formatter.exe.sha256`,
+`profileSha256` = profile `sha256`, `inputSha256` = fixture `sha256`); a hash without its id is
+rejected because it cannot be attributed.
+
 Observation fields (`exitCode`, `stdoutSha256`, `stderrSha256`, `outputSha256`,
 `observedDifference`, `repetitionsIdentical`, `evidenceStatus`) must be `null` unless executed, so a
 plan can never be mistaken for a result. `supportedScope` states the narrowest claim the run

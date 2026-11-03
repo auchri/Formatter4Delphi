@@ -34,7 +34,14 @@ invariants of Formatter4Delphi always win over cosmetic parity.
 
 ~~~powershell
 pwsh -NoProfile -File tests/FormatterOracle/scripts/Test-OracleManifest.ps1
+pwsh -NoProfile -File tests/FormatterOracle/scripts/Test-OracleScripts.ps1
 ~~~
+
+`Test-OracleScripts.ps1` needs no RAD Studio: it feeds manipulated manifest copies to the validator
+and synthetic UTF-8/UTF-16/EOL profiles to the inventory script.
+
+The local build 29.0.51961.7529 is the current reference toolchain; Delphi 12.3 is a future
+compatibility target and not a prerequisite for O2 or C1.
 
 Regenerating the inventory (needs the local installation and `local/` artifacts; output must be
 byte-identical to the committed file for the same inputs):

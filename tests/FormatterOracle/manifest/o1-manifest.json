@@ -113,12 +113,13 @@
         "note": "Profile schema attribute only; not a product or formatter version."
       },
       "productRelease": {
-        "claim": "RAD Studio 12 Athens Update 1 (12.1)",
-        "evidenceStatus": "derived-unverified",
-        "basis": "Build 29.0.51961.7529 equals the build the repository history labels \"CE 12 Update 1\"; no vendor release table was checked in O1."
+        "claim": "RAD Studio / Delphi 12 Athens Community Edition Update 1",
+        "evidenceStatus": "secondary-unverified",
+        "basis": "Repository documents (design/docs/spec/08_TESTS.md, design/ARCHITEKTUR_REVIEW.md) record this build as \"Delphi 12 CE Update 1\" from earlier IDE evidence. O1 itself observed only the build number 29.0.51961.7529 and did not consult a vendor release table."
       },
       "matchesTarget12_3": false,
-      "targetNote": "Delphi 12.3 artifacts are not installed. Every observation in this manifest is restricted to this toolchain; 12.3 compatibility is unverified."
+      "targetNote": "Every observation in this manifest applies to build 29.0.51961.7529 only. RAD Studio/Delphi 12.3 is a future compatibility target: no 12.3 installation is available or required now, and its absence does not block O2, C1, lexer or CST work. Nothing here demonstrates compatibility with 12.3 or any other unverified build.",
+      "role": "current reference toolchain for all original-formatter experiments (O1, O2) and native-profile observations (C1 input)"
     }
   ],
   "environments": [
@@ -695,13 +696,13 @@
     },
     {
       "id": "O1-B01",
-      "title": "Delphi 12.3 artifact inventory",
+      "title": "Delphi 12.3 artifact inventory (future compatibility target)",
       "experimentRefs": [
         "E-CONFIG",
         "E-COMP"
       ],
-      "status": "blocked",
-      "reason": "No RAD Studio 12.3 installation available; only BDS 23.0 build 29.0.51961.7529 (Starter).",
+      "status": "not-run",
+      "reason": "No 12.3 installation is available; by project decision 12.3 is a future target and not a prerequisite for O2/C1. Rerun the inventory script against a 12.3 installation when one exists and diff it against the committed inventory.",
       "runs": []
     },
     {

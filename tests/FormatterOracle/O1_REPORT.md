@@ -5,8 +5,12 @@ head 65000fca7ce3890541aa1f691a17666ef47cfb92) is open and was neither used nor 
 Observation date 2026-11-03. Records: [manifest](manifest/o1-manifest.json),
 [inventory](inventory/rad-studio-23.0_29.0.51961.7529.inventory.json).
 
-**Scope of every finding below: toolchain `TC-BDS23-29.0.51961.7529` only. Delphi 12.3
-compatibility is unverified.** No native formatter compatibility of Formatter4Delphi is claimed.
+**Scope of every finding below: toolchain `TC-BDS23-29.0.51961.7529` only.** This local
+installation is the current reference for all experiments with the original formatter (O1, O2) and
+the source of observed native profiles (C1). RAD Studio/Delphi 12.3 stays a future compatibility
+target: its absence blocks neither O2, C1 nor lexer/CST work, and nothing here demonstrates
+compatibility with 12.3 or any other unverified build. No native formatter compatibility of
+Formatter4Delphi is claimed.
 
 ## 1. Available and missing artifacts
 
@@ -19,7 +23,7 @@ compatibility is unverified.** No native formatter compatibility of Formatter4De
 | Active IDE profile `%APPDATA%\Embarcadero\BDS\23.0\Formatter.config` | present, hashed (before/after experiment) |
 | Two IDE exports (O1-X02) | present locally, hashed |
 | Command-line compiler | **absent**: `dcc32.exe`/`dcc64.exe` report that this edition does not support command-line compiling |
-| Any RAD Studio 12.3 artifact | **missing** (O1-B01) |
+| Any RAD Studio 12.3 artifact | not available; future target, not required now (O1-B01 not-run) |
 
 Proprietary files stay in the installation or in the git-ignored `local/` folder
 ([LOCAL_ARTIFACTS](LOCAL_ARTIFACTS.md)).
@@ -32,7 +36,7 @@ Proprietary files stay in the installation or in the git-ignored `local/` folder
 | Compiler | `dcc32290.dll`/`dcc64290.dll` FileVersion 29.0.51961.7529 | file version resource; no compiler banner (no CLI) |
 | Original formatter | `Formatter.exe` FileVersion/ProductVersion 29.0.51961.7529 | file version resource, SHA-256 |
 | Native config schema | root `TgConfig`, attribute `Version="3"`, `SubLevelDisabled="False"` | profile XML; a schema attribute, not a product version |
-| Release name | "12 Athens Update 1 (12.1)" | **derived, unverified** (build number vs. repository history label "CE 12 Update 1") |
+| Release name | "Delphi 12 CE Update 1" | **secondary, unverified in O1**: repository documents ([08_TESTS](../../design/docs/spec/08_TESTS.md), [ARCHITEKTUR_REVIEW](../../design/ARCHITEKTUR_REVIEW.md)) record this build under that name from earlier IDE evidence; O1 observed only the build number and checked no vendor release table |
 
 The shipped-profile hashes equal those of the historical
 [native-profile-inventory.json](../../design/review-evidence/native-profile-inventory.json): the
@@ -132,12 +136,17 @@ invalid entries and other encodings; relevance of `Formatter.*`, `Config.*` and 
 entries for Delphi output; whether the CLI reads the active IDE profile; exit codes and dialog
 behavior with `-silent`; the release name of the build; compilability of the fixtures.
 
-## 8. Missing for exact Delphi 12.3 compatibility
+## 8. Future target: what a Delphi 12.3 claim would additionally need
 
-12.3 `Formatter.exe` (hash/version) and assemblies, 12.3 shipped profiles, 12.3 IDE exports with a
-single-option delta, a 12.3 compiler for fixture verification, and O2 reference runs on 12.3.
+Not a prerequisite for O2, C1 or lexer/CST work. A later 12.3 compatibility claim would need the 12.3
+`Formatter.exe` (hash/version) and assemblies, 12.3 shipped profiles, 12.3 IDE exports with a
+single-option delta, a 12.3 compiler for fixture verification and O2 reference runs on 12.3 – or,
+for each claim, a demonstration that the relevant artifacts are identical to build
+29.0.51961.7529. The inventory script and manifest format already support a second toolchain record.
 
 ## 9. Prerequisites for O2 and C1
+
+Both run against the available build 29.0.51961.7529; results are recorded with that toolchain id.
 
 O2: this manifest; a local `Formatter.exe` whose hash matches a toolchain record; isolated run
 directories; runner with timeout and dialog detection (O1-X01); explicit `-config`, `-silent`,
@@ -157,7 +166,8 @@ Formatter4Delphi reproduces its effect; that needs O2-P01 and C2.
 |---|---|
 | `pwsh -NoProfile -File scripts/ValidateDesignDocs.ps1` (PowerShell 7.5.4) | PASS, 26 documents, 111 local links, 0 warnings |
 | `pwsh -NoProfile -File tests/FormatterOracle/scripts/Test-OracleManifest.ps1` | PASS (13 profiles, 8 fixtures, 19 experiments/runs) |
-| Inventory generated twice | byte-identical (SHA-256 of output equal) |
+| `pwsh -NoProfile -File tests/FormatterOracle/scripts/Test-OracleScripts.ps1` | PASS, 62 checks: manipulated references/hashes/fields rejected; UTF-8, UTF-8 BOM, UTF-16 LE/BE, mixed EOL, no final newline, empty and undecodable files |
+| Inventory generated twice | byte-identical (SHA-256 of output equal); unchanged after the decoded-EOL fix |
 | `git diff --check` (working tree and staged) | clean |
 | Pinned corpus / `src` / existing fixtures | unchanged |
 | Delphi rebuild/DUnitX | not run (no source/project change) |
