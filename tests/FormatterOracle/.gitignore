@@ -1,0 +1,3 @@
+# Local proprietary artifacts (Formatter.exe copies, original/exported .config profiles,
+# run outputs). Never commit; see LOCAL_ARTIFACTS.md.
+local/

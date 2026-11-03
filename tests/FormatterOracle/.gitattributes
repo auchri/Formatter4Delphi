@@ -1,0 +1,3 @@
+# Oracle fixtures are byte-exact experiment inputs: no EOL normalization, no
+# whitespace checks (tabs, trailing blanks, LF/CR/mixed line ends are intentional).
+fixtures/** -text -whitespace
