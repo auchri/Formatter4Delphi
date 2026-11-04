@@ -6,7 +6,7 @@ Read [design/README.md](design/README.md) first, then [requirements](design/docs
 
 ## Actual starting point
 
-Implemented: M1 lexer; M2.1–M2.6 lossless CST expressions/postfix, basic declarations/routines/classes/records/properties and control flow; M2.7 independent coverage/analyzer tooling; S1 formatter foundation (FormatText with S0 horizontal assignment spacing only, see [S1 status](docs/S1_STATUS.md)). Unsupported syntax remains opaque. No other formatting rule, native config reader, product CLI, AST or include resolver. O1 research data (original formatter/profile hashes, manifest format, fixtures; no runner, no compatibility claim) lives in [tests/FormatterOracle](tests/FormatterOracle/README.md).
+Implemented: M1 lexer; M2.1–M2.6 lossless CST expressions/postfix, basic declarations/routines/classes/records/properties and control flow; M2.7 independent coverage/analyzer tooling; S1 formatter foundation (FormatText with S0 horizontal assignment spacing only, see [S1 status](docs/S1_STATUS.md)). Unsupported syntax remains opaque. No other formatting rule, native config reader, product CLI, AST or include resolver. O1/O2 oracle data (original formatter/profile hashes, manifest format, fixtures, test-only runner with first observed results; no compatibility claim) lives in [tests/FormatterOracle](tests/FormatterOracle/README.md).
 
 [docs/CST_SPEC.md](docs/CST_SPEC.md), [docs/LEXER_SPEC.md](docs/LEXER_SPEC.md), [M1 status](docs/M1_STATUS.md), [M2 status](docs/M2_STATUS.md) and [coverage method](docs/PARSER_COVERAGE.md) describe implementation/evidence. Historical roadmap/milestone text under docs/ is not a competing target or a new task. Exact Delphi 12.3 verification remains open; old CE Update 1 results must stay identified as such.
 

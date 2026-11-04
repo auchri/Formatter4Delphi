@@ -760,7 +760,8 @@
           "evidenceStatus": null,
           "supportedScope": null
         }
-      ]
+      ],
+      "executedIn": "manifest/o2-manifest.json"
     },
     {
       "id": "O2-P02",
@@ -1216,7 +1217,8 @@
           "evidenceStatus": null,
           "supportedScope": null
         }
-      ]
+      ],
+      "executedIn": "manifest/o2-manifest.json"
     },
     {
       "id": "O2-P12",

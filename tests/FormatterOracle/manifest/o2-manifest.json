@@ -1,0 +1,862 @@
+{
+  "manifestFormat": "formatter4delphi.oracle-manifest/1",
+  "milestone": "O2",
+  "description": "Executed O2 experiments. Hashes describe local artifacts and outputs that are NOT in the repository. Follow-up experiments remain planned in o1-manifest.json.",
+  "repositoryBase": {
+    "branch": "main",
+    "commit": "e58bf12b3b638ca919e1ee0a06e0d4d110504da6",
+    "note": "PR #13 (O1) merged."
+  },
+  "toolchains": [
+    {
+      "id": "TC-BDS23-29.0.51961.7529",
+      "observedOn": "2026-11-03",
+      "ide": {
+        "bdsRegistryKey": "BDS\\23.0",
+        "registryProductVersion": "29",
+        "registryEdition": "Starter",
+        "installLanguage": "DE",
+        "bdsExe": {
+          "location": "$(BDS)\\bin\\bds.exe",
+          "sha256": "902D731F6977DCD168384224C02CE12894795AFEFF442643CF38B1C7AFA03446",
+          "sizeBytes": 1810416,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0",
+          "productName": "Personal"
+        }
+      },
+      "compiler": {
+        "dcc32290": {
+          "location": "$(BDS)\\bin\\dcc32290.dll",
+          "sha256": "4C358B9D9C80526DDE66E6B410B6AAD139AA366B1ECB404EC009CA5CECF84407",
+          "sizeBytes": 3387880,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0.51961.7529",
+          "productName": "Embarcadero Delphi/C++Builder (Standard)"
+        },
+        "dcc64290": {
+          "location": "$(BDS)\\bin\\dcc64290.dll",
+          "sha256": "B78BC1C84A70BD0CA266AA7151CD88BEDC9D0D247A51A2BB96551FF600EA48BA",
+          "sizeBytes": 4313064,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0.51961.7529",
+          "productName": "Embarcadero Delphi/C++Builder (Enterprise)"
+        },
+        "commandLineCompiler": "unavailable: dcc32.exe/dcc64.exe print \"This version of the product does not support command line compiling.\" (observed)"
+      },
+      "formatter": {
+        "exe": {
+          "location": "$(BDS)\\bin\\Formatter.exe",
+          "sha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "sizeBytes": 373232,
+          "fileVersion": "29.0.51961.7529",
+          "productVersion": "29.0.51961.7529",
+          "productName": "Embarcadero RAD Studio",
+          "fileDescription": "Standalone Formatter",
+          "peMachine": "x86",
+          "peSubsystem": "console",
+          "managedAssembly": "Formatter, Version=29.0.0.0, Culture=neutral, PublicKeyToken=91d62ebb5b0d1b1b"
+        },
+        "supportingAssemblies": [
+          {
+            "location": "$(BDS)\\bin\\Embarcadero.Modeling.Formatter.dll",
+            "sha256": "2E9291A2DD1334570FAD8488BB3F9B8E242B0875DE343127E6058DFA6B285E67",
+            "sizeBytes": 229872,
+            "fileVersion": "29.0.51961.7529",
+            "productVersion": "29.0.51961.7529",
+            "productName": "Embarcadero RAD Studio"
+          },
+          {
+            "location": "$(BDS)\\bin\\Embarcadero.Modeling.Formatter.Resources.dll",
+            "sha256": "E04522FE60F93B7100FE3B9CE99D28DDDC9A54A4D470116F7ECBA238EF83EE39",
+            "sizeBytes": 13296,
+            "fileVersion": "29.0.51961.7529",
+            "productVersion": "29.0.51961.7529",
+            "productName": "Embarcadero RAD Studio"
+          },
+          {
+            "location": "$(BDS)\\bin\\Embarcadero.Modeling.OPENAPI3.DLL",
+            "sha256": "A94CFF8068ED62388216BB31AF471D1F731395CB7DDB2675B5967B21FEAD8E57",
+            "sizeBytes": 238064,
+            "fileVersion": "29.0.51961.7529",
+            "productVersion": "29.0.51961.7529",
+            "productName": "Embarcadero RAD Studio"
+          }
+        ],
+        "documentedParameters": {
+          "source": "usage dialog of this Formatter.exe (run O1-X01-R1); the RAD Studio online help was not consulted in O1",
+          "parameters": [
+            "-cpp",
+            "-delphi",
+            "-config <file>",
+            "-e <encoding>",
+            "-d <directory>",
+            "-r",
+            "-b",
+            "-log <file>",
+            "-silent",
+            "<filename>..."
+          ],
+          "delphiExtensions": [
+            ".pas",
+            ".dpr",
+            ".dpk",
+            ".dpkw",
+            ".inc"
+          ],
+          "unverified": "Accepted values of -e, precedence of -config over IDE/user settings, behavior without -config, exit codes for success/failure."
+        }
+      },
+      "nativeConfigSchema": {
+        "rootElement": "TgConfig",
+        "versionAttribute": "3",
+        "note": "Profile schema attribute only; not a product or formatter version."
+      },
+      "productRelease": {
+        "claim": "RAD Studio / Delphi 12 Athens Community Edition Update 1",
+        "evidenceStatus": "secondary-unverified",
+        "basis": "Repository documents (design/docs/spec/08_TESTS.md, design/ARCHITEKTUR_REVIEW.md) record this build as \"Delphi 12 CE Update 1\" from earlier IDE evidence. O1 itself observed only the build number 29.0.51961.7529 and did not consult a vendor release table."
+      },
+      "matchesTarget12_3": false,
+      "targetNote": "Every observation in this manifest applies to build 29.0.51961.7529 only. RAD Studio/Delphi 12.3 is a future compatibility target: no 12.3 installation is available or required now, and its absence does not block O2, C1, lexer or CST work. Nothing here demonstrates compatibility with 12.3 or any other unverified build.",
+      "role": "current reference toolchain for all original-formatter experiments (O1, O2) and native-profile observations (C1 input)"
+    }
+  ],
+  "environments": [
+    {
+      "id": "ENV-WIN11-DEAT",
+      "os": "Microsoft Windows NT 10.0.26300.0",
+      "osArchitecture": "X64",
+      "culture": "de-AT",
+      "uiCulture": "de-DE",
+      "ansiCodePage": 1252
+    }
+  ],
+  "profiles": [
+    {
+      "id": "PR-SHIP-DEFAULT",
+      "origin": "shipped",
+      "committed": false,
+      "location": "$(BDS)\\bin\\config\\Formatter_Default.config",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+      "sizeBytes": 28938,
+      "encoding": {
+        "bom": "none",
+        "xmlDeclarationEncoding": null,
+        "eol": "crlf"
+      },
+      "schemaVersionAttribute": "3",
+      "optionCount": 158,
+      "inventoryLabel": "shipped:Formatter_Default.config",
+      "note": "Byte-identical to Formatter.config."
+    },
+    {
+      "id": "PR-O2-P01-A",
+      "origin": "derived",
+      "committed": false,
+      "location": "local/runs/<experiment>/profiles/",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+      "optionCount": 158,
+      "derivation": "PR-SHIP-DEFAULT with DelphiFormatter.AssignSpaces set to BeforeAndAfter, the value it already has; byte-identical to PR-SHIP-DEFAULT."
+    },
+    {
+      "id": "PR-O2-P01-B",
+      "origin": "derived",
+      "committed": false,
+      "location": "local/runs/<experiment>/profiles/",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "7CE01D5C52A2D2A2C58C369F7B340BB0509FED1C01B75EA6269AADB47856D053",
+      "optionCount": 158,
+      "derivation": "PR-SHIP-DEFAULT with only the Value attribute of DelphiFormatter.AssignSpaces replaced by None."
+    },
+    {
+      "id": "PR-O2-P11-MALFORMED",
+      "origin": "derived",
+      "committed": false,
+      "location": "local/runs/<experiment>/",
+      "toolchainId": "TC-BDS23-29.0.51961.7529",
+      "sha256": "757EE4BDCA3844D9DBD855E005EBA542160F22DA25816874715378BD0B2F8642",
+      "derivation": "Written by Invoke-O2Experiments.ps1: truncated XML, the root element is never closed."
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "FX-ASSIGN",
+      "path": "fixtures/delphi/O1AssignSpacing.pas",
+      "sha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+      "sizeBytes": 546,
+      "purpose": "Assignment := with none/one/two/tab spacing, line-broken RHS, for-loop, string/comment decoys, if/else on one line.",
+      "encoding": "ascii",
+      "eol": "crlf",
+      "compileStatus": "designed-not-compiled",
+      "defineConfigurations": null,
+      "f4dParse": "structured, lossless (supplementary F4D M2.7 coverage run O1-X05; not compiler evidence)"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "O2-P01",
+      "title": "AssignSpaces BeforeAndAfter versus None on the assignment fixture",
+      "experimentRefs": [
+        "E-ORACLE",
+        "E-CONFIG"
+      ],
+      "status": "executed",
+      "plannedDeviation": "The O1 plan named the IDE export as profile. Executed with two profiles derived from PR-SHIP-DEFAULT instead, so the option is the only parsed difference and no Config.* entry carries a local path.",
+      "comparison": {
+        "parsedProfileDifferencesAB": [
+          "DelphiFormatter.AssignSpaces"
+        ],
+        "changedDiffLinesAB": 24,
+        "changedDiffLinesInputA": 22,
+        "changedDiffLinesInputB": 22,
+        "abDifferencesFullyExplainedByAssignSpacing": true,
+        "outputLineCountsEqual": true,
+        "unchangedByAssignSpaces": [
+          "string literal containing :=",
+          "brace comment containing :=",
+          "line comment containing :="
+        ],
+        "otherEffectsPresentInBothVariants": [
+          "blanks added around + and =",
+          "line-broken assignment joined onto one line",
+          "one-line if/then/else split over four lines",
+          "tabs around := removed"
+        ],
+        "outputsPublished": false,
+        "note": "Output bytes stay under local/; only hashes and descriptions are committed."
+      },
+      "runs": [
+        {
+          "runId": "O2-P01-A",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-O2-P01-A",
+          "profileSha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "A5D2D5121F6EAC08D4C861E7BA43C3817AB8C3AA73DE570FC54B7A7D168E315C",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 0,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 3,
+          "repetitionsIdentical": true,
+          "observedDifference": "Every := outside strings/comments has exactly one blank on each side.",
+          "supportedScope": "Build 29.0.51961.7529, profile PR-O2-P01-A, DelphiFormatter.AssignSpaces=BeforeAndAfter, the statement forms of FX-ASSIGN only.",
+          "processOutcome": "exited",
+          "runnerClassification": "success",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            169.0,
+            119.0,
+            125.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "none",
+          "inputChanged": true,
+          "outputSizeBytes": 567,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P01-A-20261104T164157175Z"
+        },
+        {
+          "runId": "O2-P01-B",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-O2-P01-B",
+          "profileSha256": "7CE01D5C52A2D2A2C58C369F7B340BB0509FED1C01B75EA6269AADB47856D053",
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "14D5627F482F104CFAC50452B8B54B301032B490AB2B8D4DDFD0F88880B56714",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 0,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 3,
+          "repetitionsIdentical": true,
+          "observedDifference": "Every := outside strings/comments has no blank on either side.",
+          "supportedScope": "Build 29.0.51961.7529, profile PR-O2-P01-B, DelphiFormatter.AssignSpaces=None, the statement forms of FX-ASSIGN only.",
+          "processOutcome": "exited",
+          "runnerClassification": "success",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            120.0,
+            117.0,
+            123.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "none",
+          "inputChanged": true,
+          "outputSizeBytes": 543,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P01-B-20261104T164157814Z"
+        }
+      ],
+      "regressionChecks": [
+        {
+          "checkedOn": "2026-11-04",
+          "assertionStatus": "passed",
+          "referenceStatus": "regression",
+          "assertionCount": 54,
+          "localExperiment": "O2-P01-20261104T165939Z",
+          "note": "Rerun that checked the recorded expectations. It adds no new measurement to the run records above."
+        }
+      ]
+    },
+    {
+      "id": "O2-P11",
+      "title": "Normal and faulty invocations",
+      "experimentRefs": [
+        "E-ORACLE"
+      ],
+      "status": "executed",
+      "note": "Executed means the behavior was observed. Runs that ended in an error stay classified formatter-error or aborted; they are not successful formatter runs.",
+      "runs": [
+        {
+          "runId": "O2-P11-success",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "A5D2D5121F6EAC08D4C861E7BA43C3817AB8C3AA73DE570FC54B7A7D168E315C",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 0,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Formatting line goes to the log file, stdout empty.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "exited",
+          "runnerClassification": "success",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            118.0,
+            119.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "none",
+          "inputChanged": true,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-success-20261104T164158370Z"
+        },
+        {
+          "runId": "O2-P11-success-no-log",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "A5D2D5121F6EAC08D4C861E7BA43C3817AB8C3AA73DE570FC54B7A7D168E315C",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{profile}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 0,
+          "stdoutSha256": "8132B2D7A0364AE02BCC1518AD10961D751C60E4C86BD21472B6B90E8B4CA319",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Formatting line goes to stdout.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "exited",
+          "runnerClassification": "success",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            125.0,
+            119.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "none",
+          "inputChanged": true,
+          "createdFiles": [],
+          "localRunId": "P11-success-no-log-20261104T164158706Z"
+        },
+        {
+          "runId": "O2-P11-missing-input",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{repDir}\\does-not-exist.pas"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Dialog and log: File <path> doesn't exist.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "dialog",
+          "runnerClassification": "aborted",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            1122.0,
+            1115.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": true,
+          "failureClass": "file-not-found",
+          "inputChanged": false,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-missing-input-20261104T164159019Z"
+        },
+        {
+          "runId": "O2-P11-missing-input-silent",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-SHIP-DEFAULT",
+          "profileSha256": "D8B4AC6C8DBE64168AC8AA1BCB2F47D01A8DDBEA6CC00858BAB30BB63285DEA1",
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{repDir}\\does-not-exist.pas"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "No dialog; log: File <path> doesn't exist.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "exited",
+          "runnerClassification": "formatter-error",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            93.0,
+            90.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "file-not-found",
+          "inputChanged": false,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-missing-input-silent-20261104T164201324Z"
+        },
+        {
+          "runId": "O2-P11-missing-config",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{repDir}\\missing.config",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Dialog and log: Cannot load config file \"<path>\". Input not formatted.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "dialog",
+          "runnerClassification": "aborted",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            1014.0,
+            1051.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": true,
+          "failureClass": "config-load-failed",
+          "inputChanged": false,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-missing-config-20261104T164201572Z"
+        },
+        {
+          "runId": "O2-P11-missing-config-silent",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "{repDir}\\missing.config",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "No dialog; log: Cannot load config file \"<path>\". Input not formatted.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "exited",
+          "runnerClassification": "formatter-error",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            64.0,
+            64.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "config-load-failed",
+          "inputChanged": false,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-missing-config-silent-20261104T164203694Z"
+        },
+        {
+          "runId": "O2-P11-malformed-config",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-O2-P11-MALFORMED",
+          "profileSha256": "757EE4BDCA3844D9DBD855E005EBA542160F22DA25816874715378BD0B2F8642",
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Dialog and log: Unable to load config options: <localized XML error>. The log line appears twice per repetition. Input not formatted.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "dialog",
+          "runnerClassification": "aborted",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            996.0,
+            1007.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": true,
+          "failureClass": "config-load-failed",
+          "inputChanged": false,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-malformed-config-20261104T164203871Z"
+        },
+        {
+          "runId": "O2-P11-malformed-config-silent",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": "PR-O2-P11-MALFORMED",
+          "profileSha256": "757EE4BDCA3844D9DBD855E005EBA542160F22DA25816874715378BD0B2F8642",
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "commandLine": [
+            "Formatter.exe",
+            "-delphi",
+            "-silent",
+            "-config",
+            "{profile}",
+            "-log",
+            "{log}",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "No dialog; same log message once. Input not formatted.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "exited",
+          "runnerClassification": "formatter-error",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            75.0,
+            77.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "config-load-failed",
+          "inputChanged": false,
+          "createdFiles": [
+            "formatter.log"
+          ],
+          "localRunId": "P11-malformed-config-silent-20261104T164205943Z"
+        },
+        {
+          "runId": "O2-P11-unknown-option",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "commandLine": [
+            "Formatter.exe",
+            "-o2unknown",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "AC3D89A4DCBAB4B8644475ED01A777A33F9F2083063633EC8F6F0592C300E052",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Argument treated as a file name: File <working-dir>\\-o2unknown doesn't exist, on stdout and in a dialog. The valid input after it was not formatted.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "dialog",
+          "runnerClassification": "aborted",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            1117.0,
+            1058.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": true,
+          "failureClass": "file-not-found",
+          "inputChanged": false,
+          "createdFiles": [],
+          "localRunId": "P11-unknown-option-20261104T164206161Z"
+        },
+        {
+          "runId": "O2-P11-unknown-option-silent",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": "FX-ASSIGN",
+          "inputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "outputSha256": "69EA85F5ADC79D82A7E502388423566F257DC661AFF38901BD9102001EBC95C8",
+          "commandLine": [
+            "Formatter.exe",
+            "-silent",
+            "-o2unknown",
+            "{input}"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "B527BD09213EF18E408602D38B304122700AE3E6548AC29C7BF9048CB2E0ECE2",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Same message on stdout, no dialog. The valid input after it was not formatted.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "exited",
+          "runnerClassification": "formatter-error",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            64.0,
+            67.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": false,
+          "failureClass": "file-not-found",
+          "inputChanged": false,
+          "createdFiles": [],
+          "localRunId": "P11-unknown-option-silent-20261104T164208396Z"
+        },
+        {
+          "runId": "O2-P11-help",
+          "status": "executed",
+          "kind": "formatter-cli",
+          "toolchainId": "TC-BDS23-29.0.51961.7529",
+          "environmentId": "ENV-WIN11-DEAT",
+          "formatterSha256": "11637F75E9AAE67657C854E974A7C7F23824B244F0CBF300F5316A2BDF42BFBA",
+          "encodingArgument": null,
+          "evidenceStatus": "observed",
+          "profileId": null,
+          "profileSha256": null,
+          "inputFixtureId": null,
+          "inputSha256": null,
+          "outputSha256": null,
+          "commandLine": [
+            "Formatter.exe",
+            "-?"
+          ],
+          "workingDirectory": "<run-dir>/rep-NN",
+          "exitCode": 1,
+          "stdoutSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "repetitions": 2,
+          "repetitionsIdentical": true,
+          "observedDifference": "Usage dialog; no console output; no log.",
+          "supportedScope": "Build 29.0.51961.7529, UI culture de-DE, exactly this argument list.",
+          "processOutcome": "dialog",
+          "runnerClassification": "aborted",
+          "timeoutSeconds": 60,
+          "durationMs": [
+            1028.0,
+            1080.0
+          ],
+          "killed": false,
+          "dialogClosedByRunner": true,
+          "failureClass": "usage",
+          "inputChanged": false,
+          "createdFiles": [],
+          "localRunId": "P11-help-20261104T164208584Z"
+        }
+      ],
+      "regressionChecks": [
+        {
+          "checkedOn": "2026-11-04",
+          "assertionStatus": "passed",
+          "referenceStatus": "regression",
+          "assertionCount": 224,
+          "localExperiment": "O2-P11-20261104T165939Z",
+          "note": "Rerun that checked the recorded expectations. It adds no new measurement to the run records above."
+        }
+      ]
+    }
+  ]
+}

@@ -32,8 +32,8 @@ function Invoke-ManifestCheck([string]$Path) {
     [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = ($output -join "`n") }
 }
 
-function Test-Mutation([string]$Name, [scriptblock]$Mutate, [string]$ExpectedError) {
-    $m = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json -AsHashtable
+function Test-Mutation([string]$Name, [scriptblock]$Mutate, [string]$ExpectedError, [string]$Source = $manifestPath) {
+    $m = [IO.File]::ReadAllText($Source) | ConvertFrom-Json -AsHashtable
     & $Mutate $m
     $path = Join-Path $temp ($Name + '.json')
     [IO.File]::WriteAllText($path, ($m | ConvertTo-Json -Depth 30), [Text.UTF8Encoding]::new($false))
@@ -81,7 +81,21 @@ try {
     Test-Mutation 'committed-fixture-hash' { param($m) ($m.fixtures | Where-Object id -eq 'FX-TABS').sha256 = $wrong } 'sha256 does not match'
     Test-Mutation 'original-profile-hash' { param($m) ($m.profiles | Where-Object id -eq 'PR-SHIP-WIDE').sha256 = $wrong } 'sha256 differs from inventory'
     Test-Mutation 'personal-path' { param($m) (Get-Run $m 'O2-P07-R1').workingDirectory = 'C:\Users\someone\run' } 'personal absolute path'
-    Check ((Get-FileHash $manifestPath).Hash -eq $before) 'manifest/committed file must stay unchanged'
+    $o2Manifest = Join-Path $oracle 'manifest/o2-manifest.json'
+    $o2Before = (Get-FileHash $o2Manifest).Hash
+    $r = Invoke-ManifestCheck 'manifest/o2-manifest.json'
+    Check ($r.ExitCode -eq 0) "manifest/committed o2 must pass: $($r.Output)"
+    Test-Mutation 'o2-error-reads-as-success' { param($m) (Get-Run $m 'O2-P11-missing-input-silent').runnerClassification = 'success' } "contradicts outcome 'exited'" $o2Manifest
+    Test-Mutation 'o2-dialog-reads-as-error' { param($m) (Get-Run $m 'O2-P11-help').runnerClassification = 'formatter-error' } "expected 'aborted'" $o2Manifest
+    Test-Mutation 'o2-unknown-outcome' { param($m) (Get-Run $m 'O2-P01-A').processOutcome = 'maybe' } 'unknown processOutcome' $o2Manifest
+    Test-Mutation 'o2-derived-without-derivation' { param($m) ($m.profiles | Where-Object id -eq 'PR-O2-P01-B').Remove('derivation') } 'derived profile without derivation' $o2Manifest
+    Test-Mutation 'o2-output-profile-hash' { param($m) (Get-Run $m 'O2-P01-B').profileSha256 = $wrong } 'contradicts profile' $o2Manifest
+    Test-Mutation 'o2-unknown-assertion-status' { param($m) ($m.experiments | Where-Object id -eq 'O2-P01').regressionChecks[0].assertionStatus = 'fine' } 'unknown assertionStatus' $o2Manifest
+    Test-Mutation 'planned-with-regression-check' { param($m) ($m.experiments | Where-Object id -eq 'O2-P02').regressionChecks = @(@{ assertionStatus = 'passed'; checkedOn = '2026-11-04' }) } 'only valid on an executed experiment'
+    Test-Mutation 'planned-with-runner-field' { param($m) (Get-Run $m 'O2-P02-R1').processOutcome = 'exited' } "runner field 'processOutcome'"
+    Test-Mutation 'executed-in-missing-target' { param($m) ($m.experiments | Where-Object id -eq 'O2-P01').executedIn = 'manifest/nope.json' } 'holds no executed record'
+    Test-Mutation 'executed-in-without-record' { param($m) ($m.experiments | Where-Object id -eq 'O2-P02').executedIn = 'manifest/o2-manifest.json' } 'holds no executed record'
+    Check ((Get-FileHash $manifestPath).Hash -eq $before -and (Get-FileHash $o2Manifest).Hash -eq $o2Before) 'manifest/committed files must stay unchanged'
 
     # ---- 2. Inventory encoding / line ends ------------------------------------------------
     $bds = Join-Path $temp 'bds'
