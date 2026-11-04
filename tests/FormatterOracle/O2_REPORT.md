@@ -96,6 +96,21 @@ Conclusions for this build and these argument lists:
 - A dialog variant is classified `aborted` even though the experiment observed it as expected.
   These are observations of failing invocations, not successful formatter runs.
 
+## Assertion check (2026-11-04)
+
+The review added fixed expectations ([criteria](README.md#experiment-evaluation)). A separate rerun checked
+them with the real `Formatter.exe`; it confirms the recorded results and adds no new measurement.
+
+| Experiment | Execution | Assertions | Reference | Result |
+|---|---|---|---|---|
+| O2-P01 | executed | 54 of 54 | regression | passed |
+| O2-P11 | executed | 224 of 224 | regression | passed |
+
+Both variants of O2-P01 and all 11 of O2-P11 were bound to their records, and every checked output hash
+matched. In O2-P11, nine variants end as `aborted` or `formatter-error` by design; that is the expected
+behavior of a negative test, not a successful formatter call. `passed` means only that this build behaved as
+recorded. It is not a compatibility result for Formatter4Delphi.
+
 ## Exploratory CLI findings (one repetition, not manifest records)
 
 Early runs with one repetition showed that formatting works in place and that `-delphi`, `-silent`,

@@ -90,6 +90,8 @@ try {
     Test-Mutation 'o2-unknown-outcome' { param($m) (Get-Run $m 'O2-P01-A').processOutcome = 'maybe' } 'unknown processOutcome' $o2Manifest
     Test-Mutation 'o2-derived-without-derivation' { param($m) ($m.profiles | Where-Object id -eq 'PR-O2-P01-B').Remove('derivation') } 'derived profile without derivation' $o2Manifest
     Test-Mutation 'o2-output-profile-hash' { param($m) (Get-Run $m 'O2-P01-B').profileSha256 = $wrong } 'contradicts profile' $o2Manifest
+    Test-Mutation 'o2-unknown-assertion-status' { param($m) ($m.experiments | Where-Object id -eq 'O2-P01').regressionChecks[0].assertionStatus = 'fine' } 'unknown assertionStatus' $o2Manifest
+    Test-Mutation 'planned-with-regression-check' { param($m) ($m.experiments | Where-Object id -eq 'O2-P02').regressionChecks = @(@{ assertionStatus = 'passed'; checkedOn = '2026-11-04' }) } 'only valid on an executed experiment'
     Test-Mutation 'planned-with-runner-field' { param($m) (Get-Run $m 'O2-P02-R1').processOutcome = 'exited' } "runner field 'processOutcome'"
     Test-Mutation 'executed-in-missing-target' { param($m) ($m.experiments | Where-Object id -eq 'O2-P01').executedIn = 'manifest/nope.json' } 'holds no executed record'
     Test-Mutation 'executed-in-without-record' { param($m) ($m.experiments | Where-Object id -eq 'O2-P02').executedIn = 'manifest/o2-manifest.json' } 'holds no executed record'

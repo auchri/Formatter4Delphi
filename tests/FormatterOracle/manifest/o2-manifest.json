@@ -327,6 +327,16 @@
           ],
           "localRunId": "P01-B-20261104T164157814Z"
         }
+      ],
+      "regressionChecks": [
+        {
+          "checkedOn": "2026-11-04",
+          "assertionStatus": "passed",
+          "referenceStatus": "regression",
+          "assertionCount": 54,
+          "localExperiment": "O2-P01-20261104T165939Z",
+          "note": "Rerun that checked the recorded expectations. It adds no new measurement to the run records above."
+        }
       ]
     },
     {
@@ -835,6 +845,16 @@
           "inputChanged": false,
           "createdFiles": [],
           "localRunId": "P11-help-20261104T164208584Z"
+        }
+      ],
+      "regressionChecks": [
+        {
+          "checkedOn": "2026-11-04",
+          "assertionStatus": "passed",
+          "referenceStatus": "regression",
+          "assertionCount": 224,
+          "localExperiment": "O2-P11-20261104T165939Z",
+          "note": "Rerun that checked the recorded expectations. It adds no new measurement to the run records above."
         }
       ]
     }

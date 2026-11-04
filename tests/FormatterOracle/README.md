@@ -25,8 +25,8 @@ invariants of Formatter4Delphi always win over cosmetic parity.
 | [scripts/Get-NativeArtifactInventory.ps1](scripts/Get-NativeArtifactInventory.ps1) | Read-only inventory generator |
 | [scripts/Test-OracleManifest.ps1](scripts/Test-OracleManifest.ps1) | Read-only manifest/fixture/no-proprietary-file check |
 | [scripts/RunFormatterOracle.ps1](scripts/RunFormatterOracle.ps1) | Controlled execution of the formatter on copies |
-| [scripts/Invoke-O2Experiments.ps1](scripts/Invoke-O2Experiments.ps1) | Experiments O2-P01 and O2-P11 on top of the runner |
-| [scripts/Test-OracleRunner.ps1](scripts/Test-OracleRunner.ps1), [FakeFormatter.ps1](scripts/FakeFormatter.ps1) | Runner tests with a controlled stand-in process, no RAD Studio needed |
+| [scripts/Invoke-O2Experiments.ps1](scripts/Invoke-O2Experiments.ps1) | Experiments O2-P01 and O2-P11 on top of the runner, with assertions and reference checks |
+| [scripts/Test-OracleRunner.ps1](scripts/Test-OracleRunner.ps1), [FakeFormatter.ps1](scripts/FakeFormatter.ps1) | Runner and experiment tests with a controlled stand-in process, no RAD Studio needed; takes about 3 minutes |
 | `local/` | Git-ignored place for local proprietary artifacts (see LOCAL_ARTIFACTS.md) |
 
 ## Prerequisites
@@ -130,8 +130,66 @@ pwsh -NoProfile -File tests/FormatterOracle/scripts/Invoke-O2Experiments.ps1 -Fo
 
 `-Experiment P01` or `-Experiment P11` runs one of them. Results go to
 `local/runs/O2-P01-<stamp>/` (`analysis.json`, `diff-input-A.txt`, `diff-input-B.txt`, `diff-A-B.txt`,
-`profiles/`, `runs/`) and `local/runs/O2-P11-<stamp>/` (`p11-summary.json`, `runs/`). A correct O2-P01
-run gives the output hashes in the manifest. See [O2_REPORT.md](O2_REPORT.md) for results.
+`profiles/`, `runs/`) and `local/runs/O2-P11-<stamp>/` (`p11-summary.json`, `runs/`). See
+[O2_REPORT.md](O2_REPORT.md) for results.
+
+### Experiment evaluation
+
+An experiment that ran has not necessarily passed. Three levels stay separate:
+
+| Level | Field | Values | Says |
+|---|---|---|---|
+| One formatter call | `classification` in `run-result.json` | `success`, `formatter-error`, `aborted`, `guard-violation` | How the process ended |
+| Experiment run | `executionStatus` | `executed`, `partial`, `not-executed` | Whether it ran |
+| Experiment result | `assertionStatus` | `passed`, `failed`, `blocked`, `unconfirmed` | Whether the fixed expectations were met |
+
+`compatibilityClaim` is always `none`: nothing here shows that Formatter4Delphi behaves the same. A
+negative test passes when the formatter fails as expected, so a run with `aborted` or `formatter-error`
+can belong to a `passed` experiment.
+
+| Exit code | `assertionStatus` | Meaning |
+|---|---|---|
+| 0 | `passed` | All assertions met and every variant matched its reference record |
+| 1 | `failed` | At least one assertion violated, or an exception occurred |
+| 2 | `blocked` | A precondition failed; nothing ran, or the series stopped at the refusal |
+| 3 | `unconfirmed` | Assertions met, but no reference evidence for this combination |
+
+With several experiments the worst one sets the exit code: 1, then 2, then 3, then 0. The result file is
+always written and raw outputs stay in place, also after a failure or an exception. It adds `assertions`
+(each with `id`, `variant`, `result`, `expected`, `actual`), `failureReasons`, `blockedReasons` and
+`reference` to the unchanged raw observations.
+
+**Criteria for O2-P01.** Both variants: all repetitions (at least 3) `exited`, exit 0, `success`, no kill,
+no guard issue, deterministic, one output hash, only the input changed and only `formatter.log` created.
+Also: A and B differ only in `DelphiFormatter.AssignSpaces`, the outputs differ, they differ only in blanks
+around `:=` outside strings and comments, the string and comment decoys stay intact, fixture and base
+profile stay unchanged, and the output equals the bound reference hash.
+
+**Criteria for O2-P11.** Each of the 11 variants has fixed expectations in `Invoke-O2Experiments.ps1`:
+dialog or not, state, exit code, classification, input formatted or not, created files, and the message with
+its channel. Two repetitions, deterministic, no kill, no guard issue. Bound variants with an input must also
+match their reference output hash. A failing call must leave the input copy unchanged.
+
+**Reference binding.** The executed run records of `manifest/o2-manifest.json` are the references. An
+output hash counts as a golden only if formatter hash, profile hash, input hash, argument list, culture,
+UI culture and ANSI code page all equal the record. The OS version is not part of the binding. If anything
+differs, `reference.variants.<name>.mismatches` names it, no golden is applied and the result can reach
+at most `unconfirmed`. With a matching combination, a different hash is `failed`, and the report gives
+expected and actual hash and the variant.
+
+**New formatter versions.** A formatter hash outside the reference toolchains is `blocked`.
+`-AcceptUnknownFormatter` runs it anyway, on the hash the script just computed; the result stays
+`unconfirmed` at best, or `failed` if expectations are violated. The expectations describe build
+29.0.51961.7529, so a failure on another version may be a real behavior change and not a defect.
+
+**Approving a new reference** is manual and never comes from a failed run:
+
+1. Run with `-AcceptUnknownFormatter` and confirm exit code 3 in a second independent run.
+2. Review `diff-*.txt`, `analysis.json` and the outputs by hand.
+3. In a reviewed PR, add a new toolchain and environment and new run records. Keep the existing records.
+4. Run again; it must now report `passed` with `reference.status = regression`.
+
+No script writes to a manifest.
 
 **Observed `Formatter.exe` behavior** (build 29.0.51961.7529): formats in place; exit 0 on success, 1
 on the tested errors; without `-silent` errors block in a dialog; a config that cannot be loaded stops

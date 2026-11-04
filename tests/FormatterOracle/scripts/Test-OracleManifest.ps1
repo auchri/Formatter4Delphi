@@ -111,6 +111,13 @@ foreach ($x in $m.experiments) {
     if ($x.status -notin 'executed', 'planned', 'blocked', 'not-run') { Fail "$($x.id): unknown status '$($x.status)'." }
     if ($x.status -in 'blocked', 'not-run' -and -not (Has $x 'reason')) { Fail "$($x.id): $($x.status) without reason." }
     if ($x.status -eq 'planned' -and -not ((Has $x 'question') -and (Has $x 'decisionUse'))) { Fail "$($x.id): planned without question/decisionUse." }
+    if (Has $x 'regressionChecks') {
+        if ($x.status -ne 'executed') { Fail "$($x.id): regressionChecks are only valid on an executed experiment." }
+        foreach ($check in $x.regressionChecks) {
+            if ($check.assertionStatus -notin 'passed', 'failed', 'blocked', 'unconfirmed') { Fail "$($x.id): unknown assertionStatus '$($check.assertionStatus)'." }
+            if ($check.checkedOn -notmatch '^\d{4}-\d{2}-\d{2}$') { Fail "$($x.id): regression check without checkedOn date." }
+        }
+    }
     if (Has $x 'executedIn') {
         if ($x.status -ne 'planned') { Fail "$($x.id): executedIn is only valid on a planned record." }
         $target = Join-Path $root $x.executedIn

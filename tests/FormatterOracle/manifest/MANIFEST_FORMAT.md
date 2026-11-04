@@ -66,6 +66,15 @@ All are additive; O1 records stay valid.
   `outputSizeBytes`, `createdFiles`, `localRunId`.
 - The validator rejects a classification that contradicts outcome and exit code, so a failed run
   cannot read as success. `exitCode` after a closed dialog is what the process returned then.
+- `regressionChecks` on executed experiments: `checkedOn`, `assertionStatus` (`passed`, `failed`,
+  `blocked`, `unconfirmed`), `referenceStatus`, `assertionCount`, `localExperiment`, `note`. A check
+  evaluates a rerun against recorded expectations. It is not a new measurement and does not replace
+  the run records. `executed` stays the fact that an experiment ran; `passed` is never a manifest
+  status.
+- The executed run records are the reference data: `outputSha256` is a golden only for the exact
+  formatter hash, profile hash, input hash, argument list, culture, UI culture and ANSI code page of its
+  record (see the [README](../README.md#experiment-evaluation)). `Invoke-O2Experiments.ps1` only reads
+  manifests; a new reference is a reviewed manual edit.
 - `stdoutSha256` of a formatter run covers text with timestamps and paths and is not comparable
   between runs. `repetitionsIdentical` means state, exit code and file hashes, without logs and stdout.
 
