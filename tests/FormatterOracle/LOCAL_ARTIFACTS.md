@@ -10,7 +10,7 @@ repository holds only their hashes, version metadata and derived, path-free inve
 tests/FormatterOracle/local/
   ide-exports/            profiles saved with the IDE "Save As" button
   ide-active-snapshots/   byte copies of %APPDATA%\Embarcadero\BDS\<ver>\Formatter.config
-  runs/<run-id>/          (O2) per-run copies of input, profile, output, log
+  runs/<run-id>/          (O2) per-run copies of input, profile, output, log, run-result.json
 ~~~
 
 `Formatter.exe` itself stays in the installation; O2 references it by absolute path and checks its

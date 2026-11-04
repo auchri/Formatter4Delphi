@@ -65,7 +65,7 @@ try {
     Check ([IO.File]::ReadAllText($out) -match 'A := 1;' -and [IO.File]::ReadAllText($out) -notmatch 'A:=1') 'ok: output content transformed'
     Check ($reps[0].stdout -match 'fake: formatted O1AssignSpacing.pas') 'ok: stdout captured'
     Check ((Get-Content -Raw (Join-Path $r.Dir 'rep-01.process/stdout.txt')) -match 'fake: formatted') 'ok: stdout file written'
-    Check ($r.Result.determinism.deterministic -eq $true -and $r.Result.classification -eq 'completed') 'ok: deterministic and completed'
+    Check ($r.Result.determinism.deterministic -eq $true -and $r.Result.classification -eq 'success') 'ok: deterministic and success'
     Check ($r.Result.formatter.hashCheck -eq 'explicit' -and $r.Result.formatter.sha256 -eq $pwshHash) 'ok: formatter hash recorded'
     Check (@($reps[0].arguments | Where-Object { $_ -like "*$temp*" }).Count -eq 0 -and $reps[0].arguments[-1] -like '<run-dir>*') 'ok: recorded arguments are run-dir relative'
     Check (-not (Test-Path (Join-Path $r.Dir '.lock'))) 'ok: lock file released'
@@ -73,7 +73,7 @@ try {
 
     # 2. Non-zero exit code is recorded, not hidden.
     $r = Invoke-Fake 'fail' 'fail'
-    Check ($r.ExitCode -eq 0 -and $r.Result.repetitionResults[0].exitCode -eq 3) "fail: exit code 3 recorded (runner $($r.ExitCode))"
+    Check ($r.ExitCode -eq 1 -and $r.Result.repetitionResults[0].exitCode -eq 3 -and $r.Result.classification -eq 'formatter-error') "fail: exit code 3 not reported as success (runner $($r.ExitCode))"
     Check ($r.Result.repetitionResults[0].stderr -match 'failure requested') 'fail: stderr captured'
     Check (@($r.Result.repetitionResults[0].changed).Count -eq 0) 'fail: no file changed'
 
@@ -83,14 +83,14 @@ try {
     $rep = $r.Result.repetitionResults[0]
     Check ($r.ExitCode -eq 1 -and $rep.state -eq 'timeout' -and $rep.killed -eq $true) "timeout: state=$($rep.state) killed=$($rep.killed)"
     Check ($sw.Elapsed.TotalSeconds -lt 60) 'timeout: runner returned promptly'
-    Check ($r.Result.classification -eq 'failed') 'timeout: classified failed'
+    Check ($r.Result.classification -eq 'aborted') 'timeout: classified aborted'
     $leftover = @(Get-CimInstance Win32_Process -Filter "Name = 'pwsh.exe'" | Where-Object { $_.CommandLine -like "*FakeFormatter.ps1*sleep*" })
     Check ($leftover.Count -eq 0) 'timeout: no fake process left'
 
     # 4. Dialog detection, text capture and controlled termination.
     $r = Invoke-Fake 'dialog' 'dialog' @{ TimeoutSeconds = 30 }
     $rep = $r.Result.repetitionResults[0]
-    Check ($r.ExitCode -eq 1 -and $rep.state -eq 'dialog') "dialog: state=$($rep.state)"
+    Check ($r.ExitCode -eq 1 -and $rep.state -eq 'dialog' -and $r.Result.classification -eq 'aborted') "dialog: state=$($rep.state)"
     Check ((@($rep.dialogTexts) -join "`n") -match 'fake dialog text' -and (@($rep.dialogTexts) -join "`n") -match 'Fake Formatter Dialog') 'dialog: text captured'
     Check ($rep.dialogClosedByRunner -or $rep.killed) 'dialog: closed or killed'
     Check ($rep.durationMs -lt 20000) 'dialog: did not wait for timeout'
@@ -103,7 +103,7 @@ try {
     $foreign = Join-Path $temp 'foreign.txt'
     [IO.File]::WriteAllText($foreign, "original`n")
     $r = Invoke-Fake 'touch' 'touch' @{ ProtectedPath = @($foreign) } @($foreign)
-    Check ($r.ExitCode -eq 1 -and (@($r.Result.guardIssues) -join ';') -match 'foreign.txt' -and $r.Result.classification -eq 'failed') 'guard: foreign file change reported'
+    Check ($r.ExitCode -eq 1 -and (@($r.Result.guardIssues) -join ';') -match 'foreign.txt' -and $r.Result.classification -eq 'guard-violation') 'guard: foreign file change reported'
 
     # 7. Preconditions: nothing executed, no run directory.
     $before = @(Get-ChildItem (Join-Path $temp 'runs') -Directory).Count
@@ -137,8 +137,10 @@ try {
     Check ($tracked.Count -eq 0) 'publish: nothing under local/ is tracked'
 
     # 9. Manifest stays valid.
-    $m = & (Join-Path $PSScriptRoot 'Test-OracleManifest.ps1')
-    Check ($LASTEXITCODE -eq 0) "manifest: $($m -join ' ')"
+    foreach ($file in 'manifest/o1-manifest.json', 'manifest/o2-manifest.json') {
+        $m = & (Join-Path $PSScriptRoot 'Test-OracleManifest.ps1') -Manifest $file
+        Check ($LASTEXITCODE -eq 0) "manifest $($file): $($m -join ' ')"
+    }
 } finally {
     Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
 }

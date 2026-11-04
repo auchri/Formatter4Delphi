@@ -52,5 +52,22 @@ Observation fields (`exitCode`, `stdoutSha256`, `stderrSha256`, `outputSha256`,
 plan can never be mistaken for a result. `supportedScope` states the narrowest claim the run
 supports (toolchain, profile hash, key, value, syntax feature); anything wider is unverified.
 
+## O2 extensions
+
+All are additive; O1 records stay valid.
+
+- Profile `origin: derived`: uncommitted profile made for an experiment, requires `derivation` text.
+- `executedIn` on a planned experiment: manifest path that holds its executed record; checked.
+- `plannedDeviation` and `comparison` on experiments: how execution differed from the plan, and the
+  evaluation across runs.
+- Optional run fields (executed runs only): `processOutcome` (`exited`, `dialog`, `timeout`,
+  `start-failed`), `runnerClassification` (`success`, `formatter-error`, `aborted`, `guard-violation`),
+  `timeoutSeconds`, `durationMs`, `killed`, `dialogClosedByRunner`, `failureClass`, `inputChanged`,
+  `outputSizeBytes`, `createdFiles`, `localRunId`.
+- The validator rejects a classification that contradicts outcome and exit code, so a failed run
+  cannot read as success. `exitCode` after a closed dialog is what the process returned then.
+- `stdoutSha256` of a formatter run covers text with timestamps and paths and is not comparable
+  between runs. `repetitionsIdentical` means state, exit code and file hashes, without logs and stdout.
+
 Expected outputs ("goldens") are not part of this format version; they are added only after
 reproducible O2 runs.

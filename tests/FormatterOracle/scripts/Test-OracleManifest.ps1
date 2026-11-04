@@ -55,7 +55,7 @@ foreach ($p in $inv.profiles) { $inventoryHashes[$p.label] = $p.sha256 }
 foreach ($p in $m.profiles) {
     Register 'profile' $p.id
     if ($p.sha256 -notmatch $hash) { Fail "$($p.id): sha256 malformed." }
-    if ($p.origin -notin 'shipped', 'ide-active', 'ide-export', 'self-authored') { Fail "$($p.id): unknown origin '$($p.origin)'." }
+    if ($p.origin -notin 'shipped', 'ide-active', 'ide-export', 'self-authored', 'derived') { Fail "$($p.id): unknown origin '$($p.origin)'." }
     if ($p.committed) {
         if ($p.origin -ne 'self-authored') { Fail "$($p.id): only self-authored profiles may be committed." }
         $full = Join-Path $root $p.path
@@ -65,6 +65,9 @@ foreach ($p in $m.profiles) {
             if ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)) -ne $p.sha256) { Fail "$($p.id): sha256 does not match $($p.path)." }
             if ($bytes.Length -ne $p.sizeBytes) { Fail "$($p.id): size does not match $($p.path)." }
         }
+    } elseif ($p.origin -eq 'derived') {
+        if (Has $p 'path') { Fail "$($p.id): uncommitted derived profile must not declare a repository path." }
+        if (-not (Has $p 'derivation') -or [string]::IsNullOrWhiteSpace($p.derivation)) { Fail "$($p.id): derived profile without derivation." }
     } else {
         if (Has $p 'path') { Fail "$($p.id): uncommitted original profile must not declare a repository path." }
         if (-not $inventoryHashes.ContainsKey($p.inventoryLabel)) { Fail "$($p.id): inventory label '$($p.inventoryLabel)' not found." }
@@ -94,6 +97,8 @@ $runFields = 'runId', 'status', 'kind', 'toolchainId', 'environmentId', 'formatt
     'encodingArgument', 'exitCode', 'stdoutSha256', 'stderrSha256', 'repetitions', 'repetitionsIdentical',
     'observedDifference', 'evidenceStatus', 'supportedScope'
 $observationFields = 'exitCode', 'stdoutSha256', 'stderrSha256', 'outputSha256', 'observedDifference', 'repetitionsIdentical'
+# Optional O2 run fields; observations too, so they may only appear on executed runs.
+$runnerFields = 'processOutcome', 'runnerClassification', 'durationMs', 'killed', 'dialogClosedByRunner', 'failureClass', 'inputChanged', 'createdFiles', 'localRunId'
 # (id field, hash field, referenced record kind)
 $references = @(
     @('toolchainId', 'formatterSha256', 'toolchain'),
@@ -106,6 +111,13 @@ foreach ($x in $m.experiments) {
     if ($x.status -notin 'executed', 'planned', 'blocked', 'not-run') { Fail "$($x.id): unknown status '$($x.status)'." }
     if ($x.status -in 'blocked', 'not-run' -and -not (Has $x 'reason')) { Fail "$($x.id): $($x.status) without reason." }
     if ($x.status -eq 'planned' -and -not ((Has $x 'question') -and (Has $x 'decisionUse'))) { Fail "$($x.id): planned without question/decisionUse." }
+    if (Has $x 'executedIn') {
+        if ($x.status -ne 'planned') { Fail "$($x.id): executedIn is only valid on a planned record." }
+        $target = Join-Path $root $x.executedIn
+        $executed = (Test-Path -LiteralPath $target -PathType Leaf) ?
+            @(([IO.File]::ReadAllText($target) | ConvertFrom-Json).experiments | Where-Object { $_.id -eq $x.id -and $_.status -eq 'executed' }) : @()
+        if ($executed.Count -ne 1) { Fail "$($x.id): executedIn '$($x.executedIn)' holds no executed record of this experiment." }
+    }
     if ($x.status -in 'blocked', 'not-run' -and @($x.runs).Count -gt 0) { Fail "$($x.id): $($x.status) experiment must not list runs." }
     if ($x.status -in 'executed', 'planned' -and @($x.runs).Count -eq 0) { Fail "$($x.id): $($x.status) experiment without runs." }
     foreach ($r in $x.runs) {
@@ -149,9 +161,19 @@ foreach ($x in $m.experiments) {
             if ($r.kind -eq 'formatter-cli' -and ($null -eq $r.exitCode -or $null -eq $r.commandLine -or $null -eq $r.workingDirectory)) {
                 Fail "$($r.runId): executed formatter run lacks exitCode/commandLine/workingDirectory."
             }
+            if (Has $r 'processOutcome') {
+                # A run that did not end by itself with exit code 0 must never read as success.
+                $expectedClass = if ($r.processOutcome -in 'dialog', 'timeout', 'start-failed') { 'aborted' }
+                    elseif ($r.processOutcome -eq 'exited') { $r.exitCode -eq 0 ? 'success' : 'formatter-error' }
+                    else { Fail "$($r.runId): unknown processOutcome '$($r.processOutcome)'."; $null }
+                if ($null -ne $expectedClass -and $r.runnerClassification -ne $expectedClass) {
+                    Fail "$($r.runId): runnerClassification '$($r.runnerClassification)' contradicts outcome '$($r.processOutcome)' with exit $($r.exitCode), expected '$expectedClass'."
+                }
+            }
         } else {
             foreach ($o in $observationFields) { if ($null -ne $r.$o) { Fail "$($r.runId): non-executed run carries observation '$o'." } }
             if ($null -ne $r.evidenceStatus) { Fail "$($r.runId): non-executed run carries evidenceStatus." }
+            foreach ($o in $runnerFields) { if (Has $r $o) { Fail "$($r.runId): non-executed run carries runner field '$o'." } }
         }
     }
 }
@@ -162,7 +184,10 @@ foreach ($file in $tracked) {
     if ($file -match '(?i)\.(exe|dll|bpl|bak)$') { Fail "Binary artifact must not be versioned: $file" }
     if ($file -match '(?i)\.config$' -and $file -notmatch '^fixtures/profiles/O1[A-Za-z0-9]+\.config$') { Fail "Original-looking profile must not be versioned: $file" }
 }
-$committedProfiles = @($m.profiles | Where-Object committed | ForEach-Object path)
+$committedProfiles = @(foreach ($file in Get-ChildItem -LiteralPath (Join-Path $root 'manifest') -Filter '*.json' -File) {
+    ([IO.File]::ReadAllText($file.FullName) | ConvertFrom-Json).profiles | Where-Object committed | ForEach-Object path
+})
+$committedProfiles += @($m.profiles | Where-Object committed | ForEach-Object path)
 foreach ($file in $tracked | Where-Object { $_ -match '^fixtures/profiles/' }) {
     if ($committedProfiles -notcontains $file) { Fail "Profile fixture not described in manifest: $file" }
 }

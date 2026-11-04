@@ -22,9 +22,11 @@ template) it:
   - writes run-result.json (format formatter4delphi.oracle-run/1) into the run directory.
 The meaning of Formatter.exe arguments is not assumed: the caller passes -ArgumentTemplate.
 Placeholders: {input} (first input copy), {input:N}, {profile}, {repDir}, {log} (= {repDir}\formatter.log).
-Exit codes: 0 all repetitions finished by themselves and no guard tripped; 1 at least one
-repetition timed out/hit a dialog/failed to start or a guard tripped; 2 precondition failure
-(nothing was executed).
+run-result.json "classification": success (every repetition exited by itself with exit code 0, no
+guard tripped), formatter-error (all exited by themselves, at least one with a non-zero exit code),
+aborted (timeout, dialog or start failure), guard-violation (a protected file changed).
+Exit codes: 0 success; 1 formatter-error, aborted or guard-violation (the run is recorded);
+2 precondition failure (nothing was executed).
 #>
 [CmdletBinding()]
 param(
@@ -322,7 +324,10 @@ $volatile = @('formatter.log')
 $stableKeys = @($outputKeys | Where-Object { $volatile -notcontains $_ })
 $deterministic = @($stableKeys | Where-Object { $perFile[$_].distinct -ne 1 }).Count -eq 0 -and
     @($repResults | ForEach-Object { "$($_.state)|$($_.exitCode)" } | Sort-Object -Unique).Count -eq 1
-$clean = @($repResults | Where-Object { $_.state -ne 'exited' }).Count -eq 0 -and $guardIssues.Count -eq 0
+$classification = if ($guardIssues.Count -gt 0) { 'guard-violation' }
+    elseif (@($repResults | Where-Object { $_.state -ne 'exited' }).Count -gt 0) { 'aborted' }
+    elseif (@($repResults | Where-Object { $_.exitCode -ne 0 }).Count -gt 0) { 'formatter-error' }
+    else { 'success' }
 
 $result = [ordered]@{
     resultFormat = 'formatter4delphi.oracle-run/1'
@@ -344,11 +349,11 @@ $result = [ordered]@{
     repetitionResults = $repResults
     determinism = [ordered]@{ deterministic = $deterministic; ignoredForDeterminism = $volatile; perFile = $perFile }
     guardIssues = $guardIssues
-    classification = $clean ? 'completed' : 'failed'
+    classification = $classification
 }
 $json = $result | ConvertTo-Json -Depth 12
 [IO.File]::WriteAllText((Join-Path $runDir 'run-result.json'), $json.Replace("`r`n", "`n") + "`n", [Text.UTF8Encoding]::new($false))
 Write-Output ('{0}: {1}; states {2}; exit codes {3}; deterministic {4}; result {5}' -f $runId, $result.classification,
     (($repResults | ForEach-Object state) -join ','), (($repResults | ForEach-Object exitCode) -join ','), $deterministic,
     [IO.Path]::GetRelativePath($repoRoot, (Join-Path $runDir 'run-result.json')).Replace('\', '/'))
-exit ($clean ? 0 : 1)
+exit ($classification -eq 'success' ? 0 : 1)

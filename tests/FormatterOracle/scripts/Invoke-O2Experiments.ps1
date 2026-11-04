@@ -98,7 +98,7 @@ function Invoke-Runner([string]$RunRoot, [string]$Name, [string[]]$Template, [st
     $out = & $runner @params
     $code = $LASTEXITCODE
     $out | ForEach-Object { Write-Host "  $_" }
-    $dir = Get-ChildItem -LiteralPath $RunRoot -Directory -Filter "$Name-*" | Sort-Object Name | Select-Object -Last 1
+    $dir = Get-ChildItem -LiteralPath $RunRoot -Directory | Where-Object Name -match "^$([regex]::Escape($Name))-\d{8}T\d{9}Z$" | Sort-Object Name | Select-Object -Last 1
     if ($code -eq 2 -or -not $dir -or -not (Test-Path (Join-Path $dir.FullName 'run-result.json'))) { throw "Runner precondition failure for $Name (exit $code)." }
     [pscustomobject]@{ ExitCode = $code; Dir = $dir.FullName; Result = ([IO.File]::ReadAllText((Join-Path $dir.FullName 'run-result.json')) | ConvertFrom-Json -AsHashtable) }
 }

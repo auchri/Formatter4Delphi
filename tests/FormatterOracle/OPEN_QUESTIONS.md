@@ -28,11 +28,11 @@ Build 29.0.51961.7529 is the current reference for all experiments; results are 
 | `Formatter.Enabled/Confirmation` | IDE-level entries, Confirmation differs between shipped and active | relevance for CLI output → O2-P12 |
 | `DelphiFormatter.*` versus `CppFormatter.*` | 84/72 by prefix and Category | prefix is not relevance evidence; vary single Cpp keys and compare Delphi output (E-CONFIG) |
 
-## C. Formatting behavior (C2, F1–F4) – nothing observed in O1
+## C. Formatting behavior (C2, F1–F4) – O2-P01 observed, the rest open
 
 | Option(s) | Hypothesis only | Planned run |
 |---|---|---|
-| `DelphiFormatter.AssignSpaces` (`USE_SPACE`) | `None`/`BeforeAndAfter` control blanks around `:=` | O2-P01 |
+| `DelphiFormatter.AssignSpaces` (`USE_SPACE`) | **observed** for `None`/`BeforeAndAfter` on FX-ASSIGN ([O2 report](O2_REPORT.md)); other values and syntax open | O2-P01 executed |
 | `DelphiFormatter.TabSize/IndentSize/UseTabs` (Category `DelphiEditor`) | indentation unit and tab use of the formatter output | O2-P09 (E-TABS) |
 | `IndentCompilerDirectives`, `NumOfEmptyLinesAroundCompilerDirectives`, `CompilerDirectivesCapitalization` | directive column, blank lines, case of directive keywords | O2-P10 (E-CONDITIONAL/E-CASE) |
 | Source encoding / `-e` | unknown accepted values; BOM preservation unknown | O2-P07 (E-BYTES) |
@@ -43,6 +43,6 @@ Build 29.0.51961.7529 is the current reference for all experiments; results are 
 | Question | Observed | Planned run |
 |---|---|---|
 | Console help | none; usage appears in a blocking dialog, exit code 1 | — |
-| Does `-silent` suppress all dialogs? Exit codes on success/failure? `-log` content? | unknown | O2-P11 |
+| Does `-silent` suppress all dialogs? Exit codes on success/failure? `-log` content? | **observed** for the tested errors: no dialog with `-silent`, exit 0/1, messages in log ([O2 report](O2_REPORT.md)); other error kinds open | O2-P11 executed |
 | Is the IDE/user `Formatter.config` read when `-config` is omitted? | unknown | O2 run without `-config` against a changed active profile copy (to be planned) |
 | `-b` backup naming, in-place write vs. output file | documented in usage text only | O2 runs in isolated `local/runs/` copies |
